@@ -73,23 +73,38 @@
                     drop-shadow(0 0 20px rgba(255,255,0,0.5));
         }
 
-        /* DVD Case */
+        /* DVD Case - shared styles */
         .dvd-case {
             position: absolute;
-            top: 30%;
-            right: 20%;
             width: 190px;
             height: 190px;
             cursor: pointer;
             transition: all 0.3s ease;
             z-index: 10;
-            transform: rotate(12deg);
             filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.4));
+        }
+
+        /* Original case position */
+        .dvd-case.main-case {
+            top: 30%;
+            right: 20%;
+            transform: rotate(12deg);
+        }
+
+        /* Access case position */
+        .dvd-case.access-case {
+            top: 35%;
+            left: 15%;
+            transform: rotate(-8deg);
         }
 
         .dvd-case:hover {
             transform: rotate(12deg) translateY(-5px);
             filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));
+        }
+
+        .dvd-case.access-case:hover {
+            transform: rotate(-8deg) translateY(-5px);
         }
 
         .dvd-case img {
@@ -189,8 +204,16 @@
             .dvd-case {
                 width: 120px;
                 height: 120px;
+            }
+
+            .dvd-case.main-case {
                 top: 25%;
                 right: 10%;
+            }
+
+            .dvd-case.access-case {
+                top: 30%;
+                left: 10%;
             }
 
             .dvd-disc {
@@ -203,14 +226,24 @@
 <body>
     <div class="scene-container"></div>
 
-    <!-- DVD Case -->
-    <div class="dvd-case" id="dvd-case">
+    <!-- Main DVD Case -->
+    <div class="dvd-case main-case" id="dvd-case">
         <img src="assets/entrance/start-case.png" alt="Internet Olympics DVD">
     </div>
 
-    <!-- DVD Disc (hidden until case clicked) -->
+    <!-- Access DVD Case -->
+    <div class="dvd-case access-case" id="access-case">
+        <img src="assets/entrance/access-case.png" alt="Access Portal DVD">
+    </div>
+
+    <!-- Main DVD Disc (hidden until case clicked) -->
     <div class="dvd-disc" id="dvd-disc">
         <img src="assets/entrance/start-disc.png" alt="Internet Olympics Disc">
+    </div>
+
+    <!-- Access DVD Disc (hidden until case clicked) -->
+    <div class="dvd-disc" id="access-disc">
+        <img src="assets/entrance/access-disc.png" alt="Access Portal Disc">
     </div>
 
     <!-- DVD Player -->
@@ -274,46 +307,54 @@
         // Elements
         const dvdCase = document.getElementById('dvd-case');
         const dvdDisc = document.getElementById('dvd-disc');
+        const accessCase = document.getElementById('access-case');
+        const accessDisc = document.getElementById('access-disc');
         const dvdPlayer = document.getElementById('dvd-player');
 
-        // Case click handler
-        dvdCase.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Don't re-open if already opened
-            if (this.classList.contains('opened')) return;
-            
-            // Play open sound
-            sounds.discOpen.currentTime = 0;
-            sounds.discOpen.play();
-            
-            // Mark as opened
-            this.classList.add('opened');
-            
-            // Position disc to emerge from case
-            const caseRect = this.getBoundingClientRect();
-            const slideDistance = 30;
-            
-            dvdDisc.style.left = (caseRect.left + slideDistance) + 'px';
-            dvdDisc.style.top = (caseRect.top - slideDistance) + 'px';
-            dvdDisc.classList.add('active');
-            
-            // Animate slide out
-            setTimeout(() => {
-                dvdDisc.style.transition = 'left 0.5s ease-out, top 0.5s ease-out';
-                dvdDisc.style.left = (caseRect.left + caseRect.width/2 - dvdDisc.offsetWidth/2) + 'px';
-                dvdDisc.style.top = (caseRect.top - dvdDisc.offsetHeight) + 'px';
+        // Case click handler for both cases
+        function setupCase(caseElement, discElement, destination) {
+            caseElement.addEventListener('click', function(e) {
+                e.preventDefault();
                 
-                // Enable dragging after animation
+                // Don't re-open if already opened
+                if (this.classList.contains('opened')) return;
+                
+                // Play open sound
+                sounds.discOpen.currentTime = 0;
+                sounds.discOpen.play();
+                
+                // Mark as opened
+                this.classList.add('opened');
+                
+                // Position disc to emerge from case
+                const caseRect = this.getBoundingClientRect();
+                const slideDistance = 30;
+                
+                discElement.style.left = (caseRect.left + slideDistance) + 'px';
+                discElement.style.top = (caseRect.top - slideDistance) + 'px';
+                discElement.classList.add('active');
+                
+                // Animate slide out
                 setTimeout(() => {
-                    dvdDisc.style.transition = '';
-                    enableDragging(dvdDisc);
-                }, 500);
-            }, 50);
-        });
+                    discElement.style.transition = 'left 0.5s ease-out, top 0.5s ease-out';
+                    discElement.style.left = (caseRect.left + caseRect.width/2 - discElement.offsetWidth/2) + 'px';
+                    discElement.style.top = (caseRect.top - discElement.offsetHeight) + 'px';
+                    
+                    // Enable dragging after animation
+                    setTimeout(() => {
+                        discElement.style.transition = '';
+                        enableDragging(discElement, destination);
+                    }, 500);
+                }, 50);
+            });
+        }
+
+        // Set up both cases
+        setupCase(dvdCase, dvdDisc, './cast/');
+        setupCase(accessCase, accessDisc, './access/');
 
         // Dragging functionality
-        function enableDragging(disc) {
+        function enableDragging(disc, destination) {
             let isDragging = false;
             let startX, startY, initialX, initialY;
 
@@ -360,8 +401,8 @@
                     discCenterX < playerRect.right && 
                     discCenterY > playerRect.top && 
                     discCenterY < playerRect.bottom) {
-                    // Activate portal!
-                    activatePortal();
+                    // Activate portal with specific destination!
+                    activatePortal(destination);
                 }
                 
                 // Remove hovering effect
@@ -416,7 +457,7 @@
         }
 
         // Portal activation
-        function activatePortal() {
+        function activatePortal(destination) {
             // Stop all sounds
             Object.values(sounds).forEach(sound => {
                 sound.pause();
@@ -431,10 +472,9 @@
             const overlay = document.querySelector('.transition-overlay');
             overlay.classList.add('active');
             
-            // Navigate to next page after animation
+            // Navigate to specific destination
             setTimeout(() => {
-                // Update this path to wherever you want to go
-                window.location.href = './cast/';
+                window.location.href = destination;
             }, 1000);
         }
 
