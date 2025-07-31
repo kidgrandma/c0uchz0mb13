@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INTERNET OLYMPICS - Entry Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Times New Roman', serif;
+            background: url('../assets/entrance/entrance-bg.jpg') center/cover no-repeat fixed;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* TV static overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(255,255,255,0.03) 0px,
+                    transparent 1px,
+                    transparent 2px,
+                    rgba(255,255,255,0.03) 3px
+                );
+            pointer-events: none;
+            animation: static 8s linear infinite;
+            z-index: 1;
+        }
+
+        @keyframes static {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(10px); }
+        }
+
+        /* Modal container */
+        .modal-container {
+            position: relative;
+            width: 90%;
+            max-width: 650px;
+            background: #c0c0c0;
+            border: 3px solid #000;
+            box-shadow: 
+                inset -2px -2px #808080,
+                inset 2px 2px #dfdfdf,
+                5px 5px 0 rgba(0,0,0,0.5);
+            transform: rotate(-0.5deg);
+            animation: glitch 15s infinite;
+            z-index: 10;
+        }
+
+        @keyframes glitch {
+            0%, 100% { transform: rotate(-0.5deg) translateX(0); }
+            20% { transform: rotate(-0.5deg) translateX(-2px); }
+            40% { transform: rotate(-0.5deg) translateX(2px); }
+        }
+
+        /* Title bar */
+        .title-bar {
+            background: linear-gradient(to right, #000080, #1084d0);
+            color: white;
+            padding: 3px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+
+        .title-bar span {
+            padding-left: 5px;
+        }
+
+        .close-btn {
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #dfdfdf #808080 #808080 #dfdfdf;
+            width: 18px;
+            height: 18px;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            cursor: not-allowed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 2px;
+        }
+
+        .close-btn:hover {
+            background: #b0b0b0;
+        }
+
+        /* Content area */
+        .modal-content {
+            background: #fff;
+            color: #000;
+            padding: 20px;
+            max-height: 75vh;
+            overflow-y: scroll;
+            position: relative;
+        }
+
+        /* Custom scrollbar */
+        .modal-content::-webkit-scrollbar {
+            width: 16px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: #c0c0c0;
+            border: 1px solid #808080;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #808080;
+            border: 1px solid #c0c0c0;
+        }
+
+        /* Typography */
+        h1 {
+            font-family: Arial, sans-serif;
+            font-size: 28px;
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+        }
+
+        .price {
+            font-family: Verdana, sans-serif;
+            font-size: 18px;
+            color: #ff0000;
+            animation: blink 2s infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.5; }
+        }
+
+        .tagline {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-family: Verdana, sans-serif;
+            font-size: 16px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            background: #000;
+            color: #0f0;
+            padding: 3px 5px;
+            display: inline-block;
+            transform: skew(-5deg);
+        }
+
+        p {
+            font-family: 'Times New Roman', serif;
+            font-size: 15px;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .list-item {
+            font-family: 'Times New Roman', serif;
+            font-size: 15px;
+            margin-bottom: 8px;
+            padding-left: 25px;
+        }
+
+        .steps {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            background: #f0f0f0;
+            border: 1px dashed #999;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .step {
+            margin-bottom: 8px;
+        }
+
+        .warning {
+            font-family: Verdana, sans-serif;
+            font-size: 14px;
+            color: #ff0000;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .payment-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .payment-btn {
+            display: block;
+            padding: 15px 30px;
+            background: #00ff00;
+            color: #000;
+            text-decoration: none;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            border: 3px solid #000;
+            transform: rotate(1deg);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .payment-btn:hover {
+            background: #ffff00;
+            transform: rotate(-1deg) scale(1.05);
+            box-shadow: 5px 5px 0 rgba(0,0,0,0.5);
+        }
+
+        .payment-btn.venmo {
+            transform: rotate(-1deg);
+        }
+
+        .payment-btn.zelle {
+            transform: rotate(1.5deg);
+        }
+
+        .flash-warning {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #ff0000;
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px;
+            background: #ffff00;
+            border: 2px solid #ff0000;
+            animation: flash 1s infinite;
+            text-transform: uppercase;
+        }
+
+        @keyframes flash {
+            0%, 100% { background: #ffff00; color: #ff0000; }
+            50% { background: #ff0000; color: #ffff00; }
+        }
+
+        .loading {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            color: #666;
+        }
+
+        .footer-text {
+            font-family: Verdana, sans-serif;
+            font-size: 9px;
+            color: #999;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        /* Popup styles */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .popup-overlay.active {
+            display: flex;
+        }
+
+        .popup {
+            background: #c0c0c0;
+            border: 3px solid #000;
+            box-shadow: 
+                inset -2px -2px #808080,
+                inset 2px 2px #dfdfdf,
+                5px 5px 0 rgba(0,0,0,0.8);
+            max-width: 90%;
+            width: 400px;
+            animation: popupSlam 0.3s ease-out;
+        }
+
+        @keyframes popupSlam {
+            0% { transform: scale(0.5) rotate(5deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .popup-title {
+            background: linear-gradient(to right, #000080, #1084d0);
+            color: white;
+            padding: 3px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+
+        .popup-close {
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #dfdfdf #808080 #808080 #dfdfdf;
+            width: 18px;
+            height: 18px;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 2px;
+        }
+
+        .popup-close:hover {
+            background: #ff0000;
+            color: white;
+        }
+
+        .popup-content {
+            background: #fff;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #000;
+        }
+
+        .popup-banner {
+            background: linear-gradient(45deg, #ff00ff, #00ffff, #ffff00, #ff00ff);
+            background-size: 300% 300%;
+            color: #000;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 15px;
+            cursor: pointer;
+            border: 3px solid #000;
+            box-shadow: 
+                inset 0 0 20px rgba(255,255,255,0.5),
+                0 0 10px rgba(255,0,255,0.5);
+            animation: rainbow 3s ease-in-out infinite, pulse 2s ease-in-out infinite;
+            text-shadow: 2px 2px 0 #fff;
+            transform: scale(1);
+            transition: transform 0.2s;
+        }
+
+        .popup-banner:hover {
+            transform: scale(1.05) rotate(-1deg);
+            box-shadow: 
+                inset 0 0 30px rgba(255,255,255,0.8),
+                0 0 20px rgba(255,0,255,0.8),
+                5px 5px 0 rgba(0,0,0,0.3);
+        }
+
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.9; }
+        }
+
+        .vip-option {
+            background: #f0f0f0;
+            border: 1px dashed #666;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .vip-title {
+            font-weight: bold;
+            color: #000080;
+            margin-bottom: 5px;
+        }
+
+        .memo-reminder {
+            background: #ffff00;
+            color: #ff0000;
+            padding: 5px;
+            text-align: center;
+            font-size: 12px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+         .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            z-index: 50;
+            transition: transform 0.3s ease;
+        }
+
+        .back-button:hover {
+            transform: rotate(-20deg) scale(1.1);
+        }
+
+        .back-button img {
+            width: 100%;
+            height: 100%;
+        }
+
+
+        /* Audio element */
+        audio {
+            display: none;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 600px) {
+            .modal-content {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .steps {
+                font-size: 13px;
+                padding: 10px;
+            }
+
+            .payment-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .popup {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background music -->
+    <audio id="bgMusic" loop>
+        <source src="../assets/cast/encore.mp3" type="audio/mpeg">
+    </audio>
+      <a href="../cast/" class="back-button">
+        <img src="../back.png" alt="Back">
+    </a>
+
+    <!-- Popup sounds -->
+    <audio id="popOpen">
+        <source src="../assets/cast/pop-open.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="popClose">
+        <source src="../assets/cast/pop-close.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="modal-container">
+        <div class="title-bar">
+            <span>⚠️ INTERNET_OLYMPICS.exe has stopped working</span>
+            <button class="close-btn" onclick="alert('nice try lol')">X</button>
+        </div>
+        
+        <div class="modal-content">
+            <h1>INTERNET OLYMPICS 2</h1>
+            <div class="tagline">
+                Access to 7 nights of gameplay. Teams. Tools. Internet challenges. Survival.<br>
+                Moderated by Kidgrandma at worksucks.net<br>
+                Played entirely in your Instagram DMs.
+            </div>
+<div class="price">Cheaper than a beer and a bag - cheaper than renewing your driver's license. BE COOL.</div>
+            <h2>WHAT IS IT?</h2>
+            <p>Internet Olympics is a weeklong game where your DMs become the arena. You'll be assigned a team. Complete internet-themed challenges. You'll get weird. Make friends. Lose your mind.</p>
+
+            <h2>HOW IT WORKS</h2>
+            <div class="steps">
+                <div class="step">🔥 Step 1 — Pay $25 to enter - get access code</div>
+                <div class="step">🍓 Step 2 — Choose a character</div>
+                <div class="step">💣 Step 3 — Buy optional tools to help (or sabotage)</div>
+                <div class="step">💿 Step 4 — Get dropped into a team group chat</div>
+                <div class="step">⚡ Step 5 — Play the game through your Instagram DMs</div>
+            </div>
+
+            <h2>WHAT YOU GET</h2>
+            <div class="list-item">🥚 Entry into a 7-day competitive internet game</div>
+            <div class="list-item">🐟 Assigned to a team chat</div>
+            <div class="list-item">💻 Nightly challenges (meme hunts, doom scrolls, ChatGPT fights, etc.)</div>
+            <div class="list-item">🍒 Cool things.</div>
+
+            <h2>WHO SHOULD JOIN?</h2>
+            <p>If any of these apply, you're gonna win.</p>
+            <div class="list-item">📱 You're chronically online</div>
+            <div class="list-item">🔪 You're bored of regular games</div>
+            <div class="list-item">⭐ You want to waste your screen time on something new</div>
+
+            <h2>WHAT'S THE TIME COMMITMENT?</h2>
+            <p>You don't need to play every night. But if you're in, that's gr8.</p>
+            <div class="list-item">🔥 Most players spend 1–2 hours a night, usually after 8pm PST</div>
+            <div class="list-item">💿 You can play casually, but the more involved you are, the more likely you are to win (or at least survive)</div>
+            <div class="list-item">🍓 You won't be kicked out for missing a night, but your team might notice</div>
+            <div class="list-item">💣 This is a team game - you can cover for each other.</div>
+            <div class="list-item">⚡ Some players lurk. Some reach psychosis. Both are valid.</div>
+            <p style="font-weight: bold; margin-top: 10px;">TL;DR: You don't need to cancel your life. Just don't ghost.</p>
+
+            <h2>THE RULES?</h2>
+            <p>You'll get the full breakdown once you're inside. But basically: don't flake, be cool, don't be weird, win points.</p>
+
+            <h2>READY?</h2>
+            <p>Once you pay, you'll get access to the character portal. Get some extra tools. Enter the arena.</p>
+
+            <div class="warning">$25 to enter. No refunds. No blood. No fireworks. DM kidgrandma for more info.</div>
+
+            <div class="flash-warning">
+                ⚠️ PLS PUT YOUR INSTAGRAM HANDLE IN YOUR MEMO LINE ⚠️
+            </div>
+
+            <div class="payment-buttons">
+                <button class="payment-btn venmo" onclick="showVenmoPopup()">VENMO</button>
+                <button class="payment-btn zelle" onclick="showZellePopup()">ZELLE</button>
+            </div>
+
+            <div class="loading">Loading... ████████░░ 82%</div>
+            
+            <div class="footer-text">
+                Best viewed in Netscape Navigator<br>
+                © 1999-2025 worksucks.net
+            </div>
+        </div>
+    </div>
+
+    <!-- Venmo Popup -->
+    <div id="venmoPopup" class="popup-overlay">
+        <div class="popup">
+            <div class="popup-title">
+                <span>💸 VENMO PAYMENT INFO</span>
+                <button class="popup-close" onclick="closePopup('venmoPopup')">X</button>
+            </div>
+            <div class="popup-content">
+                <div class="popup-banner" onclick="showVIPPopup()">
+                    💕✨ CLICK HERE for early access to VIP GAME BUNDLES! 🎉💖
+                </div>
+                <p><strong>VENMO:</strong> <a href="https://venmo.com/worksucksdotnet" target="_blank">@worksucksdotnet</a></p>
+                <p>$25 to play!! Cheaper than a beer and a bag!</p>
+                <div class="memo-reminder">
+                    REMEMBER: Put your Instagram handle in the memo!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zelle Popup -->
+    <div id="zellePopup" class="popup-overlay">
+        <div class="popup">
+            <div class="popup-title">
+                <span>💸 ZELLE PAYMENT INFO</span>
+                <button class="popup-close" onclick="closePopup('zellePopup')">X</button>
+            </div>
+            <div class="popup-content">
+                <div class="popup-banner" onclick="showVIPPopup()">
+                    💕✨ CLICK HERE for early access to VIP GAME BUNDLES! 🎉💖
+                </div>
+                <p><strong>ZELLE:</strong> paizley@worksucks.net</p>
+                <p>$25 to play!! Cheaper than a beer and a bag!</p>
+                <div class="memo-reminder">
+                    REMEMBER: Put your Instagram handle in the memo!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIP Popup -->
+    <div id="vipPopup" class="popup-overlay">
+        <div class="popup" style="transform: rotate(2deg);">
+            <div class="popup-title">
+                <span>👑 VIP GAME BUNDLES</span>
+                <button class="popup-close" onclick="closePopup('vipPopup')">X</button>
+            </div>
+            <div class="popup-content">
+                <div class="vip-option">
+                    <div class="vip-title">💿 $50 TITE</div>
+                    Entry + 1 VIP weapon
+                </div>
+                <div class="vip-option">
+                    <div class="vip-title">🔥 $100 SUPER TITE</div>
+                    Entry + 3 VIP weapons
+                </div>
+                <div class="vip-option">
+                    <div class="vip-title">💣 $200 TITE PRO MAX</div>
+                    Entry + Choose your team + 5 VIP weapons
+                </div>
+                <div class="memo-reminder">
+                    MEMO: Your handle + package (e.g. @user123 + SUPER TITE)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Start music on user interaction
+        document.addEventListener('click', function() {
+            const audio = document.getElementById('bgMusic');
+            if (audio.paused) {
+                audio.play().catch(e => console.log('Audio failed:', e));
+            }
+        }, { once: true });
+
+        // Popup functions
+        function playPopSound(soundId) {
+            const sound = document.getElementById(soundId);
+            sound.currentTime = 0;
+            sound.play().catch(e => console.log('Sound failed:', e));
+        }
+
+        function showVenmoPopup() {
+            document.getElementById('venmoPopup').classList.add('active');
+            playPopSound('popOpen');
+        }
+
+        function showZellePopup() {
+            document.getElementById('zellePopup').classList.add('active');
+            playPopSound('popOpen');
+        }
+
+        function showVIPPopup() {
+            document.getElementById('vipPopup').classList.add('active');
+            playPopSound('popOpen');
+        }
+
+        function closePopup(popupId) {
+            document.getElementById(popupId).classList.remove('active');
+            playPopSound('popClose');
+        }
+
+        // Close popup when clicking outside
+        document.querySelectorAll('.popup-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                    playPopSound('popClose');
+                }
+            });
+        });
+
+        // Random glitch text effect
+        setInterval(() => {
+            if (Math.random() > 0.95) {
+                const elements = document.querySelectorAll('p, .list-item');
+                const random = elements[Math.floor(Math.random() * elements.length)];
+                const original = random.textContent;
+                random.style.fontFamily = 'Wingdings';
+                setTimeout(() => {
+                    random.style.fontFamily = '';
+                }, 100);
+            }
+        }, 3000);
+
+        // Fake loading percentage
+        const loading = document.querySelector('.loading');
+        let percent = 82;
+        setInterval(() => {
+            percent = 80 + Math.floor(Math.random() * 15);
+            const bars = '█'.repeat(Math.floor(percent/10)) + '░'.repeat(10 - Math.floor(percent/10));
+            loading.textContent = `Loading... ${bars} ${percent}%`;
+        }, 2000);
+    </script>
+</body>
+</html>

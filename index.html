@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <title>INTERNET OLYMPICS 2</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Prevent iOS bounce */
+        html, body {
+            position: fixed;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            overscroll-behavior: none;
+            touch-action: pan-x pan-y;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #87CEEB;
+            position: relative;
+        }
+
+        /* Blockbuster background */
+        .scene-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('assets/entrance/entrance-bg.jpg') center/cover no-repeat;
+            filter: brightness(1.1) contrast(1.1);
+        }
+
+        /* DVD Player - positioned on the asphalt */
+        .dvd-player {
+            position: absolute;
+            bottom: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 300px;
+            cursor: default;
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5));
+            animation: playerPulse 2s ease-in-out infinite;
+            z-index: 20;
+        }
+
+        .dvd-player img {
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        @keyframes playerPulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.02); }
+        }
+
+        .dvd-player.hovering {
+            animation: playerPulse 0.5s ease-in-out infinite;
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5)) 
+                    drop-shadow(0 0 20px rgba(255,255,0,0.5));
+        }
+
+        /* DVD Case */
+        .dvd-case {
+            position: absolute;
+            top: 30%;
+            right: 20%;
+            width: 190px;
+            height: 190px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            transform: rotate(12deg);
+            filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.4));
+        }
+
+        .dvd-case:hover {
+            transform: rotate(12deg) translateY(-5px);
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));
+        }
+
+        .dvd-case img {
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .dvd-case::after {
+            content: 'CLICK TO OPEN';
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .dvd-case.opened::after {
+            content: 'DRAG DISC';
+            color: #ffff00;
+            text-shadow: 0 0 5px #ffff00, 1px 1px 2px rgba(0,0,0,0.8);
+            animation: textPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes textPulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        /* DVD Disc */
+        .dvd-disc {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            cursor: grab;
+            display: none;
+            z-index: 30;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.5));
+            animation: discSpin 4s linear infinite;
+            touch-action: none;
+        }
+
+        .dvd-disc.active {
+            display: block;
+        }
+
+        .dvd-disc.dragging {
+            cursor: grabbing;
+            animation: none;
+            z-index: 100;
+        }
+
+        .dvd-disc img {
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        @keyframes discSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Transition overlay */
+        .transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+
+        .transition-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 768px) {
+            .dvd-player {
+                width: 200px;
+                height: 200px;
+                bottom: 30%;
+            }
+
+            .dvd-case {
+                width: 120px;
+                height: 120px;
+                top: 25%;
+                right: 10%;
+            }
+
+            .dvd-disc {
+                width: 80px;
+                height: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="scene-container"></div>
+
+    <!-- DVD Case -->
+    <div class="dvd-case" id="dvd-case">
+        <img src="assets/entrance/start-case.png" alt="Internet Olympics DVD">
+    </div>
+
+    <!-- DVD Disc (hidden until case clicked) -->
+    <div class="dvd-disc" id="dvd-disc">
+        <img src="assets/entrance/start-disc.png" alt="Internet Olympics Disc">
+    </div>
+
+    <!-- DVD Player -->
+    <div class="dvd-player" id="dvd-player">
+        <img src="assets/entrance/disc-player.png" alt="Portable DVD Player">
+    </div>
+
+    <!-- Transition overlay -->
+    <div class="transition-overlay"></div>
+
+    <!-- Audio elements -->
+    <audio id="bgMusic" loop>
+        <source src="assets/entrance/entrance.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="discOpen">
+        <source src="assets/entrance/disc-open.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="discPickup">
+        <source src="assets/entrance/disc-pickup.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="portalActivate">
+        <source src="assets/entrance/portal-activate.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Audio setup
+        const sounds = {
+            bgMusic: document.getElementById('bgMusic'),
+            discOpen: document.getElementById('discOpen'),
+            discPickup: document.getElementById('discPickup'),
+            portalActivate: document.getElementById('portalActivate')
+        };
+
+        // Start background music
+        sounds.bgMusic.volume = 0.2;
+        
+        // Try to autoplay
+        const playMusic = () => {
+            sounds.bgMusic.play().catch(e => {
+                // If autoplay blocked, wait for interaction
+                console.log('Autoplay blocked, waiting for user interaction');
+            });
+        };
+
+        // Attempt autoplay on load
+        window.addEventListener('load', playMusic);
+        
+        // Also try on first interaction
+        document.addEventListener('click', () => {
+            if (sounds.bgMusic.paused) {
+                sounds.bgMusic.play();
+            }
+        }, { once: true });
+
+        document.addEventListener('touchstart', () => {
+            if (sounds.bgMusic.paused) {
+                sounds.bgMusic.play();
+            }
+        }, { once: true });
+
+        // Elements
+        const dvdCase = document.getElementById('dvd-case');
+        const dvdDisc = document.getElementById('dvd-disc');
+        const dvdPlayer = document.getElementById('dvd-player');
+
+        // Case click handler
+        dvdCase.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Don't re-open if already opened
+            if (this.classList.contains('opened')) return;
+            
+            // Play open sound
+            sounds.discOpen.currentTime = 0;
+            sounds.discOpen.play();
+            
+            // Mark as opened
+            this.classList.add('opened');
+            
+            // Position disc to emerge from case
+            const caseRect = this.getBoundingClientRect();
+            const slideDistance = 30;
+            
+            dvdDisc.style.left = (caseRect.left + slideDistance) + 'px';
+            dvdDisc.style.top = (caseRect.top - slideDistance) + 'px';
+            dvdDisc.classList.add('active');
+            
+            // Animate slide out
+            setTimeout(() => {
+                dvdDisc.style.transition = 'left 0.5s ease-out, top 0.5s ease-out';
+                dvdDisc.style.left = (caseRect.left + caseRect.width/2 - dvdDisc.offsetWidth/2) + 'px';
+                dvdDisc.style.top = (caseRect.top - dvdDisc.offsetHeight) + 'px';
+                
+                // Enable dragging after animation
+                setTimeout(() => {
+                    dvdDisc.style.transition = '';
+                    enableDragging(dvdDisc);
+                }, 500);
+            }, 50);
+        });
+
+        // Dragging functionality
+        function enableDragging(disc) {
+            let isDragging = false;
+            let startX, startY, initialX, initialY;
+
+            function dragStart(e) {
+                if (e.target === disc || e.target.parentElement === disc) {
+                    e.preventDefault();
+                    isDragging = true;
+                    disc.classList.add('dragging');
+                    
+                    // Play pickup sound
+                    sounds.discPickup.currentTime = 0;
+                    sounds.discPickup.play();
+                    
+                    // Get initial positions
+                    const rect = disc.getBoundingClientRect();
+                    initialX = rect.left;
+                    initialY = rect.top;
+                    
+                    if (e.type === "touchstart") {
+                        startX = e.touches[0].clientX - initialX;
+                        startY = e.touches[0].clientY - initialY;
+                    } else {
+                        startX = e.clientX - initialX;
+                        startY = e.clientY - initialY;
+                    }
+                }
+            }
+
+            function dragEnd(e) {
+                if (!isDragging) return;
+                
+                isDragging = false;
+                disc.classList.remove('dragging');
+                
+                // Check if over DVD player
+                const playerRect = dvdPlayer.getBoundingClientRect();
+                const discRect = disc.getBoundingClientRect();
+                
+                const discCenterX = discRect.left + discRect.width / 2;
+                const discCenterY = discRect.top + discRect.height / 2;
+                
+                // Check if disc center is within player bounds
+                if (discCenterX > playerRect.left && 
+                    discCenterX < playerRect.right && 
+                    discCenterY > playerRect.top && 
+                    discCenterY < playerRect.bottom) {
+                    // Activate portal!
+                    activatePortal();
+                }
+                
+                // Remove hovering effect
+                dvdPlayer.classList.remove('hovering');
+            }
+
+            function drag(e) {
+                if (!isDragging) return;
+                
+                e.preventDefault();
+                
+                let currentX, currentY;
+                if (e.type === "touchmove") {
+                    currentX = e.touches[0].clientX - startX;
+                    currentY = e.touches[0].clientY - startY;
+                } else {
+                    currentX = e.clientX - startX;
+                    currentY = e.clientY - startY;
+                }
+                
+                // Update disc position
+                disc.style.left = currentX + 'px';
+                disc.style.top = currentY + 'px';
+                
+                // Check proximity to player
+                const playerRect = dvdPlayer.getBoundingClientRect();
+                const discRect = disc.getBoundingClientRect();
+                
+                const discCenterX = discRect.left + discRect.width / 2;
+                const discCenterY = discRect.top + discRect.height / 2;
+                
+                // Add hovering effect when near
+                if (discCenterX > playerRect.left - 50 && 
+                    discCenterX < playerRect.right + 50 && 
+                    discCenterY > playerRect.top - 50 && 
+                    discCenterY < playerRect.bottom + 50) {
+                    dvdPlayer.classList.add('hovering');
+                } else {
+                    dvdPlayer.classList.remove('hovering');
+                }
+            }
+
+            // Mouse events
+            disc.addEventListener('mousedown', dragStart);
+            document.addEventListener('mouseup', dragEnd);
+            document.addEventListener('mousemove', drag);
+
+            // Touch events
+            disc.addEventListener('touchstart', dragStart, { passive: false });
+            document.addEventListener('touchend', dragEnd, { passive: false });
+            document.addEventListener('touchmove', drag, { passive: false });
+        }
+
+        // Portal activation
+        function activatePortal() {
+            // Stop all sounds
+            Object.values(sounds).forEach(sound => {
+                sound.pause();
+                sound.currentTime = 0;
+            });
+
+            // Play activation sound
+            sounds.portalActivate.currentTime = 0;
+            sounds.portalActivate.play();
+            
+            // Fade to black
+            const overlay = document.querySelector('.transition-overlay');
+            overlay.classList.add('active');
+            
+            // Navigate to next page after animation
+            setTimeout(() => {
+                // Update this path to wherever you want to go
+                window.location.href = './cast/';
+            }, 1000);
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            Object.values(sounds).forEach(sound => {
+                sound.pause();
+                sound.src = '';
+            });
+        });
+    </script>
+</body>
+</html>
