@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internet Olympics 2 - Admin Panel (Secure)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: #00ff00;
+            text-shadow: 2px 2px 0px #000;
+            margin-bottom: 10px;
+        }
+
+        .admin-login {
+            max-width: 400px;
+            margin: 0 auto;
+            background: #333;
+            padding: 30px;
+            border: 2px solid #00ff00;
+            text-align: center;
+        }
+
+        .admin-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            background: #000;
+            border: 1px solid #00ff00;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .admin-btn {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 30px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .admin-btn:hover {
+            background: #00cc00;
+        }
+
+        .admin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            padding: 8px 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .admin-panel {
+            display: none;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .user-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #00ff00;
+            font-size: 14px;
+        }
+
+        .section {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #00ff00;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .pending-item {
+            background: #333;
+            border: 1px solid #555;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .pending-info {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .pending-info p {
+            margin-bottom: 5px;
+        }
+
+        .pending-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .approve-btn {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 8px 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .deny-btn {
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            padding: 8px 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .payment-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+
+        .users-table th {
+            background: #333;
+            color: #00ff00;
+        }
+
+        .status-active { color: #00ff00; }
+        .status-blocked { color: #ff0000; }
+        .status-dead { color: #999; }
+
+        .status-select {
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #00ff00;
+            padding: 20px;
+        }
+
+        .error {
+            color: #ff0000;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .success {
+            color: #00ff00;
+            text-align: center;
+            padding: 10px;
+        }
+
+        /* Add User Section */
+        .add-user-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .add-user-input {
+            padding: 8px;
+            background: #000;
+            border: 1px solid #555;
+            color: #fff;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .add-user-btn {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 8px 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>INTERNET OLYMPICS 2 - SECURE ADMIN PANEL</h1>
+    </div>
+
+    <!-- Admin Login -->
+    <div class="admin-login" id="adminLogin">
+        <h2>Admin Access</h2>
+        <input type="email" 
+               class="admin-input" 
+               id="adminEmail" 
+               placeholder="Admin email">
+        <input type="password" 
+               class="admin-input" 
+               id="adminPassword" 
+               placeholder="Password">
+        <button class="admin-btn" id="loginBtn" onclick="loginAdmin()">LOGIN</button>
+        <div class="error" id="loginError"></div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div class="admin-panel" id="adminPanel">
+        <div class="user-info" id="userInfo"></div>
+        <button class="logout-btn" onclick="logoutAdmin()">LOGOUT</button>
+        
+        <!-- Pending Approvals -->
+        <div class="section">
+            <h2>Pending Character Approvals</h2>
+            <div id="pendingList" class="pending-list">
+                <div class="loading">Loading pending approvals...</div>
+            </div>
+        </div>
+
+        <!-- Add New User -->
+        <div class="section">
+            <h2>Add New User</h2>
+            <div class="add-user-form">
+                <input type="text" 
+                       class="add-user-input" 
+                       id="newAccessCode" 
+                       placeholder="Access Code (e.g., PLAYER001)"
+                       style="text-transform: uppercase;">
+                <input type="email" 
+                       class="add-user-input" 
+                       id="newUserEmail" 
+                       placeholder="Email (optional)">
+                <button class="add-user-btn" onclick="addNewUser()">ADD USER</button>
+            </div>
+            <div id="addUserMessage"></div>
+        </div>
+
+        <!-- Active Users -->
+        <div class="section">
+            <h2>Manage Users</h2>
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>Access Code</th>
+                        <th>Email</th>
+                        <th>Character</th>
+                        <th>Status</th>
+                        <th>Team</th>
+                        <th>Points</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr><td colspan="7" class="loading">Loading users...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Characters Management -->
+        <div class="section">
+            <h2>Character Availability</h2>
+            <div id="charactersList">
+                <div class="loading">Loading characters...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { 
+            getAuth, 
+            signInWithEmailAndPassword, 
+            onAuthStateChanged,
+            signOut
+        } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+        import { 
+            getFirestore, 
+            collection, 
+            getDocs, 
+            doc, 
+            updateDoc, 
+            deleteDoc,
+            onSnapshot,
+            getDoc,
+            setDoc
+        } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO21-40668WNpOdj2w",
+            authDomain: "c0uchz0mb13.firebaseapp.com",
+            projectId: "c0uchz0mb13",
+            storageBucket: "c0uchz0mb13.firebasestorage.app",
+            messagingSenderId: "1051521591004",
+            appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
+            measurementId: "G-6BNDYZQRPE"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        // List of allowed admin emails
+        const ADMIN_EMAILS = [
+            'paizley@worksucks.net',
+            // Add your email here
+        ];
+
+        // Auth state listener
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Check if user email is in admin list
+                if (ADMIN_EMAILS.includes(user.email)) {
+                    currentUser = user;
+                    showAdminPanel();
+                } else {
+                    document.getElementById('loginError').textContent = 'Access denied. Not an admin email.';
+                    signOut(auth);
+                }
+            } else {
+                showLoginForm();
+            }
+        });
+
+        // Login function
+        window.loginAdmin = async function() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            const loginBtn = document.getElementById('loginBtn');
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'LOGGING IN...';
+            
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                // Auth state listener will handle the rest
+            } catch (error) {
+                console.error('Login error:', error);
+                let errorMessage = 'Invalid email or password';
+                if (error.code === 'auth/user-not-found') {
+                    errorMessage = 'User not found';
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMessage = 'Incorrect password';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = 'Invalid email format';
+                }
+                document.getElementById('loginError').textContent = errorMessage;
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'LOGIN';
+            }
+        };
+
+        // Logout function
+        window.logoutAdmin = async function() {
+            await signOut(auth);
+        };
+
+        // Show admin panel
+        function showAdminPanel() {
+            document.getElementById('adminLogin').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+            document.getElementById('userInfo').textContent = `Logged in as: ${currentUser.email}`;
+            loadAdminData();
+        }
+
+        // Show login form
+        function showLoginForm() {
+            document.getElementById('adminLogin').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+        }
+
+        // Load all admin data
+        function loadAdminData() {
+            loadPendingApprovals();
+            loadUsers();
+            loadCharacters();
+        }
+
+        // Add new user function
+        window.addNewUser = async function() {
+            const accessCode = document.getElementById('newAccessCode').value.toUpperCase();
+            const email = document.getElementById('newUserEmail').value;
+            
+            if (!accessCode) {
+                document.getElementById('addUserMessage').innerHTML = '<p class="error">Access code is required</p>';
+                return;
+            }
+
+            try {
+                // Check if access code already exists
+                const existingUser = await getDoc(doc(db, 'users', accessCode));
+                if (existingUser.exists()) {
+                    document.getElementById('addUserMessage').innerHTML = '<p class="error">Access code already exists</p>';
+                    return;
+                }
+
+                // Create new user
+                await setDoc(doc(db, 'users', accessCode), {
+                    email: email || '',
+                    status: 'active',
+                    characterId: '',
+                    characterName: '',
+                    team: '',
+                    individualPoints: 0,
+                    createdAt: new Date().toISOString()
+                });
+
+                document.getElementById('addUserMessage').innerHTML = `<p class="success">User ${accessCode} created successfully!</p>`;
+                document.getElementById('newAccessCode').value = '';
+                document.getElementById('newUserEmail').value = '';
+                
+                // Reload users table
+                loadUsers();
+            } catch (error) {
+                console.error('Error adding user:', error);
+                document.getElementById('addUserMessage').innerHTML = '<p class="error">Error creating user</p>';
+            }
+        };
+
+        // Load pending approvals with real-time updates
+        function loadPendingApprovals() {
+            const pendingList = document.getElementById('pendingList');
+            
+            // Listen for real-time updates
+            onSnapshot(collection(db, 'pendingSelections'), (snapshot) => {
+                if (snapshot.empty) {
+                    pendingList.innerHTML = '<p>No pending approvals</p>';
+                    return;
+                }
+
+                pendingList.innerHTML = '';
+                
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const pendingItem = document.createElement('div');
+                    pendingItem.className = 'pending-item';
+                    
+                    const toolsList = data.tools ? data.tools.map(t => t.name).join(', ') : 'None';
+                    
+                    pendingItem.innerHTML = `
+                        <div class="pending-info">
+                            <p><strong>Access Code:</strong> ${data.accessCode}</p>
+                            <p><strong>Character:</strong> ${data.characterName} (${data.characterId})</p>
+                            <p><strong>Tools:</strong> ${toolsList}</p>
+                            <p><strong>Total Cost:</strong> $${data.totalCost}</p>
+                            <p><strong>Submitted:</strong> ${new Date(data.submittedAt).toLocaleString()}</p>
+                            <div class="payment-check">
+                                <label>
+                                    <input type="checkbox" id="payment-${doc.id}">
+                                    Payment Verified
+                                </label>
+                            </div>
+                        </div>
+                        <div class="pending-actions">
+                            <button class="approve-btn" onclick="approveSelection('${doc.id}')">APPROVE</button>
+                            <button class="deny-btn" onclick="denySelection('${doc.id}')">DENY</button>
+                        </div>
+                    `;
+                    
+                    pendingList.appendChild(pendingItem);
+                });
+            });
+        }
+
+        // Approve selection
+        window.approveSelection = async function(selectionId) {
+            const paymentChecked = document.getElementById(`payment-${selectionId}`).checked;
+            
+            if (!paymentChecked) {
+                alert('Please verify payment before approving!');
+                return;
+            }
+
+            try {
+                // Get the pending selection data
+                const selectionDoc = await getDoc(doc(db, 'pendingSelections', selectionId));
+                const selectionData = selectionDoc.data();
+                
+                // Update user with character
+                await updateDoc(doc(db, 'users', selectionData.accessCode), {
+                    characterId: selectionData.characterId,
+                    characterName: selectionData.characterName,
+                    tools: selectionData.tools,
+                    approvedAt: new Date().toISOString()
+                });
+                
+                // Mark character as unavailable
+                await updateDoc(doc(db, 'characters', selectionData.characterId), {
+                    available: false,
+                    ownerId: selectionData.accessCode
+                });
+                
+                // Delete pending selection
+                await deleteDoc(doc(db, 'pendingSelections', selectionId));
+                
+                alert(`Approved ${selectionData.characterName} for ${selectionData.accessCode}`);
+            } catch (error) {
+                console.error('Error approving selection:', error);
+                alert('Error approving selection: ' + error.message);
+            }
+        };
+
+        // Deny selection
+        window.denySelection = async function(selectionId) {
+            if (!confirm('Are you sure you want to deny this selection?')) return;
+            
+            try {
+                await deleteDoc(doc(db, 'pendingSelections', selectionId));
+                alert('Selection denied and removed');
+            } catch (error) {
+                console.error('Error denying selection:', error);
+                alert('Error denying selection: ' + error.message);
+            }
+        };
+
+        // Load users
+        async function loadUsers() {
+            const usersTableBody = document.getElementById('usersTableBody');
+            
+            try {
+                const snapshot = await getDocs(collection(db, 'users'));
+                usersTableBody.innerHTML = '';
+                
+                snapshot.forEach((doc) => {
+                    const userData = doc.data();
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>${doc.id}</td>
+                        <td>${userData.email || 'N/A'}</td>
+                        <td>${userData.characterName || 'None'}</td>
+                        <td class="status-${userData.status}">${userData.status}</td>
+                        <td>${userData.team || 'None'}</td>
+                        <td>${userData.individualPoints || 0}</td>
+                        <td>
+                            <select class="status-select" onchange="updateUserStatus('${doc.id}', this.value)">
+                                <option value="active" ${userData.status === 'active' ? 'selected' : ''}>Active</option>
+                                <option value="blocked" ${userData.status === 'blocked' ? 'selected' : ''}>Blocked</option>
+                                <option value="dead" ${userData.status === 'dead' ? 'selected' : ''}>Dead</option>
+                            </select>
+                        </td>
+                    `;
+                    
+                    usersTableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading users:', error);
+                usersTableBody.innerHTML = '<tr><td colspan="7" class="error">Error loading users</td></tr>';
+            }
+        }
+
+        // Update user status
+        window.updateUserStatus = async function(userId, newStatus) {
+            try {
+                await updateDoc(doc(db, 'users', userId), {
+                    status: newStatus
+                });
+                console.log(`Updated ${userId} status to ${newStatus}`);
+            } catch (error) {
+                console.error('Error updating user status:', error);
+                alert('Error updating status: ' + error.message);
+            }
+        };
+
+        // Load characters
+        async function loadCharacters() {
+            const charactersList = document.getElementById('charactersList');
+            
+            try {
+                const snapshot = await getDocs(collection(db, 'characters'));
+                charactersList.innerHTML = '';
+                
+                const availableCount = snapshot.docs.filter(doc => doc.data().available).length;
+                charactersList.innerHTML = `<p>Available: ${availableCount} / ${snapshot.size}</p>`;
+                
+            } catch (error) {
+                console.error('Error loading characters:', error);
+                charactersList.innerHTML = '<p class="error">Error loading characters</p>';
+            }
+        }
+
+        // Enter key for login
+        document.getElementById('adminPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                loginAdmin();
+            }
+        });
+
+        // Enter key for add user
+        document.getElementById('newUserEmail').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addNewUser();
+            }
+        });
+    </script>
+</body>
+</html>
