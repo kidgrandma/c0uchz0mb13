@@ -1842,19 +1842,26 @@
             // Show disc image
             discDiv.innerHTML = `<img src="../assets/cast/cast-members/${userData.characterId}-disc.png" alt="${userData.characterName}">`;
             const paymentAmount = userData.paymentAmount || 0;
-    const toolsCost = (userData.tools || []).reduce((sum, tool) => sum + (tool.price || 0), 0);
-    const credit = paymentAmount - 25 - toolsCost;
-    
-    // Show credit or payment due based on calculation
-    if (credit > 0) {
-        // Show credit section
-        document.getElementById('creditSection').style.display = 'block';
-        document.getElementById('creditAmount').textContent = credit;
-    } else if (credit < 0) {
-        // Show payment due (only place with $ sign)
-        document.getElementById('paymentDue').style.display = 'block';
-        document.getElementById('amountOwed').textContent = Math.abs(credit);
-    }
+const toolsCost = (userData.tools || []).reduce((sum, tool) => sum + (tool.price || 0), 0);
+const totalCost = 25 + toolsCost; // Base cost + tools
+const credit = paymentAmount - totalCost;
+
+// Only show payment due if they actually haven't paid enough
+// Don't show payment due if they're marked as paid or if paymentAmount covers costs
+if (credit > 0) {
+    // Show credit section
+    document.getElementById('creditSection').style.display = 'block';
+    document.getElementById('creditAmount').textContent = credit;
+} else if (credit < 0 && !userData.paid) {
+    // Only show payment due if NOT marked as paid
+    document.getElementById('paymentDue').style.display = 'block';
+    document.getElementById('amountOwed').textContent = Math.abs(credit);
+} else {
+    // They're paid but have 0 credit - show nothing or show "0 credits"
+    // You could show the credit section with 0 if you want
+    document.getElementById('creditSection').style.display = 'block';
+    document.getElementById('creditAmount').textContent = '0';
+}
     
     // Check for moderator note
     if (userData.moderatorNote) {
