@@ -19,7 +19,38 @@
             min-height: 100vh;
             position: relative;
         }
+        @keyframes sparkle {
+    0%, 100% { 
+        text-shadow: 
+            2px 2px 0 #ff00ff,
+            -2px -2px 0 #00ffff,
+            0 0 20px #ffff00;
+        transform: scale(1) rotate(-1deg);
+    }
+    50% { 
+        text-shadow: 
+            -2px 2px 0 #ffff00,
+            2px -2px 0 #ff00ff,
+            0 0 30px #00ffff;
+        transform: scale(1.05) rotate(1deg);
+    }
+}
 
+#profileTitle {
+    background: linear-gradient(90deg, #ff00ff, #ffff00, #00ffff, #ff00ff);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 28px;
+    font-weight: bold;
+    text-transform: lowercase;
+    letter-spacing: 3px;
+    font-family: 'Arial Black', Arial, sans-serif;
+    animation: sparkle 2s ease-in-out infinite;
+    display: inline-block;
+    padding: 10px 0;
+}
         /* Windows 95 Base Styles */
         .window-95 {
             background: #c0c0c0;
@@ -1436,6 +1467,7 @@
             letter-spacing: 2px;
             text-shadow: 1px 1px #ff00ff;
         }
+        
     </style>
 </head>
 <body>
@@ -1503,7 +1535,8 @@
 
         <!-- Player Profile -->
         <div class="player-profile window-95" id="playerProfile">
-            <h3>YOUR CHARACTER PROFILE</h3>
+                <div class="profile-title-container">
+    <h3><span id="profileTitle">YOUR PROFILE</span></h3>
             <div id="moderatorNote" style="display: none; text-align: center; margin: 20px auto; max-width: 600px;">
     <div style="background: #ffff00; border: 3px solid #ff00ff; padding: 15px; animation: pulse 2s infinite;">
         <p style="color: #000; font-weight: bold; font-size: 16px;">
@@ -1834,11 +1867,14 @@
             document.getElementById('carouselWrapper').style.display = 'none';
             document.getElementById('gridWrapper').style.display = 'none';
             document.getElementById('instructions').style.display = 'none';
-            
+            document.getElementById('profileTitle').textContent = `@${userData.handle || userData.code}'s PROFILE`;
+
             const profileDiv = document.getElementById('playerProfile');
+                profileDiv.style.display = 'block';
             const discDiv = document.getElementById('profileDisc');
             const infoDiv = document.getElementById('profileInfo');
-            
+    const handle = userData.handle || userData.code;
+document.getElementById('profileTitle').textContent = `@${handle.toLowerCase()}'s space`;
             // Show disc image
             discDiv.innerHTML = `<img src="../assets/cast/cast-members/${userData.characterId}-disc.png" alt="${userData.characterName}">`;
             const paymentAmount = userData.paymentAmount || 0;
