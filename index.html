@@ -26,7 +26,7 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Tahoma', 'Segoe UI', sans-serif;
             background: #87CEEB;
             position: relative;
         }
@@ -42,10 +42,179 @@
             filter: brightness(1.1) contrast(1.1);
         }
 
-        /* DVD Player - positioned on the asphalt */
+        /* Windows XP Style Welcome Modal */
+        .welcome-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .welcome-modal.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: #ECE9D8;
+            border: 2px solid #0054E3;
+            border-radius: 8px 8px 0 0;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 
+                0 0 0 1px #003C74,
+                2px 2px 5px rgba(0,0,0,0.3),
+                inset -1px -1px 0 #716F64,
+                inset 1px 1px 0 #FFFFFF;
+        }
+
+        /* XP Title Bar */
+        .xp-titlebar {
+            background: linear-gradient(to bottom, #0054E3 0%, #0046C7 3%, #0036A3 100%);
+            padding: 6px;
+            border-radius: 6px 6px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .xp-title {
+            color: white;
+            font-size: 13px;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+            padding-left: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .xp-title::before {
+            content: "⚠";
+            font-size: 16px;
+            color: #FFD700;
+        }
+
+        .xp-buttons {
+            display: flex;
+            gap: 2px;
+        }
+
+        .xp-button {
+            width: 21px;
+            height: 21px;
+            border: 1px solid #003C74;
+            border-radius: 3px;
+            background: linear-gradient(to bottom, #FFFFFF 0%, #E3E3DB 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-family: 'Marlett', sans-serif;
+            font-size: 14px;
+            color: #000;
+        }
+
+        .xp-button:hover {
+            background: linear-gradient(to bottom, #FFE8A6 0%, #FFC73C 100%);
+        }
+
+        .xp-button.close::after {
+            content: "✕";
+            font-weight: bold;
+        }
+
+        .modal-inner {
+            background: #ECE9D8;
+            padding: 20px;
+            border: 1px solid #FFFFFF;
+            border-top: none;
+        }
+
+        .modal-icon-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .warning-icon {
+            width: 32px;
+            height: 32px;
+            background: radial-gradient(circle, #FFD700 0%, #FFA500 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #000;
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .modal-main-title {
+            color: #003C74;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .modal-text {
+            color: #000;
+            font-size: 11px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            padding-left: 44px;
+        }
+
+        .modal-text strong {
+            color: #003C74;
+            font-weight: bold;
+        }
+
+        .modal-text .highlight {
+            background: #FFFF88;
+            padding: 0 2px;
+            font-weight: bold;
+        }
+
+        /* XP Style Button */
+        .start-btn {
+            background: linear-gradient(to bottom, #FFFFFF 0%, #ECE9D8 100%);
+            border: 1px solid #003C74;
+            color: #000;
+            padding: 6px 14px;
+            font-size: 11px;
+            cursor: pointer;
+            margin: 20px auto 0;
+            display: block;
+            border-radius: 3px;
+            box-shadow: 
+                inset -1px -1px 0 #716F64,
+                inset 1px 1px 0 #FFFFFF;
+            min-width: 75px;
+        }
+
+        .start-btn:hover {
+            background: linear-gradient(to bottom, #FFE8A6 0%, #FFC73C 100%);
+        }
+
+        .start-btn:active {
+            background: linear-gradient(to bottom, #E3E3DB 0%, #C7C7BF 100%);
+            box-shadow: 
+                inset 1px 1px 0 #716F64,
+                inset -1px -1px 0 #FFFFFF;
+        }
+
+        /* DVD Player - better positioning */
         .dvd-player {
             position: absolute;
-            bottom: 25%;
+            bottom: 15%;
             left: 50%;
             transform: translateX(-50%);
             width: 300px;
@@ -73,7 +242,7 @@
                     drop-shadow(0 0 20px rgba(255,255,0,0.5));
         }
 
-        /* DVD Case - shared styles */
+        /* DVD Case - better spacing */
         .dvd-case {
             position: absolute;
             width: 190px;
@@ -84,16 +253,16 @@
             filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.4));
         }
 
-        /* Original case position */
+        /* Original case position - upper right */
         .dvd-case.main-case {
-            top: 30%;
-            right: 20%;
+            top: 20%;
+            right: 15%;
             transform: rotate(12deg);
         }
 
-        /* Access case position */
+        /* Access case position - upper left */
         .dvd-case.access-case {
-            top: 35%;
+            top: 20%;
             left: 15%;
             transform: rotate(-8deg);
         }
@@ -129,7 +298,7 @@
         }
 
         .dvd-case.opened::after {
-            content: 'DRAG DISC';
+            content: 'DRAG DISC TO PORTAL';
             color: #ffff00;
             text-shadow: 0 0 5px #ffff00, 1px 1px 2px rgba(0,0,0,0.8);
             animation: textPulse 1s ease-in-out infinite;
@@ -174,6 +343,124 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Can't Read Button - Now a sticky note in the middle */
+        .cant-read-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-2deg);
+            background: #FFFF88;
+            color: #000;
+            border: none;
+            padding: 15px 20px;
+            font-family: 'Comic Sans MS', cursive;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            max-width: 250px;
+            line-height: 1.4;
+        }
+
+        .cant-read-btn::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 20px;
+            background: rgba(255,255,255,0.6);
+            border: 1px solid #ccc;
+        }
+
+        .cant-read-btn:hover {
+            transform: translate(-50%, -50%) rotate(0deg) scale(1.05);
+            background: #FFFF00;
+            box-shadow: 3px 3px 8px rgba(0,0,0,0.3);
+        }
+
+        /* Simple Instructions Modal - XP Style */
+        .simple-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            padding: 20px;
+        }
+
+        .simple-modal.active {
+            display: flex;
+        }
+
+        .simple-content {
+            background: #ECE9D8;
+            border: 2px solid #0054E3;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 
+                0 0 0 1px #003C74,
+                2px 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .simple-titlebar {
+            background: linear-gradient(to bottom, #0054E3 0%, #0046C7 3%, #0036A3 100%);
+            padding: 6px;
+            border-radius: 6px 6px 0 0;
+            color: white;
+            font-size: 13px;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .simple-inner {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .simple-text {
+            color: #000;
+            font-size: 12px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            font-family: 'Tahoma', sans-serif;
+        }
+
+        .simple-text .venmo {
+            color: #0054E3;
+            font-weight: bold;
+            font-size: 14px;
+            display: block;
+            margin: 10px 0;
+            background: #FFFF88;
+            padding: 5px;
+        }
+
+        .simple-close {
+            background: linear-gradient(to bottom, #FFFFFF 0%, #ECE9D8 100%);
+            border: 1px solid #003C74;
+            color: #000;
+            padding: 6px 20px;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 3px;
+            box-shadow: 
+                inset -1px -1px 0 #716F64,
+                inset 1px 1px 0 #FFFFFF;
+        }
+
+        .simple-close:hover {
+            background: linear-gradient(to bottom, #FFE8A6 0%, #FFC73C 100%);
+        }
+
         /* Transition overlay */
         .transition-overlay {
             position: fixed;
@@ -195,10 +482,15 @@
 
         /* Mobile adjustments */
         @media (max-width: 768px) {
+            .modal-text {
+                font-size: 10px;
+                padding-left: 35px;
+            }
+
             .dvd-player {
                 width: 200px;
                 height: 200px;
-                bottom: 30%;
+                bottom: 20%;
             }
 
             .dvd-case {
@@ -207,23 +499,112 @@
             }
 
             .dvd-case.main-case {
-                top: 25%;
-                right: 10%;
+                top: 15%;
+                right: 5%;
             }
 
             .dvd-case.access-case {
-                top: 30%;
-                left: 10%;
+                top: 15%;
+                left: 5%;
             }
 
             .dvd-disc {
                 width: 80px;
                 height: 80px;
             }
+
+            .cant-read-btn {
+                font-size: 12px;
+                padding: 12px 15px;
+            }
+        }
+
+        /* Desktop adjustments for better spacing */
+        @media (min-width: 1024px) {
+            .dvd-case {
+                width: 220px;
+                height: 220px;
+            }
+
+            .dvd-case.main-case {
+                top: 15%;
+                right: 20%;
+            }
+
+            .dvd-case.access-case {
+                top: 15%;
+                left: 20%;
+            }
+
+            .dvd-player {
+                bottom: 10%;
+                width: 350px;
+                height: 350px;
+            }
+
+            .dvd-disc {
+                width: 140px;
+                height: 140px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Welcome Modal -->
+    <div class="welcome-modal" id="welcomeModal">
+        <div class="modal-content">
+            <div class="xp-titlebar">
+                <div class="xp-title">System Message</div>
+                <div class="xp-buttons">
+                    <div class="xp-button close" onclick="closeWelcome()"></div>
+                </div>
+            </div>
+            <div class="modal-inner">
+                <div class="modal-icon-title">
+                    <div class="warning-icon">!</div>
+                    <div class="modal-main-title">WELCOME PLAYERS!</div>
+                </div>
+                
+                <p class="modal-text">
+                    <strong>NEW PLAYERS:</strong><br>
+                    Click on the <span class="highlight">START HERE</span> disc and drop it into the portal.<br>
+                    Follow instructions to grab an access code.
+                </p>
+                
+                <p class="modal-text">
+                    <strong>RETURNING PLAYERS:</strong><br>
+                    If you already have an access code - grab the <span class="highlight">INTERNET OLYMPICS 2</span> disc<br>
+                    and I'll see ya on the other side!
+                </p>
+                
+                <p class="modal-text" style="margin-top: 15px;">
+                    Any questions? DM <strong>@kidgrandma</strong> on IG
+                </p>
+                
+                <button class="start-btn" onclick="closeWelcome()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simple Instructions Modal -->
+    <div class="simple-modal" id="simpleModal">
+        <div class="simple-content">
+            <div class="simple-titlebar">
+                worksucks.exe has stopped responding
+            </div>
+            <div class="simple-inner">
+                <p class="simple-text">
+                    hey... i get it.<br>
+                    reading sucks.<br><br>
+                    venmo <span class="venmo">$25 to @worksucksdotnet</span>
+                    to start. easy.<br><br>
+                    make sure you put your ig handle in the memo
+                </p>
+                <button class="simple-close" onclick="closeSimple()">ok cool</button>
+            </div>
+        </div>
+    </div>
+
     <div class="scene-container"></div>
 
     <!-- Main DVD Case -->
@@ -251,6 +632,13 @@
         <img src="assets/entrance/disc-player.png" alt="Portable DVD Player">
     </div>
 
+    <!-- Can't Read Button - Now styled as sticky note -->
+    <button class="cant-read-btn" onclick="openSimple()">
+        ugh reading is hard<br>
+        just tell me what 2 do<br>
+        this is confusing :(
+    </button>
+
     <!-- Transition overlay -->
     <div class="transition-overlay"></div>
 
@@ -277,32 +665,27 @@
             portalActivate: document.getElementById('portalActivate')
         };
 
-        // Start background music
         sounds.bgMusic.volume = 0.2;
-        
-        // Try to autoplay
-        const playMusic = () => {
-            sounds.bgMusic.play().catch(e => {
-                // If autoplay blocked, wait for interaction
-                console.log('Autoplay blocked, waiting for user interaction');
-            });
-        };
 
-        // Attempt autoplay on load
-        window.addEventListener('load', playMusic);
-        
-        // Also try on first interaction
-        document.addEventListener('click', () => {
-            if (sounds.bgMusic.paused) {
-                sounds.bgMusic.play();
-            }
-        }, { once: true });
+        // Welcome modal functions
+        function closeWelcome() {
+            document.getElementById('welcomeModal').classList.add('hidden');
+            // Start music after user interaction
+            sounds.bgMusic.play().catch(e => console.log('Music autoplay prevented'));
+        }
 
-        document.addEventListener('touchstart', () => {
+        // Simple modal functions
+        function openSimple() {
+            document.getElementById('simpleModal').classList.add('active');
+        }
+
+        function closeSimple() {
+            document.getElementById('simpleModal').classList.remove('active');
+            // Also ensure music is playing
             if (sounds.bgMusic.paused) {
-                sounds.bgMusic.play();
+                sounds.bgMusic.play().catch(e => console.log('Music autoplay prevented'));
             }
-        }, { once: true });
+        }
 
         // Elements
         const dvdCase = document.getElementById('dvd-case');
@@ -350,7 +733,7 @@
         }
 
         // Set up both cases
-        setupCase(dvdCase, dvdDisc, './cast/');
+        setupCase(dvdCase, dvdDisc, './cast/character.html');
         setupCase(accessCase, accessDisc, './access/');
 
         // Dragging functionality
