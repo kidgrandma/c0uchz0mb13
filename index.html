@@ -40,6 +40,197 @@
             height: 100%;
             background: url('assets/entrance/entrance-bg.jpg') center/cover no-repeat;
             filter: brightness(1.1) contrast(1.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Layout container for better spacing */
+        .content-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-rows: 1fr auto 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            padding: 40px;
+        }
+
+        /* DVD Cases - using grid positions */
+        .dvd-case {
+            position: relative;
+            width: 190px;
+            height: 190px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.4));
+            justify-self: center;
+            align-self: center;
+        }
+
+        /* Access case - top left */
+        .dvd-case.access-case {
+            grid-row: 1;
+            grid-column: 1;
+            transform: rotate(-8deg);
+        }
+
+        /* Main case - top right */
+        .dvd-case.main-case {
+            grid-row: 1;
+            grid-column: 3;
+            transform: rotate(12deg);
+        }
+
+        .dvd-case:hover {
+            transform: rotate(12deg) translateY(-5px) scale(1.05);
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));
+        }
+
+        .dvd-case.access-case:hover {
+            transform: rotate(-8deg) translateY(-5px) scale(1.05);
+        }
+
+        .dvd-case img {
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .dvd-case::after {
+            content: 'CLICK TO OPEN';
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .dvd-case.opened::after {
+            content: 'DRAG DISC TO PORTAL';
+            color: #ffff00;
+            text-shadow: 0 0 5px #ffff00, 1px 1px 2px rgba(0,0,0,0.8);
+            animation: textPulse 1s ease-in-out infinite;
+        }
+
+        /* DVD Player - bottom center */
+        .dvd-player {
+            grid-row: 3;
+            grid-column: 2;
+            width: 300px;
+            height: 300px;
+            cursor: default;
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5));
+            animation: playerPulse 2s ease-in-out infinite;
+            z-index: 20;
+            justify-self: center;
+            align-self: end;
+            margin-bottom: 20px;
+        }
+
+        .dvd-player img {
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        @keyframes playerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .dvd-player.hovering {
+            animation: playerPulse 0.5s ease-in-out infinite;
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5)) 
+                    drop-shadow(0 0 20px rgba(255,255,0,0.5));
+        }
+
+        /* Can't Read Button - center middle */
+        .cant-read-btn {
+            grid-row: 2;
+            grid-column: 2;
+            justify-self: center;
+            align-self: center;
+            background: #FFFF88;
+            color: #000;
+            border: none;
+            padding: 15px 20px;
+            font-family: 'Comic Sans MS', cursive;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            max-width: 250px;
+            line-height: 1.4;
+            transform: rotate(-2deg);
+            margin: 20px;
+        }
+
+        .cant-read-btn::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 20px;
+            background: rgba(255,255,255,0.6);
+            border: 1px solid #ccc;
+        }
+
+        .cant-read-btn:hover {
+            transform: rotate(0deg) scale(1.05);
+            background: #FFFF00;
+            box-shadow: 3px 3px 8px rgba(0,0,0,0.3);
+        }
+
+        /* AIM Buddy Icon - middle right */
+        .aim-buddy {
+            grid-row: 2;
+            grid-column: 3;
+            justify-self: center;
+            align-self: center;
+            cursor: pointer;
+            z-index: 500;
+            text-align: center;
+            animation: aimBounce 2s ease-in-out infinite;
+            margin: 20px;
+        }
+
+        .aim-buddy img {
+            width: 80px;
+            height: 80px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .aim-buddy-text {
+            background: #FFFF88;
+            color: #000;
+            font-size: 10px;
+            padding: 4px 8px;
+            margin-top: 5px;
+            border: 1px solid #000;
+            font-family: 'Comic Sans MS', cursive;
+            transform: rotate(-2deg);
+            display: inline-block;
+            max-width: 150px;
+            line-height: 1.2;
+        }
+
+        @keyframes aimBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
         /* Windows XP Style Welcome Modal */
@@ -211,99 +402,6 @@
                 inset -1px -1px 0 #FFFFFF;
         }
 
-        /* DVD Player - better positioning */
-        .dvd-player {
-            position: absolute;
-            bottom: 15%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 300px;
-            height: 300px;
-            cursor: default;
-            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5));
-            animation: playerPulse 2s ease-in-out infinite;
-            z-index: 20;
-        }
-
-        .dvd-player img {
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        @keyframes playerPulse {
-            0%, 100% { transform: translateX(-50%) scale(1); }
-            50% { transform: translateX(-50%) scale(1.02); }
-        }
-
-        .dvd-player.hovering {
-            animation: playerPulse 0.5s ease-in-out infinite;
-            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5)) 
-                    drop-shadow(0 0 20px rgba(255,255,0,0.5));
-        }
-
-        /* DVD Case - better spacing */
-        .dvd-case {
-            position: absolute;
-            width: 190px;
-            height: 190px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            z-index: 10;
-            filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.4));
-        }
-
-        /* Original case position - upper right */
-        .dvd-case.main-case {
-            top: 20%;
-            right: 15%;
-            transform: rotate(12deg);
-        }
-
-        /* Access case position - upper left */
-        .dvd-case.access-case {
-            top: 20%;
-            left: 15%;
-            transform: rotate(-8deg);
-        }
-
-        .dvd-case:hover {
-            transform: rotate(12deg) translateY(-5px);
-            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));
-        }
-
-        .dvd-case.access-case:hover {
-            transform: rotate(-8deg) translateY(-5px);
-        }
-
-        .dvd-case img {
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        .dvd-case::after {
-            content: 'CLICK TO OPEN';
-            position: absolute;
-            bottom: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 10px;
-            color: #fff;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-            opacity: 0.8;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            white-space: nowrap;
-        }
-
-        .dvd-case.opened::after {
-            content: 'DRAG DISC TO PORTAL';
-            color: #ffff00;
-            text-shadow: 0 0 5px #ffff00, 1px 1px 2px rgba(0,0,0,0.8);
-            animation: textPulse 1s ease-in-out infinite;
-        }
-
         @keyframes textPulse {
             0%, 100% { opacity: 0.8; }
             50% { opacity: 1; }
@@ -341,43 +439,6 @@
         @keyframes discSpin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
-        }
-
-        /* Can't Read Button - Now a sticky note in the middle */
-        .cant-read-btn {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-2deg);
-            background: #FFFF88;
-            color: #000;
-            border: none;
-            padding: 15px 20px;
-            font-family: 'Comic Sans MS', cursive;
-            font-size: 14px;
-            cursor: pointer;
-            z-index: 100;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-            max-width: 250px;
-            line-height: 1.4;
-        }
-
-        .cant-read-btn::before {
-            content: "";
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40px;
-            height: 20px;
-            background: rgba(255,255,255,0.6);
-            border: 1px solid #ccc;
-        }
-
-        .cant-read-btn:hover {
-            transform: translate(-50%, -50%) rotate(0deg) scale(1.05);
-            background: #FFFF00;
-            box-shadow: 3px 3px 8px rgba(0,0,0,0.3);
         }
 
         /* Simple Instructions Modal - XP Style */
@@ -480,6 +541,260 @@
             pointer-events: all;
         }
 
+        /* AIM Chat Window - Match XP Modal Style */
+        .aim-window {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 450px;
+            max-width: 90vw;
+            background: #ECE9D8;
+            border: 2px solid #0054E3;
+            border-radius: 8px 8px 0 0;
+            display: none;
+            z-index: 600;
+            font-family: 'Tahoma', 'Segoe UI', sans-serif;
+            box-shadow: 
+                0 0 0 1px #003C74,
+                2px 2px 5px rgba(0,0,0,0.3),
+                inset -1px -1px 0 #716F64,
+                inset 1px 1px 0 #FFFFFF;
+        }
+
+        .aim-window.active {
+            display: block;
+        }
+
+        /* AIM Title Bar - Match XP Style Exactly */
+        .aim-titlebar {
+            background: linear-gradient(to bottom, #0054E3 0%, #0046C7 3%, #0036A3 100%);
+            padding: 6px;
+            border-radius: 6px 6px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .aim-title-text {
+            color: white;
+            font-size: 13px;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+            padding-left: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .aim-title-text img {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* XP Style Close Button - Match Welcome Modal */
+        .aim-close {
+            width: 21px;
+            height: 21px;
+            border: 1px solid #003C74;
+            border-radius: 3px;
+            background: linear-gradient(to bottom, #FFFFFF 0%, #E3E3DB 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-family: 'Marlett', sans-serif;
+            font-size: 14px;
+            color: #000;
+        }
+
+        .aim-close:hover {
+            background: linear-gradient(to bottom, #FFE8A6 0%, #FFC73C 100%);
+        }
+
+        .aim-close::after {
+            content: "✕";
+            font-weight: bold;
+        }
+
+        /* Chat Area Container */
+        .aim-chat-container {
+            background: #ECE9D8;
+            padding: 8px;
+            border: 1px solid #FFFFFF;
+            border-top: none;
+        }
+
+        /* Chat Area - AIM Style with Custom Colors */
+        .aim-chat-area {
+            background: #FFFFFF;
+            height: 300px;
+            overflow-y: auto;
+            padding: 8px;
+            font-size: 12px;
+            border: 2px solid;
+            border-color: #848484 #FFFFFF #FFFFFF #848484;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.4;
+        }
+
+        /* AIM Messages with Custom Backgrounds */
+        .aim-message {
+            margin-bottom: 6px;
+            padding: 4px 6px;
+            border-radius: 3px;
+            word-wrap: break-word;
+        }
+
+        .aim-message.kidgrandma-msg {
+            background: #000000;
+            display: inline-block;
+            max-width: 80%;
+        }
+
+        .aim-message.user-msg {
+            background: #0054E3;
+            display: inline-block;
+            max-width: 80%;
+            margin-left: auto;
+            display: block;
+        }
+
+        /* Custom Font Colors */
+        .aim-username {
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .aim-username.kidgrandma {
+            color: #FF69B4;
+        }
+
+        .aim-username.user {
+            color: #FFFFFF;
+        }
+
+        .aim-text.kidgrandma {
+            color: #FF69B4;
+        }
+
+        .aim-text.user {
+            color: #FFFFFF;
+        }
+
+        .aim-typing {
+            color: #808080;
+            font-style: italic;
+            animation: pulse 1s ease-in-out infinite;
+            padding: 4px 6px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* Input Area - XP Style */
+        .aim-input-area {
+            display: flex;
+            gap: 6px;
+            padding: 8px;
+            background: #ECE9D8;
+        }
+
+        .aim-input {
+            flex: 1;
+            padding: 4px 6px;
+            border: 2px solid;
+            border-color: #848484 #FFFFFF #FFFFFF #848484;
+            font-size: 12px;
+            font-family: 'Arial', sans-serif;
+            background: white;
+            outline: none;
+        }
+
+        .aim-input:focus {
+            border-color: #003C74;
+        }
+
+        /* XP Style Send Button */
+        .aim-send {
+            background: linear-gradient(to bottom, #FFFFFF 0%, #ECE9D8 100%);
+            border: 1px solid #003C74;
+            color: #000;
+            padding: 4px 14px;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 3px;
+            box-shadow: 
+                inset -1px -1px 0 #716F64,
+                inset 1px 1px 0 #FFFFFF;
+        }
+
+        .aim-send:hover {
+            background: linear-gradient(to bottom, #FFE8A6 0%, #FFC73C 100%);
+        }
+
+        .aim-send:active {
+            background: linear-gradient(to bottom, #E3E3DB 0%, #C7C7BF 100%);
+            box-shadow: 
+                inset 1px 1px 0 #716F64,
+                inset -1px -1px 0 #FFFFFF;
+        }
+
+        /* Chaos Windows */
+        .chaos-window {
+            position: fixed;
+            background: #C0C0C0;
+            border: 2px solid;
+            border-color: #FFFFFF #808080 #808080 #FFFFFF;
+            min-width: 200px;
+            z-index: 9999;
+            font-family: 'MS Sans Serif', Arial, sans-serif;
+            font-size: 11px;
+            animation: windowShake 0.1s ease-in-out infinite;
+        }
+
+        @keyframes windowShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+
+        .chaos-titlebar {
+            background: linear-gradient(to right, #000080, #1084D0);
+            color: white;
+            padding: 2px 4px;
+            font-weight: bold;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chaos-x {
+            background: #C0C0C0;
+            border: 1px solid;
+            border-color: #FFFFFF #808080 #808080 #FFFFFF;
+            width: 16px;
+            height: 14px;
+            font-size: 10px;
+            line-height: 1;
+            cursor: not-allowed;
+            text-align: center;
+        }
+
+        .chaos-content {
+            padding: 20px;
+            text-align: center;
+            background: #C0C0C0;
+        }
+
+        .chaos-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
         /* Mobile adjustments */
         @media (max-width: 768px) {
             .modal-text {
@@ -487,10 +802,11 @@
                 padding-left: 35px;
             }
 
-            .dvd-player {
-                width: 200px;
-                height: 200px;
-                bottom: 20%;
+            .content-wrapper {
+                grid-template-rows: auto auto auto auto;
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+                padding: 20px;
             }
 
             .dvd-case {
@@ -498,14 +814,38 @@
                 height: 120px;
             }
 
-            .dvd-case.main-case {
-                top: 15%;
-                right: 5%;
+            .dvd-case.access-case {
+                grid-row: 1;
+                grid-column: 1;
             }
 
-            .dvd-case.access-case {
-                top: 15%;
-                left: 5%;
+            .dvd-case.main-case {
+                grid-row: 1;
+                grid-column: 2;
+            }
+
+            .cant-read-btn {
+                grid-row: 2;
+                grid-column: 1 / -1;
+                font-size: 12px;
+                padding: 12px 15px;
+            }
+
+            .aim-buddy {
+                grid-row: 3;
+                grid-column: 1 / -1;
+            }
+
+            .aim-buddy img {
+                width: 60px;
+                height: 60px;
+            }
+
+            .dvd-player {
+                grid-row: 4;
+                grid-column: 1 / -1;
+                width: 200px;
+                height: 200px;
             }
 
             .dvd-disc {
@@ -513,31 +853,31 @@
                 height: 80px;
             }
 
-            .cant-read-btn {
-                font-size: 12px;
-                padding: 12px 15px;
+            .aim-window {
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: calc(100vw - 20px);
+                max-width: 400px;
+            }
+
+            .aim-chat-area {
+                height: 250px;
             }
         }
 
         /* Desktop adjustments for better spacing */
         @media (min-width: 1024px) {
+            .content-wrapper {
+                padding: 60px;
+            }
+
             .dvd-case {
                 width: 220px;
                 height: 220px;
             }
 
-            .dvd-case.main-case {
-                top: 15%;
-                right: 20%;
-            }
-
-            .dvd-case.access-case {
-                top: 15%;
-                left: 20%;
-            }
-
             .dvd-player {
-                bottom: 10%;
                 width: 350px;
                 height: 350px;
             }
@@ -605,16 +945,36 @@
         </div>
     </div>
 
-    <div class="scene-container"></div>
+    <div class="scene-container">
+        <div class="content-wrapper">
+            <!-- Access DVD Case - top left -->
+            <div class="dvd-case access-case" id="access-case">
+                <img src="assets/entrance/access-case.png" alt="Access Portal DVD">
+            </div>
 
-    <!-- Main DVD Case -->
-    <div class="dvd-case main-case" id="dvd-case">
-        <img src="assets/entrance/start-case.png" alt="Internet Olympics DVD">
-    </div>
+            <!-- Main DVD Case - top right -->
+            <div class="dvd-case main-case" id="dvd-case">
+                <img src="assets/entrance/start-case.png" alt="Internet Olympics DVD">
+            </div>
 
-    <!-- Access DVD Case -->
-    <div class="dvd-case access-case" id="access-case">
-        <img src="assets/entrance/access-case.png" alt="Access Portal DVD">
+            <!-- Can't Read Button - center -->
+            <button class="cant-read-btn" onclick="openSimple()">
+                ugh reading is hard<br>
+                just tell me what 2 do<br>
+                this is confusing :(
+            </button>
+
+            <!-- AIM Buddy Icon - middle right -->
+            <div class="aim-buddy" onclick="openAIM()">
+                <img src="assets/entrance/aim-box.png" alt="AIM Buddy">
+                <div class="aim-buddy-text">REAL UNPAID SUPER LEGIT testimonials</div>
+            </div>
+
+            <!-- DVD Player - bottom center -->
+            <div class="dvd-player" id="dvd-player">
+                <img src="assets/entrance/disc-player.png" alt="Portable DVD Player">
+            </div>
+        </div>
     </div>
 
     <!-- Main DVD Disc (hidden until case clicked) -->
@@ -627,20 +987,28 @@
         <img src="assets/entrance/access-disc.png" alt="Access Portal Disc">
     </div>
 
-    <!-- DVD Player -->
-    <div class="dvd-player" id="dvd-player">
-        <img src="assets/entrance/disc-player.png" alt="Portable DVD Player">
-    </div>
-
-    <!-- Can't Read Button - Now styled as sticky note -->
-    <button class="cant-read-btn" onclick="openSimple()">
-        ugh reading is hard<br>
-        just tell me what 2 do<br>
-        this is confusing :(
-    </button>
-
     <!-- Transition overlay -->
     <div class="transition-overlay"></div>
+
+    <!-- AIM Chat Window -->
+    <div class="aim-window" id="aimWindow">
+        <div class="aim-titlebar">
+            <div class="aim-title-text">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAbwAAAG8B8aLcQwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAHFSURBVDiNjZO9S1tRGMZ/5yY3uReNTW5MYiLRKmjRQaSDg4OLk5OLf4CDi4uLg4ODg4ODg5OLk5OLi4uLi4OLiyAFi1+IWvELRIOaGBOT3Jvce8+5HZK0VWl94YXD4fA87/s+5xXMzc0BYJqmtbe319rf369omqZIKUEI4HA43Kenp64gCIJEIjE0Pj4+EwqFiEQi+P1+XC4XAPV6nVKpRDabJZVKsb6+vrCxsbG4tLQkAGw2W6hQKPxOp9Nks1lKpRK1Wg0ArMhkFRAMBolGo/T39xOPx38dHBwMAwiHw5FAIPDb7XZjGAZCCKSUSCmRUmIYBlJKhBBYrVacTieapjE8PPwdIBQKOV0uFy6XC8MwmkJN5LNmNxqNJpnFYsFqtTI4ONgJEPR6vfh8Pux2O4Zh8KN6wA+5w8/6EaZs/IOjWq1SKBQ4OztjdHTUBdBlsViwWCxUKhWK1QO+mMt8M79QFdnWN7VajdPT01cSm81muVwuN4maNrxBD73qBG5LD4Y0KfGAzOQEJQC73V7O5/M8Pj5itVoBkGaBrflhNRQ8lghtSicmcHp6GpNSisbFj4+PP0ulEk9PT1itVtzWbtz2HiDCPwt/A+m1ljCzcoh6AAAAAElFTkSuQmCC" alt="AIM">
+                Instant Message with kidgrandma
+            </div>
+            <button class="aim-close" onclick="closeAIM()"></button>
+        </div>
+        <div class="aim-chat-container">
+            <div class="aim-chat-area" id="aimChat">
+                <!-- Messages will appear here -->
+            </div>
+            <div class="aim-input-area">
+                <input type="text" class="aim-input" id="aimInput" placeholder="Type message here..." onkeypress="handleAIMEnter(event)">
+                <button class="aim-send" onclick="sendAIMMessage()">Send</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Audio elements -->
     <audio id="bgMusic" loop>
@@ -655,6 +1023,12 @@
     <audio id="portalActivate">
         <source src="assets/entrance/portal-activate.mp3" type="audio/mpeg">
     </audio>
+    <audio id="aimSound">
+        <source src="assets/entrance/instant.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="popOpen">
+        <source src="assets/cast/pop-open.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
         // Audio setup
@@ -662,10 +1036,265 @@
             bgMusic: document.getElementById('bgMusic'),
             discOpen: document.getElementById('discOpen'),
             discPickup: document.getElementById('discPickup'),
-            portalActivate: document.getElementById('portalActivate')
+            portalActivate: document.getElementById('portalActivate'),
+            aimSound: document.getElementById('aimSound'),
+            popOpen: document.getElementById('popOpen')
         };
 
         sounds.bgMusic.volume = 0.2;
+        sounds.aimSound.volume = 0.5;
+        sounds.popOpen.volume = 0.4;
+
+        // AIM Chat Bot Logic
+        const testimonials = [
+            "you are dropped into a group chat of complete and utter confusion. you don't know these people. you don't know what you're doing. why are they all so hot??? within hours you're in the trenches doing things you never thought you'd be good at, and let's face it you're probably still not good at them but you're doing your best. are you feeding raccoons? are you making a ransom video? are you even a theater kid because you are now! at the end of the week you are exhausted. mind numbingly so but you leave with friendships and skills you've never had before and a lot of really incriminating and embarrassing videos.",
+            "It's a virtual team building experience for a bunch of strangers who are relying on each other for no particular reason. Some of the team members feel like its life or death situations, while others cant be bothered to participate. All the other team members speak a different language and you only pick up on every 17th word, and you jump in to help when you think you understand... only to find out you're crushing it, so then you continue to try harder. Then you realize it's every man for themselves and you have to do some serious self reflection and decide if you want to play Squid Games...",
+            "Internet based boot camp. A chaotic survivalists guide that will not only challenge your mind, but challenge your way of thinking and approaching problem solving. You will venture from \"how do I code a functioning web store in 12 minutes\" to \"how do I make a figure made of cheese stand upright on its own\". Your search history will never be the same. And your algorithm is now destroyed.",
+            "it's like a huge group chat that never stops but inside of the group chat you've got friends and enemies and there are probably other group chats as well and sometimes you're playing each other and sometimes you're not but playing each other means doing things that are fun could be perceived as creative or silly or dangerous, depending on who you ask could be perceived as difficult or easy depending on who you've asked too. Basically you're number one goal. All the time is to stay alive.",
+            "Imagine an escape room... but the escape room is only the confines of your day-to-day and... ~Your mind~. If you are looking to push the boundaries of your creativity and existing social connections, join a [Post Apocalyptic] game. Join with friends. Join with strangers. The competition and collaboration will depend on your speed, imagination, improvisation, and execution. You'll learn new things about the world, about others, and maybe even yourself. To be continued...",
+            "Gotta keep the mystery. It's not about the win it's about the journey, it's like a Rube Goldberg of Olympics with varied challenges. It brings out your creativity and improvisation skills and it gives you community.",
+            "The game is made by creators for creators, has barely any guidelines, creation and initiative are the only requisite. + MAKE NEW BUDDIES TM",
+            "Okay so think of any game that has rules and exists in a linear space, now think of the total and complete opposite of that and you'll understand 1/16th of the game. OR I say It's like who's line is it anyways but with fire",
+            "Gamified therapy IRL URL DND where you have to figure out everything while knowing nothing because it keeps evolving as you play.",
+            "normal everyday internet experiences for freaks and weirdos"
+        ];
+
+        const chaosMessages = [
+            "WHY DONT U LOVE ME",
+            "WHO SENT YOU",
+            "WHAT DID THE INTERNET DO TO YOU",
+            "I SAID NO ICE",
+            "IMAGINE A WORLD WHERE",
+            "IF THE MOON WAS MADE OF CHEESE WOULD YOU EAT IT",
+            "I THINK ITS TIME TO GO HOME",
+            "I HATE THAT U HURT ME",
+            "SORRY THIS IS NOT PROFESSIONAL",
+            "DM KIDGRANDMA",
+            "ITS OVER BETWEEN US PLS START OVER"
+        ];
+
+        let currentTestimonialIndex = 0;
+        let aimState = 'initial';
+        let messageCount = 0;
+
+        function openAIM() {
+            document.getElementById('aimWindow').classList.add('active');
+            // Play pop open sound
+            sounds.popOpen.currentTime = 0;
+            sounds.popOpen.play();
+            
+            if (messageCount === 0) {
+                setTimeout(() => {
+                    addAIMMessage('kidgrandma', 'wsuppp are u ready to read some completely real super unpaid testimonials?');
+                    aimState = 'waiting_response';
+                }, 500);
+            }
+        }
+
+        function closeAIM() {
+            document.getElementById('aimWindow').classList.remove('active');
+        }
+
+        function addAIMMessage(username, text, isMe = false) {
+            const chat = document.getElementById('aimChat');
+            const message = document.createElement('div');
+            
+            if (username === 'kidgrandma') {
+                message.className = 'aim-message kidgrandma-msg';
+            } else if (isMe) {
+                message.className = 'aim-message user-msg';
+            } else {
+                message.className = 'aim-message';
+            }
+            
+            const usernameSpan = document.createElement('span');
+            usernameSpan.className = username === 'kidgrandma' ? 'aim-username kidgrandma' : 'aim-username user';
+            usernameSpan.textContent = username + ': ';
+            
+            const textSpan = document.createElement('span');
+            textSpan.className = username === 'kidgrandma' ? 'aim-text kidgrandma' : 'aim-text user';
+            textSpan.textContent = text;
+            
+            message.appendChild(usernameSpan);
+            message.appendChild(textSpan);
+            chat.appendChild(message);
+            
+            chat.scrollTop = chat.scrollHeight;
+            messageCount++;
+            
+            // Play AIM sound for incoming messages
+            if (!isMe) {
+                sounds.aimSound.currentTime = 0;
+                sounds.aimSound.play();
+            }
+        }
+
+        function showTyping() {
+            const chat = document.getElementById('aimChat');
+            const typing = document.createElement('div');
+            typing.className = 'aim-typing';
+            typing.id = 'typing-indicator';
+            typing.textContent = 'kidgrandma is typing...';
+            chat.appendChild(typing);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function hideTyping() {
+            const typing = document.getElementById('typing-indicator');
+            if (typing) typing.remove();
+        }
+
+        function sendAIMMessage() {
+            const input = document.getElementById('aimInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addAIMMessage('NEW_pl4y3r_69', message, true);
+            input.value = '';
+
+            // Process response based on state
+            if (aimState === 'waiting_response') {
+                const lowerMessage = message.toLowerCase();
+                const positiveResponses = ['yes', 'ya', 'yeah', 'sure', 'ok', 'okay', 'yep', 'yup', 'ye', 'y'];
+                const negativeResponses = ['no', 'nah', 'nope', 'n', 'fuck off', 'stop', 'leave me alone'];
+                
+                if (positiveResponses.some(r => lowerMessage.includes(r))) {
+                    showTyping();
+                    setTimeout(() => {
+                        hideTyping();
+                        addAIMMessage('kidgrandma', `sick. here's what Player ${Math.floor(Math.random() * 50) + 1} from Game ${Math.floor(Math.random() * 8) + 1} said:`);
+                        setTimeout(() => {
+                            addAIMMessage('kidgrandma', testimonials[currentTestimonialIndex]);
+                            currentTestimonialIndex = (currentTestimonialIndex + 1) % testimonials.length;
+                            setTimeout(() => {
+                                addAIMMessage('kidgrandma', 'more?');
+                                aimState = 'waiting_more';
+                            }, 1500);
+                        }, 1000);
+                    }, 1500);
+                } else if (negativeResponses.some(r => lowerMessage.includes(r)) || 
+                          lowerMessage.includes('dumb') || 
+                          lowerMessage.includes('stupid') ||
+                          lowerMessage.includes('why') ||
+                          lowerMessage.includes('this is')) {
+                    // CHAOS MODE ACTIVATED
+                    showTyping();
+                    setTimeout(() => {
+                        hideTyping();
+                        addAIMMessage('kidgrandma', 'wow ok');
+                        setTimeout(() => {
+                            unleashChaos();
+                        }, 500);
+                    }, 1000);
+                } else {
+                    showTyping();
+                    setTimeout(() => {
+                        hideTyping();
+                        addAIMMessage('kidgrandma', 'i dont understand... just say yes or no lol');
+                    }, 1000);
+                }
+            } else if (aimState === 'waiting_more') {
+                const lowerMessage = message.toLowerCase();
+                const positiveResponses = ['yes', 'ya', 'yeah', 'sure', 'ok', 'okay', 'yep', 'yup', 'ye', 'y', 'more'];
+                
+                if (positiveResponses.some(r => lowerMessage.includes(r))) {
+                    showTyping();
+                    setTimeout(() => {
+                        hideTyping();
+                        addAIMMessage('kidgrandma', `Player ${Math.floor(Math.random() * 50) + 1} from Game ${Math.floor(Math.random() * 8) + 1}:`);
+                        setTimeout(() => {
+                            addAIMMessage('kidgrandma', testimonials[currentTestimonialIndex]);
+                            currentTestimonialIndex = (currentTestimonialIndex + 1) % testimonials.length;
+                            setTimeout(() => {
+                                addAIMMessage('kidgrandma', 'want another one?');
+                            }, 1500);
+                        }, 1000);
+                    }, 1500);
+                } else {
+                    unleashChaos();
+                }
+            }
+        }
+
+        function handleAIMEnter(event) {
+            if (event.key === 'Enter') {
+                sendAIMMessage();
+            }
+        }
+
+        function unleashChaos() {
+            // Close AIM window
+            closeAIM();
+            
+            // Create chaos windows
+            let windowCount = 0;
+            const maxWindows = 50;
+            
+            const spawnInterval = setInterval(() => {
+                if (windowCount >= maxWindows) {
+                    clearInterval(spawnInterval);
+                    return;
+                }
+                
+                // Play pop sound for each window
+                sounds.popOpen.currentTime = 0;
+                sounds.popOpen.play();
+                
+                const chaosWindow = document.createElement('div');
+                chaosWindow.className = 'chaos-window';
+                chaosWindow.style.left = Math.random() * (window.innerWidth - 250) + 'px';
+                chaosWindow.style.top = Math.random() * (window.innerHeight - 150) + 'px';
+                chaosWindow.style.zIndex = 9999 + windowCount;
+                
+                const message = chaosMessages[Math.floor(Math.random() * chaosMessages.length)];
+                const icons = ['⚠️', '❌', '🚫', '💔', '😭', '🔥', '👁️', '🆘'];
+                const icon = icons[Math.floor(Math.random() * icons.length)];
+                
+                chaosWindow.innerHTML = `
+                    <div class="chaos-titlebar">
+                        <span>Error</span>
+                        <button class="chaos-x">X</button>
+                    </div>
+                    <div class="chaos-content">
+                        <div class="chaos-icon">${icon}</div>
+                        <div>${message}</div>
+                    </div>
+                `;
+                
+                document.body.appendChild(chaosWindow);
+                windowCount++;
+                
+                // Make them draggable but annoying
+                let isDragging = false;
+                let currentX;
+                let currentY;
+                let initialX;
+                let initialY;
+                
+                const titlebar = chaosWindow.querySelector('.chaos-titlebar');
+                
+                titlebar.addEventListener('mousedown', dragStart);
+                
+                function dragStart(e) {
+                    initialX = e.clientX - chaosWindow.offsetLeft;
+                    initialY = e.clientY - chaosWindow.offsetTop;
+                    isDragging = true;
+                }
+                
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    e.preventDefault();
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+                    chaosWindow.style.left = currentX + 'px';
+                    chaosWindow.style.top = currentY + 'px';
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    isDragging = false;
+                });
+            }, 100);
+        }
 
         // Welcome modal functions
         function closeWelcome() {
@@ -711,17 +1340,50 @@
                 
                 // Position disc to emerge from case
                 const caseRect = this.getBoundingClientRect();
-                const slideDistance = 30;
+                const viewportHeight = window.innerHeight;
+                const viewportWidth = window.innerWidth;
                 
-                discElement.style.left = (caseRect.left + slideDistance) + 'px';
-                discElement.style.top = (caseRect.top - slideDistance) + 'px';
+                // Check if we're on mobile
+                const isMobile = window.innerWidth < 768;
+                
+                // Calculate initial position
+                let initialLeft = caseRect.left;
+                let initialTop = caseRect.top;
+                
+                // For mobile, make disc slide down instead of up if near top
+                let slideX = caseRect.width / 4;
+                let slideY = -caseRect.height / 3;
+                
+                if (isMobile && caseRect.top < viewportHeight * 0.3) {
+                    // If case is in top 30% of screen, slide disc down instead
+                    slideY = caseRect.height / 2;
+                }
+                
+                discElement.style.left = initialLeft + 'px';
+                discElement.style.top = initialTop + 'px';
                 discElement.classList.add('active');
                 
                 // Animate slide out
                 setTimeout(() => {
                     discElement.style.transition = 'left 0.5s ease-out, top 0.5s ease-out';
-                    discElement.style.left = (caseRect.left + caseRect.width/2 - discElement.offsetWidth/2) + 'px';
-                    discElement.style.top = (caseRect.top - discElement.offsetHeight) + 'px';
+                    
+                    // Calculate final position - ensure disc stays in viewport
+                    let finalLeft = caseRect.left + caseRect.width/2 - discElement.offsetWidth/2;
+                    let finalTop = initialTop + slideY;
+                    
+                    // Ensure disc doesn't go off screen
+                    if (finalTop < 10) {
+                        finalTop = caseRect.bottom + 10;
+                    }
+                    if (finalLeft < 10) {
+                        finalLeft = 10;
+                    }
+                    if (finalLeft + discElement.offsetWidth > viewportWidth - 10) {
+                        finalLeft = viewportWidth - discElement.offsetWidth - 10;
+                    }
+                    
+                    discElement.style.left = finalLeft + 'px';
+                    discElement.style.top = finalTop + 'px';
                     
                     // Enable dragging after animation
                     setTimeout(() => {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>INTERNET OLYMPICS - Entry Portal</title>
+    <title>INTERNET OLYMPICS 2 - Access Portal</title>
     <style>
         * {
             margin: 0;
@@ -12,273 +12,425 @@
         }
 
         body {
-            font-family: 'Times New Roman', serif;
-            background: url('../assets/entrance/entrance-bg.jpg') center/cover no-repeat fixed;
-            color: #fff;
+            font-family: 'Tahoma', 'Segoe UI', sans-serif;
+            background: #5A7EDC url('../assets/entrance/entrance-bg.jpg') center/cover no-repeat fixed;
+            color: #000;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            padding: 20px;
         }
 
-        /* TV static overlay */
-        body::before {
-            content: '';
+        /* Back Button - XP Style */
+        .back-button {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                repeating-linear-gradient(
-                    0deg,
-                    rgba(255,255,255,0.03) 0px,
-                    transparent 1px,
-                    transparent 2px,
-                    rgba(255,255,255,0.03) 3px
-                );
-            pointer-events: none;
-            animation: static 8s linear infinite;
-            z-index: 1;
+            top: 20px;
+            left: 20px;
+            width: 100px;
+            padding: 6px 12px;
+            background: linear-gradient(to bottom, #FFFFFF 0%, #ECE9D8 100%);
+            border: 1px solid #003C74;
+            border-radius: 3px;
+            color: #000;
+            font-size: 11px;
+            font-family: 'Tahoma', sans-serif;
+            cursor: pointer;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 
+                0 0 0 1px #003C74,
+                inset -1px -1px 0 #716F64,
+                inset 1px 1px 0 #FFFFFF;
+            text-decoration: none;
         }
 
-        @keyframes static {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(10px); }
+        .back-button:hover {
+            background: linear-gradient(to bottom, #FFE8A6 0%, #FFC73C 100%);
         }
 
-        /* Modal container */
+        .back-button:active {
+            background: linear-gradient(to bottom, #E3E3DB 0%, #C7C7BF 100%);
+            box-shadow: 
+                0 0 0 1px #003C74,
+                inset 1px 1px 0 #716F64,
+                inset -1px -1px 0 #FFFFFF;
+        }
+
+        .back-button::before {
+            content: "◀";
+            font-size: 14px;
+        }
+
+        /* Modal container - Pure XP Style */
         .modal-container {
             position: relative;
             width: 90%;
-            max-width: 650px;
-            background: #c0c0c0;
-            border: 3px solid #000;
+            max-width: 700px;
+            background: #ECE9D8;
+            border: 2px solid #0054E3;
+            border-radius: 8px 8px 0 0;
             box-shadow: 
-                inset -2px -2px #808080,
-                inset 2px 2px #dfdfdf,
-                5px 5px 0 rgba(0,0,0,0.5);
-            transform: rotate(-0.5deg);
-            animation: glitch 15s infinite;
+                0 0 0 1px #003C74,
+                2px 2px 5px rgba(0,0,0,0.3),
+                inset -1px -1px 0 #716F64,
+                inset 1px 1px 0 #FFFFFF;
             z-index: 10;
         }
 
-        @keyframes glitch {
-            0%, 100% { transform: rotate(-0.5deg) translateX(0); }
-            20% { transform: rotate(-0.5deg) translateX(-2px); }
-            40% { transform: rotate(-0.5deg) translateX(2px); }
-        }
-
-        /* Title bar */
+        /* XP Title bar */
         .title-bar {
-            background: linear-gradient(to right, #000080, #1084d0);
+            background: linear-gradient(to bottom, #0054E3 0%, #0046C7 3%, #0036A3 100%);
             color: white;
-            padding: 3px;
+            padding: 6px;
+            border-radius: 6px 6px 0 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-family: Arial, sans-serif;
-            font-size: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
         }
 
         .title-bar span {
-            padding-left: 5px;
-        }
-
-        .close-btn {
-            background: #c0c0c0;
-            border: 2px solid;
-            border-color: #dfdfdf #808080 #808080 #dfdfdf;
-            width: 18px;
-            height: 18px;
-            font-family: Arial, sans-serif;
-            font-size: 11px;
-            cursor: not-allowed;
+            padding-left: 6px;
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 6px;
+        }
+
+        .title-bar span::before {
+            content: "⚠";
+            font-size: 16px;
+            color: #FFD700;
+        }
+
+        /* XP Window Controls */
+        .window-controls {
+            display: flex;
+            gap: 2px;
             margin-right: 2px;
         }
 
-        .close-btn:hover {
-            background: #b0b0b0;
+        .window-btn {
+            width: 21px;
+            height: 21px;
+            border: 1px solid #003C74;
+            border-radius: 3px;
+            background: linear-gradient(to bottom, #FFFFFF 0%, #E3E3DB 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-family: 'Marlett', sans-serif;
+            font-size: 14px;
+            color: #000;
+        }
+
+        .window-btn:hover {
+            background: linear-gradient(to bottom, #FFE8A6 0%, #FFC73C 100%);
+        }
+
+        .window-btn.close::after {
+            content: "✕";
+            font-weight: bold;
+        }
+
+        .window-btn.minimize::after {
+            content: "—";
+            font-weight: bold;
+            margin-top: -4px;
         }
 
         /* Content area */
         .modal-content {
-            background: #fff;
+            background: #FFFFFF;
             color: #000;
             padding: 20px;
-            max-height: 75vh;
-            overflow-y: scroll;
+            max-height: calc(85vh - 40px);
+            overflow-y: auto;
             position: relative;
+            border: 1px solid #FFFFFF;
+            border-top: none;
+            font-size: 11px;
         }
 
-        /* Custom scrollbar */
+        /* XP Scrollbar */
         .modal-content::-webkit-scrollbar {
             width: 16px;
         }
 
         .modal-content::-webkit-scrollbar-track {
-            background: #c0c0c0;
-            border: 1px solid #808080;
+            background: #ECE9D8;
+            border-left: 1px solid #FFFFFF;
         }
 
         .modal-content::-webkit-scrollbar-thumb {
-            background: #808080;
-            border: 1px solid #c0c0c0;
+            background: linear-gradient(to right, #FFFFFF 0%, #ECE9D8 50%, #C3C3C3 100%);
+            border: 1px solid #003C74;
         }
 
-        /* Typography */
+        .modal-content::-webkit-scrollbar-button {
+            background: #ECE9D8;
+            border: 1px solid #003C74;
+            height: 16px;
+        }
+
+        /* Typography - XP Style */
         h1 {
-            font-family: Arial, sans-serif;
-            font-size: 28px;
-            margin-bottom: 5px;
-            letter-spacing: 2px;
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #003C74;
         }
 
         .price {
-            font-family: Verdana, sans-serif;
-            font-size: 18px;
-            color: #ff0000;
-            animation: blink 2s infinite;
-            margin-bottom: 10px;
-        }
-
-        @keyframes blink {
-            0%, 50%, 100% { opacity: 1; }
-            25%, 75% { opacity: 0.5; }
+            font-family: 'Tahoma', sans-serif;
+            font-size: 14px;
+            color: #CC0000;
+            font-weight: bold;
+            margin-bottom: 15px;
+            background: #FFFACD;
+            padding: 5px 10px;
+            display: inline-block;
+            border: 1px dashed #CC0000;
         }
 
         .tagline {
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            color: #666;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
+            color: #5D5D5D;
             margin-bottom: 20px;
+            line-height: 1.6;
         }
 
         h2 {
-            font-family: Verdana, sans-serif;
-            font-size: 16px;
-            margin-top: 25px;
-            margin-bottom: 15px;
-            background: #000;
-            color: #0f0;
-            padding: 3px 5px;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #003C74;
+            background: linear-gradient(to bottom, #E3E3DB 0%, #C7C7BF 100%);
+            padding: 4px 8px;
+            border: 1px solid #7F9DB9;
             display: inline-block;
-            transform: skew(-5deg);
         }
 
         p {
-            font-family: 'Times New Roman', serif;
-            font-size: 15px;
-            line-height: 1.4;
-            margin-bottom: 8px;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
+            line-height: 1.6;
+            margin-bottom: 10px;
         }
 
         .list-item {
-            font-family: 'Times New Roman', serif;
-            font-size: 15px;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
             margin-bottom: 8px;
-            padding-left: 25px;
+            padding-left: 20px;
+            position: relative;
         }
 
         .steps {
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            background: #f0f0f0;
-            border: 1px dashed #999;
-            padding: 15px;
-            margin: 20px 0;
+            background: #F0F0F0;
+            border: 1px solid #D4D0C8;
+            padding: 12px;
+            margin: 15px 0;
+            box-shadow: inset 1px 1px 0 #808080;
         }
 
         .step {
             margin-bottom: 8px;
+            font-size: 11px;
         }
 
         .warning {
-            font-family: Verdana, sans-serif;
-            font-size: 14px;
-            color: #ff0000;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
+            color: #CC0000;
             text-align: center;
             margin: 20px 0;
+            padding: 10px;
+            background: #FFF4E6;
+            border: 1px solid #F0A500;
         }
 
+        /* XP Style Buttons */
         .payment-buttons {
             display: flex;
             justify-content: center;
-            gap: 30px;
-            margin: 30px 0;
+            gap: 20px;
+            margin: 25px 0;
             flex-wrap: wrap;
         }
 
         .payment-btn {
-            display: block;
-            padding: 15px 30px;
-            background: #00ff00;
+            padding: 8px 20px;
+            background: linear-gradient(to bottom, #FFFFFF 0%, #ECE9D8 100%);
             color: #000;
             text-decoration: none;
             text-align: center;
-            font-family: Arial, sans-serif;
-            font-size: 16px;
-            font-weight: bold;
-            border: 3px solid #000;
-            transform: rotate(1deg);
-            transition: all 0.2s;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
+            font-weight: normal;
+            border: 1px solid #003C74;
+            border-radius: 3px;
             cursor: pointer;
+            min-width: 90px;
+            box-shadow: 
+                inset -1px -1px 0 #716F64,
+                inset 1px 1px 0 #FFFFFF;
+            transition: all 0.1s;
         }
 
         .payment-btn:hover {
-            background: #ffff00;
-            transform: rotate(-1deg) scale(1.05);
-            box-shadow: 5px 5px 0 rgba(0,0,0,0.5);
+            background: linear-gradient(to bottom, #FFE8A6 0%, #FFC73C 100%);
         }
 
-        .payment-btn.venmo {
-            transform: rotate(-1deg);
+        .payment-btn:active {
+            background: linear-gradient(to bottom, #E3E3DB 0%, #C7C7BF 100%);
+            box-shadow: 
+                inset 1px 1px 0 #716F64,
+                inset -1px -1px 0 #FFFFFF;
         }
 
-        .payment-btn.zelle {
-            transform: rotate(1.5deg);
+        /* DM Button Style - XP */
+        .dm-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 25px;
+            background: linear-gradient(to bottom, #FFFFFF 0%, #ECE9D8 100%);
+            color: #003C74;
+            text-decoration: none;
+            text-align: center;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            border: 2px solid #003C74;
+            border-radius: 3px;
+            cursor: pointer;
+            box-shadow: 
+                0 0 0 1px #003C74,
+                inset -1px -1px 0 #716F64,
+                inset 1px 1px 0 #FFFFFF,
+                1px 1px 0 rgba(0,0,0,0.1);
+            transition: all 0.1s;
+        }
+
+        .dm-button:hover {
+            background: linear-gradient(to bottom, #B6E6FF 0%, #6BB6FF 100%);
+            transform: translateY(-1px);
+            box-shadow: 
+                0 0 0 1px #003C74,
+                inset -1px -1px 0 #4A90E2,
+                inset 1px 1px 0 #FFFFFF,
+                2px 2px 0 rgba(0,0,0,0.1);
+        }
+
+        .dm-button:active {
+            transform: translateY(0);
+            box-shadow: 
+                0 0 0 1px #003C74,
+                inset 1px 1px 0 #4A90E2,
+                inset -1px -1px 0 #FFFFFF;
+        }
+
+        /* TL;DR Button - XP Raised */
+        .tldr-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 6px 14px;
+            background: linear-gradient(to bottom, #FFFFFF 0%, #ECE9D8 100%);
+            color: #000;
+            border: 1px solid #003C74;
+            border-radius: 3px;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 
+                inset -1px -1px 0 #716F64,
+                inset 1px 1px 0 #FFFFFF;
+            transition: all 0.1s;
+        }
+
+        .tldr-toggle:hover {
+            background: linear-gradient(to bottom, #FFE8A6 0%, #FFC73C 100%);
+        }
+
+        .tldr-toggle:active {
+            background: linear-gradient(to bottom, #E3E3DB 0%, #C7C7BF 100%);
+            box-shadow: 
+                inset 1px 1px 0 #716F64,
+                inset -1px -1px 0 #FFFFFF;
+        }
+
+        /* TL;DR Content */
+        .tldr-content {
+            display: none;
+            font-family: 'Lucida Console', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            text-align: center;
+            padding: 40px 20px;
+            color: #000000;
+        }
+
+        .tldr-mode .full-content {
+            display: none;
+        }
+
+        .tldr-mode .tldr-content {
+            display: block;
+        }
+
+        .tldr-mode .modal-content {
+            background: #000;
         }
 
         .flash-warning {
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            color: #ff0000;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
+            color: #CC0000;
             text-align: center;
             margin: 20px 0;
-            padding: 10px;
-            background: #ffff00;
-            border: 2px solid #ff0000;
-            animation: flash 1s infinite;
-            text-transform: uppercase;
+            padding: 8px;
+            background: #FFFF88;
+            border: 1px solid #CC0000;
+            font-weight: bold;
+            animation: warningPulse 2s ease-in-out infinite;
         }
 
-        @keyframes flash {
-            0%, 100% { background: #ffff00; color: #ff0000; }
-            50% { background: #ff0000; color: #ffff00; }
+        @keyframes warningPulse {
+            0%, 100% { background: #FFFF88; }
+            50% { background: #FFFACD; }
         }
 
         .loading {
             position: absolute;
             bottom: 5px;
             right: 5px;
-            font-family: Arial, sans-serif;
+            font-family: 'Tahoma', sans-serif;
             font-size: 10px;
-            color: #666;
+            color: #808080;
         }
 
         .footer-text {
-            font-family: Verdana, sans-serif;
-            font-size: 9px;
-            color: #999;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 10px;
+            color: #808080;
             text-align: center;
-            margin-top: 20px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #D4D0C8;
         }
 
-        /* Popup styles */
+        /* XP Style Popups */
         .popup-overlay {
             display: none;
             position: fixed;
@@ -286,7 +438,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.3);
             z-index: 100;
             align-items: center;
             justify-content: center;
@@ -297,142 +449,84 @@
         }
 
         .popup {
-            background: #c0c0c0;
-            border: 3px solid #000;
+            background: #ECE9D8;
+            border: 2px solid #0054E3;
+            border-radius: 8px 8px 0 0;
             box-shadow: 
-                inset -2px -2px #808080,
-                inset 2px 2px #dfdfdf,
-                5px 5px 0 rgba(0,0,0,0.8);
+                0 0 0 1px #003C74,
+                2px 2px 5px rgba(0,0,0,0.3),
+                inset -1px -1px 0 #716F64,
+                inset 1px 1px 0 #FFFFFF;
             max-width: 90%;
-            width: 400px;
+            width: 450px;
             animation: popupSlam 0.3s ease-out;
         }
 
         @keyframes popupSlam {
-            0% { transform: scale(0.5) rotate(5deg); opacity: 0; }
-            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
         }
 
         .popup-title {
-            background: linear-gradient(to right, #000080, #1084d0);
+            background: linear-gradient(to bottom, #0054E3 0%, #0046C7 3%, #0036A3 100%);
             color: white;
-            padding: 3px;
+            padding: 6px;
+            border-radius: 6px 6px 0 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-family: Arial, sans-serif;
-            font-size: 12px;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 13px;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
         }
 
         .popup-close {
-            background: #c0c0c0;
-            border: 2px solid;
-            border-color: #dfdfdf #808080 #808080 #dfdfdf;
-            width: 18px;
-            height: 18px;
-            font-family: Arial, sans-serif;
-            font-size: 11px;
-            cursor: pointer;
+            width: 21px;
+            height: 21px;
+            border: 1px solid #003C74;
+            border-radius: 3px;
+            background: linear-gradient(to bottom, #FFFFFF 0%, #E3E3DB 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 2px;
-        }
-
-        .popup-close:hover {
-            background: #ff0000;
-            color: white;
-        }
-
-        .popup-content {
-            background: #fff;
-            padding: 20px;
-            font-family: Arial, sans-serif;
+            cursor: pointer;
             font-size: 14px;
             color: #000;
         }
 
-        .popup-banner {
-            background: linear-gradient(45deg, #ff00ff, #00ffff, #ffff00, #ff00ff);
-            background-size: 300% 300%;
+        .popup-close:hover {
+            background: linear-gradient(to bottom, #FFE8A6 0%, #FFC73C 100%);
+        }
+
+        .popup-close::after {
+            content: "✕";
+            font-weight: bold;
+        }
+
+        .popup-content {
+            background: #FFFFFF;
+            padding: 20px;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
             color: #000;
-            padding: 15px;
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 15px;
-            cursor: pointer;
-            border: 3px solid #000;
-            box-shadow: 
-                inset 0 0 20px rgba(255,255,255,0.5),
-                0 0 10px rgba(255,0,255,0.5);
-            animation: rainbow 3s ease-in-out infinite, pulse 2s ease-in-out infinite;
-            text-shadow: 2px 2px 0 #fff;
-            transform: scale(1);
-            transition: transform 0.2s;
+            border: 1px solid #FFFFFF;
         }
 
-        .popup-banner:hover {
-            transform: scale(1.05) rotate(-1deg);
-            box-shadow: 
-                inset 0 0 30px rgba(255,255,255,0.8),
-                0 0 20px rgba(255,0,255,0.8),
-                5px 5px 0 rgba(0,0,0,0.3);
-        }
+        /* Removed popup-banner styles */
 
-        @keyframes rainbow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.9; }
-        }
-
-        .vip-option {
-            background: #f0f0f0;
-            border: 1px dashed #666;
-            padding: 10px;
-            margin: 10px 0;
-            font-family: 'Times New Roman', serif;
-        }
-
-        .vip-title {
-            font-weight: bold;
-            color: #000080;
-            margin-bottom: 5px;
-        }
+        /* Removed VIP-related styles */
 
         .memo-reminder {
-            background: #ffff00;
-            color: #ff0000;
-            padding: 5px;
+            background: #FFFF88;
+            color: #CC0000;
+            padding: 8px;
             text-align: center;
-            font-size: 12px;
-            margin-top: 10px;
+            font-size: 11px;
+            margin-top: 15px;
             font-weight: bold;
+            border: 1px solid #CC0000;
         }
-         .back-button {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            width: 50px;
-            height: 50px;
-            cursor: pointer;
-            z-index: 50;
-            transition: transform 0.3s ease;
-        }
-
-        .back-button:hover {
-            transform: rotate(-20deg) scale(1.1);
-        }
-
-        .back-button img {
-            width: 100%;
-            height: 100%;
-        }
-
 
         /* Audio element */
         audio {
@@ -446,11 +540,11 @@
             }
             
             h1 {
-                font-size: 24px;
+                font-size: 20px;
             }
             
             .steps {
-                font-size: 13px;
+                font-size: 10px;
                 padding: 10px;
             }
 
@@ -462,6 +556,18 @@
             .popup {
                 width: 95%;
             }
+
+            .tldr-toggle {
+                position: relative;
+                margin: 10px auto;
+                display: block;
+            }
+
+            .back-button {
+                padding: 4px 8px;
+                font-size: 10px;
+                width: auto;
+            }
         }
     </style>
 </head>
@@ -470,9 +576,6 @@
     <audio id="bgMusic" loop>
         <source src="../assets/cast/encore.mp3" type="audio/mpeg">
     </audio>
-      <a href="../cast/" class="back-button">
-        <img src="../back.png" alt="Back">
-    </a>
 
     <!-- Popup sounds -->
     <audio id="popOpen">
@@ -482,75 +585,105 @@
         <source src="../assets/cast/pop-close.mp3" type="audio/mpeg">
     </audio>
 
+    <!-- Back Button -->
+    <a href="../" class="back-button">Back</a>
+
     <div class="modal-container">
         <div class="title-bar">
-            <span>⚠️ INTERNET_OLYMPICS.exe has stopped working</span>
-            <button class="close-btn" onclick="alert('nice try lol')">X</button>
+            <span>INTERNET_OLYMPICS.exe</span>
+            <div class="window-controls">
+                <button class="window-btn minimize" onclick="alert('minimize to where?')"></button>
+                <button class="window-btn close" onclick="alert('nice try lol')"></button>
+            </div>
         </div>
         
-        <div class="modal-content">
-            <h1>INTERNET OLYMPICS 2</h1>
-            <div class="tagline">
-                Access to 7 nights of gameplay. Teams. Tools. Internet challenges. Survival.<br>
-                Moderated by Kidgrandma at worksucks.net<br>
-                Played entirely in your Instagram DMs.
-            </div>
-<div class="price">Cheaper than a beer and a bag - cheaper than renewing your driver's license. BE COOL.</div>
-            <h2>WHAT IS IT?</h2>
-            <p>Internet Olympics is a weeklong game where your DMs become the arena. You'll be assigned a team. Complete internet-themed challenges. You'll get weird. Make friends. Lose your mind.</p>
-
-            <h2>HOW IT WORKS</h2>
-            <div class="steps">
-                <div class="step">🔥 Step 1 — Pay $25 to enter - get access code</div>
-                <div class="step">🍓 Step 2 — Choose a character</div>
-                <div class="step">💣 Step 3 — Buy optional tools to help (or sabotage)</div>
-                <div class="step">💿 Step 4 — Get dropped into a team group chat</div>
-                <div class="step">⚡ Step 5 — Play the game through your Instagram DMs</div>
-            </div>
-
-            <h2>WHAT YOU GET</h2>
-            <div class="list-item">🥚 Entry into a 7-day competitive internet game</div>
-            <div class="list-item">🐟 Assigned to a team chat</div>
-            <div class="list-item">💻 Nightly challenges (meme hunts, doom scrolls, ChatGPT fights, etc.)</div>
-            <div class="list-item">🍒 Cool things.</div>
-
-            <h2>WHO SHOULD JOIN?</h2>
-            <p>If any of these apply, you're gonna win.</p>
-            <div class="list-item">📱 You're chronically online</div>
-            <div class="list-item">🔪 You're bored of regular games</div>
-            <div class="list-item">⭐ You want to waste your screen time on something new</div>
-
-            <h2>WHAT'S THE TIME COMMITMENT?</h2>
-            <p>You don't need to play every night. But if you're in, that's gr8.</p>
-            <div class="list-item">🔥 Most players spend 1–2 hours a night, usually after 8pm PST</div>
-            <div class="list-item">💿 You can play casually, but the more involved you are, the more likely you are to win (or at least survive)</div>
-            <div class="list-item">🍓 You won't be kicked out for missing a night, but your team might notice</div>
-            <div class="list-item">💣 This is a team game - you can cover for each other.</div>
-            <div class="list-item">⚡ Some players lurk. Some reach psychosis. Both are valid.</div>
-            <p style="font-weight: bold; margin-top: 10px;">TL;DR: You don't need to cancel your life. Just don't ghost.</p>
-
-            <h2>THE RULES?</h2>
-            <p>You'll get the full breakdown once you're inside. But basically: don't flake, be cool, don't be weird, win points.</p>
-
-            <h2>READY?</h2>
-            <p>Once you pay, you'll get access to the character portal. Get some extra tools. Enter the arena.</p>
-
-            <div class="warning">$25 to enter. No refunds. No blood. No fireworks. DM kidgrandma for more info.</div>
-
-            <div class="flash-warning">
-                ⚠️ PLS PUT YOUR INSTAGRAM HANDLE IN YOUR MEMO LINE ⚠️
-            </div>
-
-            <div class="payment-buttons">
-                <button class="payment-btn venmo" onclick="showVenmoPopup()">VENMO</button>
-                <button class="payment-btn zelle" onclick="showZellePopup()">ZELLE</button>
-            </div>
-
-            <div class="loading">Loading... ████████░░ 82%</div>
+        <div class="modal-content" id="modalContent">
+            <button class="tldr-toggle" onclick="toggleTLDR()">TL;DR</button>
             
-            <div class="footer-text">
-                Best viewed in Netscape Navigator<br>
-                © 1999-2025 worksucks.net
+            <div class="full-content">
+                <h1>INTERNET OLYMPICS 2</h1>
+                <div class="tagline">
+                    Access to 7 nights of gameplay. Teams. Tools. Internet challenges. Survival.<br>
+                    Moderated by Kidgrandma at worksucks.net<br>
+                    Played entirely in your Instagram DMs.
+                </div>
+                <div class="price">$25 ENTRY FEE</div>
+                
+                <h2>WHAT IS IT?</h2>
+                <p>Internet Olympics is a weeklong game where your DMs become the arena. You'll be assigned a team. Complete internet-themed challenges. You'll get weird. Make friends. Lose your mind.</p>
+
+                <h2>HOW IT WORKS</h2>
+                <div class="steps">
+                    <div class="step">🔥 Step 1 — Pay $25 to enter - get access code</div>
+                    <div class="step">🍓 Step 2 — Choose a character</div>
+                    <div class="step">💣 Step 3 — Buy optional tools to help (or sabotage)</div>
+                    <div class="step">💿 Step 4 — Get dropped into a team group chat</div>
+                    <div class="step">⚡ Step 5 — Play the game through your Instagram DMs</div>
+                </div>
+
+                <h2>WHAT YOU GET</h2>
+                <div class="list-item">🥚 Entry into a 7-day competitive internet game</div>
+                <div class="list-item">🐟 Assigned to a team chat</div>
+                <div class="list-item">💻 Nightly challenges (meme hunts, doom scrolls, ChatGPT fights, etc.)</div>
+                <div class="list-item">🍒 Cool things.</div>
+
+                <h2>WHO SHOULD JOIN?</h2>
+                <p>If any of these apply, you're gonna win.</p>
+                <div class="list-item">📱 You're chronically online</div>
+                <div class="list-item">🔪 You're bored of regular games</div>
+                <div class="list-item">⭐ You want to waste your screen time on something new</div>
+
+                <h2>WHAT'S THE TIME COMMITMENT?</h2>
+                <p>You don't need to play every night. But if you're in, that's gr8.</p>
+                <div class="list-item">🔥 Most players spend 1–2 hours a night, usually after 8pm PST</div>
+                <div class="list-item">💿 You can play casually, but the more involved you are, the more likely you are to win (or at least survive)</div>
+                <div class="list-item">🍓 You won't be kicked out for missing a night, but your team might notice</div>
+                <div class="list-item">💣 This is a team game - you can cover for each other.</div>
+                <div class="list-item">⚡ Some players lurk. Some reach psychosis. Both are valid.</div>
+                <p style="font-weight: bold; margin-top: 10px;">TL;DR: You don't need to cancel your life. Just don't ghost.</p>
+
+                <h2>THE RULES?</h2>
+                <p>You'll get the full breakdown once you're inside. But basically: don't flake, be cool, don't be weird, win points.</p>
+
+                <h2>READY?</h2>
+                <p>Once you pay, you'll get access to the character portal. Get some extra tools. Enter the arena.</p>
+
+                <div class="warning">$25 to enter. No refunds. No blood. No fireworks. DM kidgrandma for more info.</div>
+
+                <a href="https://instagram.com/kidgrandma" target="_blank" class="dm-button">
+                    📱 DM @KIDGRANDMA ON INSTAGRAM
+                </a>
+
+                <div class="flash-warning">
+                    ⚠️ PUT YOUR INSTAGRAM HANDLE IN YOUR PAYMENT MEMO ⚠️
+                </div>
+
+                <div class="payment-buttons">
+                    <button class="payment-btn venmo" onclick="showVenmoPopup()">PAY WITH VENMO</button>
+                    <button class="payment-btn zelle" onclick="showZellePopup()">PAY WITH ZELLE</button>
+                </div>
+
+                <div class="loading">Loading... ████████░░ 82%</div>
+                
+                <div class="footer-text">
+                    Best viewed in Internet Explorer 6.0<br>
+                    © 2025 worksucks.net - All rights reserved
+                </div>
+            </div>
+
+            <div class="tldr-content">
+                <p>this is just a game that takes place in your DMs.</p>
+                <p>I hate selling people and self promo etc.</p>
+                <p>all i can say is - if you like the website - youll like the game.</p>
+                <p>venmo $25 to get an access code to start.</p>
+                <p>visit <a href="https://instagram.com/kidgrandma" target="_blank" style="color: #ffff00;">@kidgrandma</a> to say wsup</p>
+                <br><br>
+                <p style="font-size: 24px; color: #ff00ff;">game starts 8/8</p>
+                <br><br>
+                <div class="payment-buttons">
+                    <button class="payment-btn venmo" onclick="showVenmoPopup()">VENMO</button>
+                    <button class="payment-btn zelle" onclick="showZellePopup()">ZELLE</button>
+                </div>
             </div>
         </div>
     </div>
@@ -560,14 +693,12 @@
         <div class="popup">
             <div class="popup-title">
                 <span>💸 VENMO PAYMENT INFO</span>
-                <button class="popup-close" onclick="closePopup('venmoPopup')">X</button>
+                <button class="popup-close" onclick="closePopup('venmoPopup')"></button>
             </div>
             <div class="popup-content">
-                <div class="popup-banner" onclick="showVIPPopup()">
-                    💕✨ CLICK HERE for early access to VIP GAME BUNDLES! 🎉💖
-                </div>
+
                 <p><strong>VENMO:</strong> <a href="https://venmo.com/worksucksdotnet" target="_blank">@worksucksdotnet</a></p>
-                <p>$25 to play!! Cheaper than a beer and a bag!</p>
+                <p>$25 to enter the game</p>
                 <div class="memo-reminder">
                     REMEMBER: Put your Instagram handle in the memo!
                 </div>
@@ -580,14 +711,14 @@
         <div class="popup">
             <div class="popup-title">
                 <span>💸 ZELLE PAYMENT INFO</span>
-                <button class="popup-close" onclick="closePopup('zellePopup')">X</button>
+                <button class="popup-close" onclick="closePopup('zellePopup')"></button>
             </div>
             <div class="popup-content">
                 <div class="popup-banner" onclick="showVIPPopup()">
-                    💕✨ CLICK HERE for early access to VIP GAME BUNDLES! 🎉💖
+                    💕 CLICK HERE for VIP GAME BUNDLES 💕
                 </div>
                 <p><strong>ZELLE:</strong> paizley@worksucks.net</p>
-                <p>$25 to play!! Cheaper than a beer and a bag!</p>
+                <p>$25 to enter the game</p>
                 <div class="memo-reminder">
                     REMEMBER: Put your Instagram handle in the memo!
                 </div>
@@ -595,32 +726,7 @@
         </div>
     </div>
 
-    <!-- VIP Popup -->
-    <div id="vipPopup" class="popup-overlay">
-        <div class="popup" style="transform: rotate(2deg);">
-            <div class="popup-title">
-                <span>👑 VIP GAME BUNDLES</span>
-                <button class="popup-close" onclick="closePopup('vipPopup')">X</button>
-            </div>
-            <div class="popup-content">
-                <div class="vip-option">
-                    <div class="vip-title">💿 $50 TITE</div>
-                    Entry + 1 VIP weapon
-                </div>
-                <div class="vip-option">
-                    <div class="vip-title">🔥 $100 SUPER TITE</div>
-                    Entry + 3 VIP weapons
-                </div>
-                <div class="vip-option">
-                    <div class="vip-title">💣 $200 TITE PRO MAX</div>
-                    Entry + Choose your team + 5 VIP weapons
-                </div>
-                <div class="memo-reminder">
-                    MEMO: Your handle + package (e.g. @user123 + SUPER TITE)
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- VIP Popup - REMOVED -->
 
     <script>
         // Start music on user interaction
@@ -630,6 +736,19 @@
                 audio.play().catch(e => console.log('Audio failed:', e));
             }
         }, { once: true });
+
+        // TL;DR Toggle
+        function toggleTLDR() {
+            const modalContent = document.getElementById('modalContent');
+            modalContent.classList.toggle('tldr-mode');
+            
+            const button = document.querySelector('.tldr-toggle');
+            if (modalContent.classList.contains('tldr-mode')) {
+                button.textContent = 'FULL INFO';
+            } else {
+                button.textContent = 'TL;DR';
+            }
+        }
 
         // Popup functions
         function playPopSound(soundId) {
@@ -648,11 +767,6 @@
             playPopSound('popOpen');
         }
 
-        function showVIPPopup() {
-            document.getElementById('vipPopup').classList.add('active');
-            playPopSound('popOpen');
-        }
-
         function closePopup(popupId) {
             document.getElementById(popupId).classList.remove('active');
             playPopSound('popClose');
@@ -668,27 +782,16 @@
             });
         });
 
-        // Random glitch text effect
-        setInterval(() => {
-            if (Math.random() > 0.95) {
-                const elements = document.querySelectorAll('p, .list-item');
-                const random = elements[Math.floor(Math.random() * elements.length)];
-                const original = random.textContent;
-                random.style.fontFamily = 'Wingdings';
-                setTimeout(() => {
-                    random.style.fontFamily = '';
-                }, 100);
-            }
-        }, 3000);
-
         // Fake loading percentage
         const loading = document.querySelector('.loading');
-        let percent = 82;
-        setInterval(() => {
-            percent = 80 + Math.floor(Math.random() * 15);
-            const bars = '█'.repeat(Math.floor(percent/10)) + '░'.repeat(10 - Math.floor(percent/10));
-            loading.textContent = `Loading... ${bars} ${percent}%`;
-        }, 2000);
+        if (loading) {
+            let percent = 82;
+            setInterval(() => {
+                percent = 80 + Math.floor(Math.random() * 15);
+                const bars = '█'.repeat(Math.floor(percent/10)) + '░'.repeat(10 - Math.floor(percent/10));
+                loading.textContent = `Loading... ${bars} ${percent}%`;
+            }, 2000);
+        }
     </script>
 </body>
 </html>
