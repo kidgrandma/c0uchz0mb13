@@ -49,23 +49,22 @@ class LabubuWitchHunt {
         this.lastTapTime = 0;
         this.tapCooldown = 50; // Reduced from 100ms for more responsive gameplay
         
-        // Device difficulty settings - balanced for fun!
         this.deviceDifficulty = {
             desktop: {
-                spawnRate: 400,
+                spawnRate: 450,  
                 targetScore: 1000,
                 speedMultiplier: 1.4,
                 lifespanMultiplier: 1,
                 pointsMultiplier: 1,
-                bonusRate: 0.15
+                bonusRate: 0.4
             },
             mobile: {
-                spawnRate: 380, // Slightly faster spawning (was 350)
-                targetScore: 1200, // More achievable target (was 1500)
-                speedMultiplier: 1.5, // Moderate speed increase (was 1.8)
-                lifespanMultiplier: 0.9, // Slightly shorter lifespan (was 0.8)
-                pointsMultiplier: 0.85, // Better points (was 0.75)
-                bonusRate: 0.15 // Same bonus rate as desktop
+                spawnRate: 500,  
+                targetScore: 1200,
+                speedMultiplier: 1.3, 
+                lifespanMultiplier: 0.85, 
+                pointsMultiplier: 0.8, 
+                bonusRate: 0.18  
             }
         };
         
@@ -78,7 +77,6 @@ class LabubuWitchHunt {
         this.pointsMultiplier = settings.pointsMultiplier;
         this.bonusRate = settings.bonusRate;
         
-        // Calculate lifespan based on device
         this.lifespan = { 
             min: 2200 * this.lifespanMultiplier, 
             max: 3800 * this.lifespanMultiplier 
@@ -238,12 +236,10 @@ class LabubuWitchHunt {
     }
 
     playBubbleSound() {
-        // Simple, efficient bubble sound playback
         if (this.soundEnabled && this.bubblePopSound) {
             try {
-                // Reset and play the sound
                 this.bubblePopSound.currentTime = 0;
-                this.bubblePopSound.volume = 0.4 + Math.random() * 0.2; // Slight volume variation (0.4-0.6)
+                this.bubblePopSound.volume = 0.4 + Math.random() * 0.2; 
                 this.bubblePopSound.play().catch(e => {
                     // Silently handle autoplay errors
                 });
@@ -257,7 +253,6 @@ class LabubuWitchHunt {
         document.body.classList.add('game-active');
         this.startScreen.style.display = 'none';
         
-        // Lock viewport to prevent any scrolling or zooming during game
         if (this.isMobile) {
             document.body.style.position = 'fixed';
             document.body.style.width = '100%';
@@ -319,13 +314,13 @@ class LabubuWitchHunt {
     }
 
     createInitialLabubus() {
-        for (let i = 0; i < 4; i++) {
-            setTimeout(() => this.createLabubu(), i * 150);
+        const initialCount = this.isMobile ? 3 : 4;
+        for (let i = 0; i < initialCount; i++) {
+            setTimeout(() => this.createLabubu(), i * 200);
         }
     }
 
     showCountdown(callback) {
-        // Create countdown container with animation class
         const countdownDiv = document.createElement('div');
         countdownDiv.className = 'countdown-number';
         countdownDiv.style.cssText = `
@@ -344,7 +339,6 @@ class LabubuWitchHunt {
         
         this.gameContainer.appendChild(countdownDiv);
         
-        // Add mobile warning if needed
         if (this.isMobile) {
             const warningDiv = document.createElement('div');
             warningDiv.style.cssText = `
@@ -370,14 +364,12 @@ class LabubuWitchHunt {
         let count = 3;
         countdownDiv.textContent = count;
         
-        // Countdown with smooth CSS animations - 4 seconds total
         const countInterval = setInterval(() => {
             count--;
             if (count > 0) {
                 countdownDiv.textContent = count;
-                // Restart animation by removing and re-adding
                 countdownDiv.style.animation = 'none';
-                void countdownDiv.offsetHeight; // Force reflow
+                void countdownDiv.offsetHeight;
                 countdownDiv.style.animation = 'countdownPulse 1s ease-in-out';
             } else if (count === 0) {
                 countdownDiv.textContent = 'KILL!';
@@ -396,10 +388,8 @@ class LabubuWitchHunt {
     }
 
     updateScreenEffects() {
-        // Remove existing flash classes
         document.body.classList.remove('flash-warning', 'flash-critical');
         
-        // Add appropriate flash class based on time
         if (this.timeLeft <= 3) {
             document.body.classList.add('flash-critical');
         } else if (this.timeLeft <= 6) {
@@ -410,7 +400,6 @@ class LabubuWitchHunt {
     updateLabubuSpeed() {
         this.baseSpeed = (1 + (15 - this.timeLeft) * 0.4) * this.speedMultiplier;
         
-        // Update all existing labubus with new speed by restarting their movement
         this.labubus.forEach(labubu => {
             if (labubu.moveInterval) {
                 clearInterval(labubu.moveInterval);
@@ -431,29 +420,23 @@ class LabubuWitchHunt {
         } else {
             const goodType = Math.floor(Math.random() * 3) + 1;
             labubu.classList.add(`labubu-good-${goodType}`);
-            // Apply points multiplier for mobile
             const basePoints = Math.floor(Math.random() * 80) + 25;
             const points = Math.floor(basePoints * this.pointsMultiplier);
             labubu.dataset.points = points;
             labubu.dataset.type = 'good';
         }
         
-        // MORE DYNAMIC SIZES - better variety for mobile and desktop
         const sizeRoll = Math.random();
         let baseSize;
         
         if (sizeRoll < 0.2) {
-            // 20% small - harder to hit but rewarding
             baseSize = Math.min(window.innerWidth, window.innerHeight) * (this.isMobile ? 0.10 : 0.11);
         } else if (sizeRoll < 0.7) {
-            // 50% medium - standard size
             baseSize = Math.min(window.innerWidth, window.innerHeight) * (this.isMobile ? 0.13 : 0.14);
         } else {
-            // 30% large - easier to hit, satisfying pops!
             baseSize = Math.min(window.innerWidth, window.innerHeight) * (this.isMobile ? 0.16 : 0.18);
         }
         
-        // Add some random variation within the size category
         const size = baseSize + Math.random() * (baseSize * 0.3);
         const finalSize = Math.max(this.isMobile ? 55 : 65, Math.min(size, 170));
         labubu.style.width = finalSize + 'px';
@@ -464,7 +447,6 @@ class LabubuWitchHunt {
         labubu.style.left = Math.max(0, Math.random() * maxX) + 'px';
         labubu.style.top = Math.max(0, Math.random() * maxY) + 'px';
         
-        // Fixed event handling - prevent double firing
         if (this.isTouch) {
             labubu.addEventListener('touchstart', (e) => {
                 e.preventDefault();
@@ -478,17 +460,13 @@ class LabubuWitchHunt {
             });
         }
         
-        // Add to container first, then animate
         this.gameContainer.appendChild(labubu);
         this.labubus.push(labubu);
         
-        // Play spawn sound AFTER adding to DOM
         this.playBubbleSound();
         
-        // Start movement
         this.addMovement(labubu);
         
-        // Auto-removal after lifespan
         const lifespan = this.lifespan.min + Math.random() * (this.lifespan.max - this.lifespan.min);
         setTimeout(() => {
             if (labubu.parentNode && this.gameRunning) {
@@ -498,35 +476,33 @@ class LabubuWitchHunt {
     }
 
     handleLabubuTap(e, labubu) {
-        // Prevent multi-touch abuse
         if (e.touches && e.touches.length > 1) {
             return; // Ignore multi-touch
         }
         
-        // Add cooldown for rapid tapping on mobile - reduced for more fun!
         const now = Date.now();
         if (this.isMobile && (now - this.lastTapTime) < 50) { // Reduced from 100ms to 50ms
             return; // Too fast, ignore
         }
         this.lastTapTime = now;
         
-        // Track active touches to prevent simultaneous taps
         const touchId = e.touches ? e.touches[0].identifier : 'mouse';
         if (this.activeTouches.has(touchId)) {
             return;
         }
         
         this.activeTouches.add(touchId);
-        setTimeout(() => this.activeTouches.delete(touchId), 100); // Reduced from 200ms
+        setTimeout(() => this.activeTouches.delete(touchId), 100); 
         
         this.popLabubu(labubu);
     }
 
     addMovement(labubu) {
-        let dx = (Math.random() - 0.5) * 6 * this.baseSpeed;
-        let dy = (Math.random() - 0.5) * 6 * this.baseSpeed;
+        let dx = (Math.random() - 0.5) * 4 * this.baseSpeed; 
+        let dy = (Math.random() - 0.5) * 4 * this.baseSpeed;
         
-        // Back to the original setInterval - much more efficient for multiple objects
+        const moveInterval = this.isMobile ? 40 : 30;  // 25fps on mobile, 33fps on desktop
+        
         labubu.moveInterval = setInterval(() => {
             if (!labubu.parentNode || !this.gameRunning) {
                 clearInterval(labubu.moveInterval);
@@ -537,10 +513,10 @@ class LabubuWitchHunt {
             let currentY = parseFloat(labubu.style.top) || 0;
             const labubuSize = parseFloat(labubu.style.width) || 55;
             
-            // Random direction changes
-            if (Math.random() < 0.04) {
-                dx = (Math.random() - 0.5) * 6 * this.baseSpeed;
-                dy = (Math.random() - 0.5) * 6 * this.baseSpeed;
+            const changeChance = this.isMobile ? 0.02 : 0.04;
+            if (Math.random() < changeChance) {
+                dx = (Math.random() - 0.5) * 4 * this.baseSpeed;
+                dy = (Math.random() - 0.5) * 4 * this.baseSpeed;
             }
             
             // Bounce off walls
@@ -549,7 +525,7 @@ class LabubuWitchHunt {
             
             labubu.style.left = Math.max(0, Math.min(window.innerWidth - labubuSize, currentX + dx)) + 'px';
             labubu.style.top = Math.max(0, Math.min(window.innerHeight - labubuSize, currentY + dy)) + 'px';
-        }, 30); // 30ms interval = ~33fps, perfectly smooth for this game
+        }, moveInterval);
     }
 
     popLabubu(labubu) {
@@ -561,29 +537,24 @@ class LabubuWitchHunt {
         if (labubu.dataset.type === 'good') {
             scoreChange = parseInt(labubu.dataset.points);
             this.score += scoreChange;
-            // Play the credit sound for normal points
             this.playSound(this.creditSound);
         } else if (labubu.dataset.type === 'secret') {
-            // Adjust bonus scoring for mobile - BALANCED WIN/LOSE RATIO
             const basePoints = Math.floor(Math.random() * 100) + 25;
             const adjustedPoints = Math.floor(basePoints * this.pointsMultiplier);
-            const isWin = Math.random() < 0.5; // 50/50 chance for both mobile and desktop
+            const isWin = Math.random() < 0.4; 
             
             if (isWin) {
                 scoreChange = adjustedPoints * 2;
                 this.score += scoreChange;
-                // Play the double/multiplier sound for 2x points
                 this.playSound(this.doubleSound);
             } else {
                 scoreChange = adjustedPoints;
                 this.score = Math.max(0, this.score - scoreChange);
                 isPositive = false;
-                // Play the debit sound for losing points
                 this.playSound(this.debitSound);
             }
         }
         
-        // Don't play bubble pop on click - only the score sounds
         
         this.updateDisplay();
         labubu.classList.add('popping');
@@ -644,27 +615,28 @@ class LabubuWitchHunt {
         this.gameEndTime = Date.now();
         const gameTime = Math.round((this.gameEndTime - this.gameStartTime) / 1000);
         
-        // Cleanup
-        document.body.classList.remove('game-active');
+        document.body.classList.remove('game-active', 'flash-warning', 'flash-critical');
         clearInterval(this.gameTimer);
         clearInterval(this.spawnTimer);
         document.body.className = '';
         
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.height = '';
+        document.body.style.overflow = '';
+        
         if (this.bgMusic) this.bgMusic.pause();
         if (this.countdownSound) this.countdownSound.pause();
         
-        // Play result sound
         if (victory) {
             this.playSound(this.winnerSong);
         } else {
             this.playSound(this.loserSong);
         }
         
-        // Clean up labubus
         this.labubus.forEach(labubu => this.removeLabubu(labubu));
         this.labubus = [];
         
-        // Save score with device info
         const gameData = {
             handle: this.playerHandle,
             score: this.score,
@@ -701,7 +673,6 @@ class LabubuWitchHunt {
         let resultMessage, resultEmoji, linksHtml = '';
         let imageClass = victory ? 'victory' : 'defeat';
         
-        // Adjust messages based on target score
         const targetScore = this.targetScore;
         const remainingPoints = targetScore - this.score;
         
@@ -735,7 +706,6 @@ class LabubuWitchHunt {
             resultEmoji = '💀 LAME 💀';
         }
         
-        // Create new results screen with same structure as start screen
         const newStartScreen = document.createElement('div');
         newStartScreen.id = 'startScreen';
         newStartScreen.style.display = 'flex';
