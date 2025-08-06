@@ -390,7 +390,13 @@ h1.victory {
     font-family: Arial, Verdana, sans-serif;
     text-transform: lowercase;
 }
-
+.labubu {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
 .labubu-legend {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -718,6 +724,11 @@ h1.victory {
         min-width: auto;
         text-align: center;
         border-radius: 4px;
+    }
+  #audioControls {
+        bottom: 50px;
+        right: 5px;
+        top: auto;
     }
 
     #gameInfo {
