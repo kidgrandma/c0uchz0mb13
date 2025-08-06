@@ -37,17 +37,16 @@ class LabubuWitchHunt {
         this.countdownPlayed = false;
         this.playerHandle = '';
         this.gameStartTime = null;
+        this.victoryAchieved = false;
         this.gameEndTime = null;
+        this.unlockShown = false;
+        this.labubuKilled = 0;
         
         // Device detection
         this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
                         ('ontouchstart' in window);
         this.isTouch = 'ontouchstart' in window;
         
-        // Anti-cheat for mobile - less restrictive for fun!
-        this.activeTouches = new Set();
-        this.lastTapTime = 0;
-        this.tapCooldown = 50; // Reduced from 100ms for more responsive gameplay
         
         this.deviceDifficulty = {
             desktop: {
@@ -302,10 +301,9 @@ class LabubuWitchHunt {
             }
             
             if (this.timeLeft <= 0) {
-                this.endGame();
+                this.endGame(this.victoryAchieved);
             }
         }, 1000);
-
         this.spawnTimer = setInterval(() => {
             if (this.gameRunning) {
                 this.createLabubu();
@@ -554,7 +552,7 @@ class LabubuWitchHunt {
                 this.playSound(this.debitSound);
             }
         }
-        
+        this.labubuKilled++;
         
         this.updateDisplay();
         labubu.classList.add('popping');
@@ -596,6 +594,34 @@ class LabubuWitchHunt {
         
         const progress = Math.min(100, Math.round((this.score / this.targetScore) * 100));
         this.progressElement.textContent = progress + '%';
+        if (this.score >= this.targetScore && !this.unlockShown) {
+    this.unlockShown = true;
+
+    this.playSound(this.burnSound);
+    const unlockMsg = document.createElement('div');
+    unlockMsg.className = 'countdown-number'; 
+    unlockMsg.textContent = 'SUCCESS!';
+
+    unlockMsg.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: ${this.isMobile ? '100px' : '120px'};
+        color: #00ffcc;
+        font-weight: 900;
+        text-shadow: 0 0 40px #ff3366, 0 0 80px #00ffcc, 3px 3px 0 #000;
+        z-index: 1000;
+        font-family: 'Metal Mania', cursive;
+        animation: killPulse 1.5s ease-out forwards;
+    `;
+
+    this.gameContainer.appendChild(unlockMsg);
+
+    setTimeout(() => {
+        if (unlockMsg.parentNode) unlockMsg.remove();
+    }, 1500);
+}
         
         // Add mobile indicator if on mobile
         if (this.isMobile && !this.mobileIndicatorAdded) {
@@ -604,11 +630,11 @@ class LabubuWitchHunt {
             const targetDiv = goalDiv.querySelector('div:first-child');
             targetDiv.textContent = `TARGET: ${this.targetScore} PTS (MOBILE)`;
         }
-        
-        if (this.score >= this.targetScore && this.gameRunning) {
-            this.endGame(true);
-        }
+        if (this.score >= this.targetScore) {
+            this.victoryAchieved = true; 
+}
     }
+    
 
     async endGame(victory = false) {
         this.gameRunning = false;
@@ -649,6 +675,7 @@ class LabubuWitchHunt {
         
         await this.saveScore(gameData);
         await this.showResults(victory, gameTime);
+        await this.generateFlyer();
     }
 
     async saveScore(gameData) {
@@ -705,7 +732,6 @@ class LabubuWitchHunt {
             resultMessage = `☃️ ooof! sucks 2 suck but u can burn again!<br><br>`;
             resultEmoji = '💀 LAME 💀';
         }
-        
         const newStartScreen = document.createElement('div');
         newStartScreen.id = 'startScreen';
         newStartScreen.style.display = 'flex';
@@ -801,7 +827,8 @@ class LabubuWitchHunt {
         }
         
         leaderboardElement.innerHTML = html;
-    }
+    
+}
 }
 
 // Initialize game when page loads
