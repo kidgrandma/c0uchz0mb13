@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Labubu Witch Hunt</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&family=Orbitron:wght@400;700;900&family=Courier+Prime:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Audio Elements -->
+    <audio id="bgMusic" loop preload="auto">
+        <source src="../assets/bubble/bubble-bg.mp3" type="audio/mpeg">
+        <source src="../assets/bubble/bubble-bg.ogg" type="audio/ogg">
+    </audio>
+    <audio id="bubblePopSound" preload="auto">
+        <source src="../assets/bubble/bubble-pop-1.mp3" type="audio/mpeg">
+        <source src="../assets/bubble/bubble-pop-1.ogg" type="audio/ogg">
+    </audio>
+    <audio id="creditSound" preload="auto">
+        <source src="../assets/bubble/credit-sound.mp3" type="audio/mpeg">
+        <source src="../assets/bubble/credit-sound.ogg" type="audio/ogg">
+    </audio>
+    <audio id="doubleSound" preload="auto">
+        <source src="../assets/bubble/double-sound.mp3" type="audio/mpeg">
+        <source src="../assets/bubble/double-sound.ogg" type="audio/ogg">
+    </audio>
+    <audio id="debitSound" preload="auto">
+        <source src="../assets/bubble/debit-sound.mp3" type="audio/mpeg">
+        <source src="../assets/bubble/debit-sound.ogg" type="audio/ogg">
+    </audio>
+    <audio id="winnerSong" preload="auto">
+        <source src="../assets/bubble/winner-song.mp3" type="audio/mpeg">
+        <source src="../assets/bubble/winner-song.ogg" type="audio/ogg">
+    </audio>
+    <audio id="loserSong" preload="auto">
+        <source src="../assets/bubble/loser-song.mp3" type="audio/mpeg">
+        <source src="../assets/bubble/loser-song.ogg" type="audio/ogg">
+    </audio>
+    <audio id="startGameSound" preload="auto">
+        <source src="../assets/bubble/start-game.mp3" type="audio/mpeg">
+        <source src="../assets/bubble/start-game.ogg" type="audio/ogg">
+    </audio>
+    <audio id="countdownSound" preload="auto">
+        <source src="../assets/bubble/countdown-4.mp3" type="audio/mpeg">
+        <source src="../assets/bubble/countdown-4.ogg" type="audio/ogg">
+    </audio>
+
+    <div id="audioControls">
+        <button id="muteButton" title="Toggle Sound">🔊</button>
+    </div>
+
+    <div id="gameContainer">
+        <div id="gameInfo">
+            <div>SCORE: <span id="score">0</span></div>
+            <div>TIME: <span id="timer">15</span>S</div>
+        </div>
+
+        <div id="goal">
+            <div>TARGET: 1000 PTS</div>
+            <div style="font-size: clamp(12px, 2.5vw, 16px); margin-top: 5px;">
+                <span id="progress">0%</span>
+            </div>
+        </div>
+
+        <div class="player-info" id="playerInfo" style="display: none;">
+            PLAYER: <span id="playerHandle"></span>
+        </div>
+
+        <div id="startScreen">
+            <div class="brand">worksucks.net presents</div>
+            <h1>Labubu Witch Hunt</h1>
+            <div class="instructions">
+                <input type="text" id="handleInput" class="handle-input" placeholder="enter your handle" maxlength="20">
+                
+                <div class="goal-text">🔪 you have 15 seconds to score 1000 points 🔥</div>
+                <span style="font-family: 'Metal Mania', arial; text-transform: uppercase;">🍜 LABUBUz RUN FOR THEIR LIVES AS TIME RUNS OUT! 👽</span>
+                               </div>
+               <button id="startButton">START HUNT</button>
+                <div class="labubu-legend">
+                    <div class="legend-item">
+                        <div class="legend-labubu" style="background-image: url('../assets/bubble/labubu-good-1.png');"></div>
+                        <span style="font-family: 'Metal Mania', cursive; text-transform: uppercase;"><strong style="color: #00ffcc;">GOOD</strong><br>💿 25-125 pts</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-labubu" style="background-image: url('../assets/bubble/labubu-good-2.png');"></div>
+                        <span style="font-family: Arial, Verdana, sans-serif; text-transform: lowercase;"><strong style="color: #00ffcc;">good</strong><br>🍓 25-125 pts</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-labubu" style="background-image: url('../assets/bubble/labubu-good-3.png');"></div>
+                        <span style="font-family: 'Orbitron', monospace; text-transform: uppercase;"><strong style="color: #00ffcc;">GOOD</strong><br>🍄 25-125 pts</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-labubu" style="background-image: url('../assets/bubble/labubu-bonus.png');"></div>
+                        <span style="font-family: Arial, Verdana, sans-serif; text-transform: lowercase;"><strong style="color: #ff3366;">secret</strong><br>🎱 2x win/lose!</span>
+                    </div>
+            </div>    
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
