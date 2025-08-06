@@ -1,19 +1,43 @@
-.legend-item span {
-    font-size: clamp(12px, 2.5vw, 14px);
-    color: #c9c9c9;
-    text-shadow: 0 0 10px #c9c9c9;
-    text-align: center;
-    line-height: 1.2;
-    font-family: Arial, Verdana, sans-serif;
-}* {
+/* ================================================
+   LABUBU WITCH HUNT - COMPLETE CSS
+   ================================================ */
+
+/* ================================================
+   1. RESET & ZOOM PREVENTION
+   ================================================ */
+
+* {
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
+    /* Prevent double-tap zoom */
+    touch-action: manipulation;
 }
 
 html {
     height: 100%;
     overflow-x: hidden;
+    /* Prevent text size adjustment on orientation change */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
+
+html, body {
+    /* Prevent all zoom gestures */
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+    overscroll-behavior: none;
+    /* Prevent text selection */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* ================================================
+   2. BASE BODY STYLES
+   ================================================ */
 
 body {
     margin: 0;
@@ -30,43 +54,39 @@ body {
     transition: filter 0.3s ease;
     overflow-y: auto;
     overflow-x: hidden;
+    color: white;
 }
 
-/* Game active state - lock scrolling */
+/* Game active state - complete lockdown */
 body.game-active {
     overflow: hidden;
     position: fixed;
     width: 100%;
     height: 100vh;
     height: 100dvh;
+    top: 0;
+    left: 0;
+    /* Disable ALL touch gestures during game */
+    touch-action: none !important;
+    -ms-touch-action: none !important;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: none;
 }
 
-body.flash-warning {
-    filter: hue-rotate(30deg) saturate(1.5) contrast(1.2);
-}
-
-body.flash-critical {
-    filter: hue-rotate(60deg) saturate(2) brightness(1.2) contrast(1.3);
-    animation: criticalFlash 0.2s ease-in-out infinite alternate;
-}
-
-@keyframes criticalFlash {
-    0% { 
-        filter: hue-rotate(60deg) saturate(2) brightness(1.2) contrast(1.3);
-    }
-    100% { 
-        filter: hue-rotate(0deg) saturate(1.8) brightness(1.4) contrast(1.5);
-    }
-}
+/* ================================================
+   3. GAME CONTAINER
+   ================================================ */
 
 #gameContainer {
     position: relative;
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
+    touch-action: pan-x pan-y;
+    overscroll-behavior: none;
 }
 
-/* Game active state - full viewport lock */
+/* Lock container during gameplay */
 body.game-active #gameContainer {
     position: fixed;
     top: 0;
@@ -76,8 +96,66 @@ body.game-active #gameContainer {
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
+    touch-action: none !important;
+    -ms-touch-action: none !important;
 }
 
+/* ================================================
+   4. SCREEN EFFECTS
+   ================================================ */
+
+/* Flash warning overlay - using pseudo-element for background only */
+body.flash-warning::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 50;
+    background: rgba(255, 100, 0, 0.1);
+    animation: warningFlash 1s ease-in-out infinite;
+}
+
+body.flash-critical::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 50;
+    background: rgba(255, 0, 0, 0.15);
+    animation: criticalFlash 0.3s ease-in-out infinite;
+}
+
+@keyframes warningFlash {
+    0%, 100% { 
+        opacity: 0;
+    }
+    50% { 
+        opacity: 0.3;
+    }
+}
+
+@keyframes criticalFlash {
+    0%, 100% { 
+        opacity: 0;
+        background: rgba(255, 0, 0, 0.15);
+    }
+    50% { 
+        opacity: 0.5;
+        background: rgba(255, 0, 100, 0.2);
+    }
+}
+
+/* ================================================
+   5. HUD ELEMENTS
+   ================================================ */
+
+/* Score Display */
 #gameInfo {
     position: absolute;
     top: 15px;
@@ -96,9 +174,10 @@ body.game-active #gameContainer {
     font-family: Arial, Verdana, sans-serif;
     text-transform: uppercase;
     white-space: nowrap;
-    overflow: hidden;
+    touch-action: none;
 }
 
+/* Goal Display */
 #goal {
     position: absolute;
     top: 15px;
@@ -118,9 +197,10 @@ body.game-active #gameContainer {
     font-family: Arial, Verdana, sans-serif;
     text-transform: uppercase;
     white-space: nowrap;
-    overflow: hidden;
+    touch-action: none;
 }
 
+/* Player Info */
 .player-info {
     position: absolute;
     bottom: 15px;
@@ -139,8 +219,45 @@ body.game-active #gameContainer {
     font-family: Arial, Verdana, sans-serif;
     text-transform: uppercase;
     white-space: nowrap;
-    overflow: hidden;
+    touch-action: none;
 }
+
+/* ================================================
+   6. AUDIO CONTROLS
+   ================================================ */
+
+#audioControls {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    z-index: 1001;
+    touch-action: manipulation !important;
+}
+
+#muteButton {
+    background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(75,75,75,0.4));
+    color: #c9c9c9;
+    border: 2px solid #c9c9c9;
+    border-radius: 50%;
+    width: clamp(44px, 8vw, 50px);
+    height: clamp(44px, 8vw, 50px);
+    font-size: clamp(18px, 4vw, 22px);
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 0 20px rgba(201,201,201,0.5), inset 0 0 10px rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    touch-action: manipulation !important;
+}
+
+#muteButton:hover {
+    background: linear-gradient(135deg, rgba(75,75,75,0.4), rgba(0,0,0,0.9));
+    box-shadow: 0 0 30px rgba(201,201,201,0.8);
+    transform: scale(1.1);
+}
+
+/* ================================================
+   7. LABUBU GAME ELEMENTS
+   ================================================ */
 
 .labubu {
     position: absolute;
@@ -150,13 +267,24 @@ body.game-active #gameContainer {
     background-repeat: no-repeat;
     background-position: center;
     filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
+    /* Critical touch prevention */
+    touch-action: none !important;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    pointer-events: auto;
 }
 
-.labubu:hover, .labubu:active {
+.labubu:hover,
+.labubu:active {
     transform: scale(1.1);
     filter: drop-shadow(0 0 20px rgba(255,255,255,0.8)) saturate(1.5);
 }
 
+/* Labubu Types */
 .labubu-good-1 {
     background-image: url('../assets/bubble/labubu-good-1.png');
 }
@@ -185,15 +313,73 @@ body.game-active #gameContainer {
     }
 }
 
-@keyframes pop {
-    0% { transform: scale(1); opacity: 1; filter: brightness(1); }
-    50% { transform: scale(1.4); opacity: 0.7; filter: brightness(2) hue-rotate(180deg); }
-    100% { transform: scale(0); opacity: 0; filter: brightness(0); }
-}
-
+/* Pop Animation */
 .popping {
     animation: pop 0.3s ease-out forwards;
+    pointer-events: none;
 }
+
+@keyframes pop {
+    0% { 
+        transform: scale(1); 
+        opacity: 1; 
+        filter: brightness(1); 
+    }
+    50% { 
+        transform: scale(1.4); 
+        opacity: 0.7; 
+        filter: brightness(2) hue-rotate(180deg); 
+    }
+    100% { 
+        transform: scale(0); 
+        opacity: 0; 
+        filter: brightness(0); 
+    }
+}
+
+/* ================================================
+   8. FLOATING SCORES
+   ================================================ */
+
+.floating-score {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1000;
+    font-weight: 900;
+    text-shadow: 0 0 15px currentColor, 3px 3px 6px rgba(0,0,0,0.8);
+    animation: floatUp 1.8s ease-out forwards;
+    font-size: clamp(22px, 5.5vw, 32px);
+    font-family: 'Orbitron', monospace;
+}
+
+@keyframes floatUp {
+    0% { 
+        transform: translateY(0) scale(1); 
+        opacity: 1; 
+    }
+    50% { 
+        transform: translateY(-40px) scale(1.3); 
+        opacity: 0.9; 
+    }
+    100% { 
+        transform: translateY(-100px) scale(1); 
+        opacity: 0; 
+    }
+}
+
+.positive-score {
+    color: #00ffcc;
+    text-shadow: 0 0 25px #00ffcc, 3px 3px 6px rgba(0,0,0,0.8);
+}
+
+.negative-score {
+    color: #ff3366;
+    text-shadow: 0 0 25px #ff3366, 3px 3px 6px rgba(0,0,0,0.8);
+}
+
+/* ================================================
+   9. START SCREEN
+   ================================================ */
 
 #startScreen {
     position: relative;
@@ -212,6 +398,9 @@ body.game-active #gameContainer {
     z-index: 1000;
     padding: 20px 10px 40px 10px;
     overflow-y: auto;
+    /* Allow scroll but prevent zoom */
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
 }
 
 #startScreen::before {
@@ -225,67 +414,9 @@ body.game-active #gameContainer {
     z-index: -1;
 }
 
-#audioControls {
-    position: absolute;
-    bottom: 15px;
-    right: 15px;
-    z-index: 1001;
-}
-
-#muteButton {
-    background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(75,75,75,0.4));
-    color: #c9c9c9;
-    border: 2px solid #c9c9c9;
-    border-radius: 50%;
-    width: clamp(44px, 8vw, 50px);
-    height: clamp(44px, 8vw, 50px);
-    font-size: clamp(18px, 4vw, 22px);
-    cursor: pointer;
-    transition: all 0.3s;
-    box-shadow: 0 0 20px rgba(201,201,201,0.5), inset 0 0 10px rgba(255,255,255,0.1);
-    backdrop-filter: blur(10px);
-}
-
-#muteButton:hover {
-    background: linear-gradient(135deg, rgba(75,75,75,0.4), rgba(0,0,0,0.9));
-    box-shadow: 0 0 30px rgba(201,201,201,0.8);
-    transform: scale(1.1);
-}
-
-#startButton, .action-button {
-    padding: 15px 30px;
-    font-size: clamp(18px, 4vw, 24px);
-    background: linear-gradient(45deg, #c9c9c9, #ff3366, #00ffcc);
-    background-size: 200% 200%;
-    animation: gradientShift 1.5s ease infinite;
-    color: #000;
-    border: 3px solid #ffffff;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: clamp(15px, 3vw, 20px);
-    transition: all 0.3s;
-    box-shadow: 0 0 30px rgba(255,255,255,0.5), inset 0 0 15px rgba(255,255,255,0.2);
-    text-shadow: 0 0 5px #000;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    font-family: 'Orbitron', monospace;
-    width: auto;
-    min-width: 180px;
-    max-width: 280px;
-}
-
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-#startButton:hover, .action-button:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 10px 40px rgba(255,255,255,0.8);
-    filter: brightness(1.2);
-}
+/* ================================================
+   10. TYPOGRAPHY
+   ================================================ */
 
 h1 {
     font-family: 'Metal Mania', cursive;
@@ -314,9 +445,39 @@ h1.victory {
     text-shadow: 0 0 25px #00ffcc, 0 0 50px #00ffcc !important;
 }
 
-@keyframes textGlow {
-    0% { filter: brightness(1) contrast(1); }
-    100% { filter: brightness(1.4) contrast(1.3); }
+h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(24px, 5vw, 36px);
+    margin: 10px 0 20px 0;
+    text-align: center;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: block;
+    position: relative;
+    z-index: 10;
+}
+
+h2.victory-subtitle {
+    color: #00ffcc;
+    text-shadow: 0 0 20px #00ffcc, 0 0 40px #00ffcc;
+    animation: victoryPulse 2s ease-in-out infinite;
+}
+
+h2.defeat-subtitle {
+    color: #ff3366;
+    text-shadow: 0 0 20px #ff3366, 0 0 40px #ff3366;
+}
+
+@keyframes victoryPulse {
+    0%, 100% { 
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    50% { 
+        transform: scale(1.05);
+        filter: brightness(1.2);
+    }
 }
 
 .brand {
@@ -354,49 +515,82 @@ h1.victory {
     overflow: hidden;
 }
 
-.access-code-notice {
-    color: #00ffcc;
-    font-weight: 900;
-    font-size: clamp(11px, 4.5vw, 22px);
-    text-shadow: 0 0 25px #00ffcc, 0 0 50px #00ffcc;
-    margin: 20px 0;
-    padding: 15px;
-    background: linear-gradient(135deg, rgba(0, 255, 204, 0.2), rgba(0,0,0,0.6));
-    border: 2px solid #00ffcc;
+/* ================================================
+   11. FORM ELEMENTS
+   ================================================ */
+
+.handle-input {
+    padding: 15px 25px;
+    font-size: clamp(14px, 3.5vw, 20px);
+    background: rgba(0,0,0,0.9);
+    color: #c9c9c9;
+    border: 2px solid #c9c9c9;
     border-radius: 8px;
     text-align: center;
-    animation: accessCodePulse 2s ease-in-out infinite alternate;
-    font-family: 'Orbitron', monospace;
     text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    width: 80%;
+    max-width: 400px;
+    box-shadow: 0 0 25px rgba(201,201,201,0.5), inset 0 0 10px rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    font-family: 'VT323', monospace;
+    touch-action: manipulation !important;
 }
 
-@keyframes accessCodePulse {
-    0% { 
-        box-shadow: 0 0 20px rgba(0,255,204,0.5);
-        filter: brightness(1);
-    }
-    100% { 
-        box-shadow: 0 0 40px rgba(0,255,204,0.8);
-        filter: brightness(1.2);
-    }
-}
-
-.warning-text {
+.handle-input:focus {
+    outline: none;
+    box-shadow: 0 0 35px rgba(201,201,201,0.8);
+    border-color: #00ffcc;
     color: #00ffcc;
-    font-style: italic;
-    font-size: clamp(16px, 3.5vw, 18px);
-    text-shadow: 0 0 15px #00ffcc;
-    margin-top: 15px;
-    font-family: Arial, Verdana, sans-serif;
-    text-transform: lowercase;
 }
-.labubu {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
+
+/* ================================================
+   12. BUTTONS
+   ================================================ */
+
+#startButton,
+.action-button {
+    padding: 15px 30px;
+    font-size: clamp(18px, 4vw, 24px);
+    background: linear-gradient(45deg, #c9c9c9, #ff3366, #00ffcc);
+    background-size: 200% 200%;
+    animation: gradientShift 1.5s ease infinite;
+    color: #000;
+    border: 3px solid #ffffff;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: clamp(15px, 3vw, 20px);
+    transition: all 0.3s;
+    box-shadow: 0 0 30px rgba(255,255,255,0.5), inset 0 0 15px rgba(255,255,255,0.2);
+    text-shadow: 0 0 5px #000;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-family: 'Orbitron', monospace;
+    width: auto;
+    min-width: 180px;
+    max-width: 280px;
+    touch-action: manipulation !important;
 }
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+#startButton:hover,
+.action-button:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 40px rgba(255,255,255,0.8);
+    filter: brightness(1.2);
+}
+
+/* ================================================
+   13. LEGEND
+   ================================================ */
+
 .labubu-legend {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -421,6 +615,15 @@ h1.victory {
     backdrop-filter: blur(5px);
 }
 
+.legend-item span {
+    font-size: clamp(12px, 2.5vw, 14px);
+    color: #c9c9c9;
+    text-shadow: 0 0 10px #c9c9c9;
+    text-align: center;
+    line-height: 1.2;
+    font-family: Arial, Verdana, sans-serif;
+}
+
 .legend-labubu {
     width: clamp(45px, 10vw, 70px);
     height: clamp(45px, 10vw, 70px);
@@ -436,67 +639,9 @@ h1.victory {
     filter: drop-shadow(0 0 25px rgba(255,255,255,0.8));
 }
 
-.floating-score {
-    position: absolute;
-    pointer-events: none;
-    z-index: 1000;
-    font-weight: 900;
-    text-shadow: 0 0 15px currentColor, 3px 3px 6px rgba(0,0,0,0.8);
-    animation: floatUp 1.8s ease-out forwards;
-    font-size: clamp(22px, 5.5vw, 32px);
-    font-family: 'Orbitron', monospace;
-}
-
-@keyframes floatUp {
-    0% { transform: translateY(0) scale(1); opacity: 1; }
-    50% { transform: translateY(-40px) scale(1.3); opacity: 0.9; }
-    100% { transform: translateY(-100px) scale(1); opacity: 0; }
-}
-
-.positive-score {
-    color: #00ffcc;
-    text-shadow: 0 0 25px #00ffcc, 3px 3px 6px rgba(0,0,0,0.8);
-}
-
-.negative-score {
-    color: #ff3366;
-    text-shadow: 0 0 25px #ff3366, 3px 3px 6px rgba(0,0,0,0.8);
-}
-
-.handle-input {
-    padding: 15px 25px;
-    font-size: clamp(14px, 3.5vw, 20px);
-    background: rgba(0,0,0,0.9);
-    color: #c9c9c9;
-    border: 2px solid #c9c9c9;
-    border-radius: 8px;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 20px;
-    width: 80%;
-    max-width: 400px;
-    box-shadow: 0 0 25px rgba(201,201,201,0.5), inset 0 0 10px rgba(255,255,255,0.1);
-    backdrop-filter: blur(10px);
-    font-family: 'VT323', monospace;
-}
-
-.handle-input:focus {
-    outline: none;
-    box-shadow: 0 0 35px rgba(201,201,201,0.8);
-    border-color: #00ffcc;
-    color: #00ffcc;
-}
-
-.leaderboard-info {
-    font-size: clamp(10px, 2.5vw, 14px);
-    color: #c9c9c9;
-    margin-top: 20px;
-    text-align: center;
-    text-shadow: 0 0 10px #c9c9c9;
-    font-family: 'VT323', monospace;
-    text-transform: uppercase;
-}
+/* ================================================
+   14. RESULTS & LEADERBOARD
+   ================================================ */
 
 .results-container {
     display: flex;
@@ -516,16 +661,39 @@ h1.victory {
     align-items: center;
 }
 
-.leaderboard-section {
-    margin-top: 30px;
-    width: 100%;
-    max-width: 600px;
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(20, 20, 30, 0.8));
-    padding: 25px;
-    border-radius: 12px;
-    border: 2px solid #c9c9c9;
-    box-shadow: 0 0 30px rgba(201,201,201,0.6), inset 0 0 20px rgba(255,255,255,0.1);
-    backdrop-filter: blur(15px);
+.result-image {
+    width: 300px;
+    height: 300px;
+    margin: 15px auto 25px auto;
+    display: block;
+    filter: drop-shadow(0 0 20px #ff3366);
+    border-radius: 50%;
+    object-fit: cover;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.result-image.victory {
+    background-image: url('../assets/bubble/fire-labubu.png');
+    filter: drop-shadow(0 0 30px #00ffcc) drop-shadow(0 0 60px #ff3366);
+    animation: victoryGlow 1.5s ease-in-out infinite alternate;
+}
+
+.result-image.defeat {
+    background-image: url('../assets/bubble/lost-labubu.png');
+    filter: drop-shadow(0 0 20px #ff3366) sepia(0.3);
+}
+
+@keyframes victoryGlow {
+    0% { 
+        filter: drop-shadow(0 0 30px #00ffcc) drop-shadow(0 0 60px #ff3366) brightness(1);
+        transform: scale(1);
+    }
+    100% { 
+        filter: drop-shadow(0 0 50px #00ffcc) drop-shadow(0 0 100px #ff3366) brightness(1.2);
+        transform: scale(1.05);
+    }
 }
 
 .score-highlight {
@@ -568,17 +736,56 @@ h1.victory {
     overflow: hidden;
 }
 
-@media (max-width: 768px) {
-    .score-highlight {
-        font-size: clamp(14px, 3vw, 18px);
-        padding: 10px 12px;
-        margin: 15px 0;
-    }
-    
-    .leaderboard-section {
-        margin-top: 20px;
-        max-width: 95vw;
-    }
+.victory-links {
+    margin-top: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.victory-link {
+    padding: 12px 20px;
+    font-size: clamp(16px, 3.5vw, 18px);
+    background: linear-gradient(45deg, #ff3366, #c9c9c9);
+    color: #000;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+    box-shadow: 0 0 20px rgba(255,51,102,0.5);
+    font-family: 'Orbitron', monospace;
+    width: auto;
+    min-width: 220px;
+    max-width: 600px;
+    text-align: center;
+    display: inline-block;
+    word-wrap: break-word;
+    touch-action: manipulation !important;
+}
+
+.victory-link:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(255,51,102,0.8);
+    filter: brightness(1.2);
+}
+
+/* ================================================
+   15. LEADERBOARD
+   ================================================ */
+
+.leaderboard-section {
+    margin-top: 30px;
+    width: 100%;
+    max-width: 600px;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(20, 20, 30, 0.8));
+    padding: 25px;
+    border-radius: 12px;
+    border: 2px solid #c9c9c9;
+    box-shadow: 0 0 30px rgba(201,201,201,0.6), inset 0 0 20px rgba(255,255,255,0.1);
+    backdrop-filter: blur(15px);
 }
 
 .leaderboard-title {
@@ -641,80 +848,184 @@ h1.victory {
     white-space: nowrap;
 }
 
-.victory-links {
-    margin-top: 25px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    align-items: center;
+/* ================================================
+   16. ANIMATIONS
+   ================================================ */
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-12px); }
+    75% { transform: translateX(12px); }
 }
 
-.victory-link {
-    padding: 12px 20px;
-    font-size: clamp(16px, 3.5vw, 18px);
-    background: linear-gradient(45deg, #ff3366, #c9c9c9);
-    color: #000;
-    text-decoration: none;
-    border-radius: 8px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: all 0.3s;
-    box-shadow: 0 0 20px rgba(255,51,102,0.5);
-    font-family: 'Orbitron', monospace;
-    width: auto;
-    min-width: 220px;
-    max-width: 600px;
-    text-align: center;
-    display: inline-block;
-    word-wrap:break-word ;    
-    overflow: show;
-}
-
-.victory-link:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(255,51,102,0.8);
-    filter: brightness(1.2);
-}
-
-.result-image {
-    width: 300px;
-    height: 300px;
-    margin: 15px auto 25px auto;
-    display: block;
-    filter: drop-shadow(0 0 20px #ff3366);
-    border-radius: 50%;
-    object-fit: cover;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-}
-
-.result-image.victory {
-    background-image: url('../assets/bubble/fire-labubu.png');
-    filter: drop-shadow(0 0 30px #00ffcc) drop-shadow(0 0 60px #ff3366);
-    animation: victoryGlow 1.5s ease-in-out infinite alternate;
-}
-
-.result-image.defeat {
-    background-image: url('../assets/bubble/lost-labubu.png');
-    filter: drop-shadow(0 0 20px #ff3366) sepia(0.3);
-}
-
-@keyframes victoryGlow {
+@keyframes countdownPulse {
     0% { 
-        filter: drop-shadow(0 0 30px #00ffcc) drop-shadow(0 0 60px #ff3366) brightness(1);
-        transform: scale(1);
+        transform: translate(-50%, -50%) scale(0.3); 
+        opacity: 0; 
+    }
+    50% { 
+        transform: translate(-50%, -50%) scale(1.2); 
+        opacity: 1; 
     }
     100% { 
-        filter: drop-shadow(0 0 50px #00ffcc) drop-shadow(0 0 100px #ff3366) brightness(1.2);
-        transform: scale(1.05);
+        transform: translate(-50%, -50%) scale(1); 
+        opacity: 0.9; 
     }
 }
 
-/* Responsive Design for Very Small Screens */
+@keyframes killPulse {
+    0% { 
+        transform: translate(-50%, -50%) scale(0.5); 
+        opacity: 0; 
+    }
+    50% { 
+        transform: translate(-50%, -50%) scale(1.3); 
+        opacity: 1; 
+    }
+    90% { 
+        transform: translate(-50%, -50%) scale(1); 
+        opacity: 1; 
+    }
+    100% { 
+        transform: translate(-50%, -50%) scale(2); 
+        opacity: 0; 
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ================================================
+   17. RESPONSIVE DESIGN
+   ================================================ */
+
+/* Tablets */
+@media (max-width: 768px) {
+    * {
+        -webkit-user-select: none !important;
+        -webkit-touch-callout: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+    
+    body.game-active {
+        position: fixed !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+        touch-action: none !important;
+    }
+    
+    .score-highlight {
+        font-size: clamp(14px, 3vw, 18px);
+        padding: 10px 12px;
+        margin: 15px 0;
+    }
+    
+    .leaderboard-section {
+        margin-top: 20px;
+        max-width: 95vw;
+    }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+    .instructions {
+        font-size: 16px;
+        line-height: 1.3;
+    }
+    
+    .labubu-legend {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .result-image {
+        width: 220px;
+        height: 220px;
+    }
+
+    .victory-link {
+        font-size: clamp(12px, 3vw, 14px) !important;
+        padding: 8px 12px !important;
+        min-width: 180px !important;
+        max-width: 250px !important;
+        line-height: 1.2 !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+    }
+}
+
+/* Very Small Mobile */
+@media (max-width: 390px) {
+    #startScreen {
+        padding: 15px 10px 30px 10px;
+        min-height: 100vh;
+    }
+
+    .labubu {
+        min-width: 55px;
+        min-height: 55px;
+    }
+    
+    .floating-score {
+        font-size: 20px;
+    }
+
+    #startButton,
+    .action-button {
+        padding: 12px 25px;
+        font-size: 16px;
+        min-width: 160px;
+        max-width: 240px;
+    }
+
+    .handle-input {
+        font-size: 16px;
+        padding: 10px 15px;
+        width: 95%;
+        max-width: 280px;
+    }
+
+    .instructions {
+        font-size: 14px;
+        line-height: 1.3;
+        max-width: 98vw;
+        margin-bottom: 15px;
+    }
+
+    .goal-text {
+        font-size: 11px;
+    }
+
+    .leaderboard-section {
+        padding: 15px;
+        margin-top: 20px;
+        max-width: 95vw;
+    }
+
+    .leaderboard-title {
+        font-size: 18px;
+    }
+
+    .leaderboard-entry {
+        font-size: 16px;
+        padding: 8px 12px;
+    }
+
+    .result-image {
+        width: 250px;
+        height: 250px;
+        margin: 10px auto 20px auto;
+    }
+}
+
+/* Extra Small Mobile */
 @media (max-width: 370px) {
-    #gameInfo, #goal, .player-info {
+    #gameInfo,
+    #goal,
+    .player-info {
         position: fixed;
         left: 2px;
         right: 2px;
@@ -724,11 +1035,6 @@ h1.victory {
         min-width: auto;
         text-align: center;
         border-radius: 4px;
-    }
-  #audioControls {
-        bottom: 50px;
-        right: 5px;
-        top: auto;
     }
 
     #gameInfo {
@@ -754,30 +1060,21 @@ h1.victory {
     }
 
     #audioControls {
-        top: 2px;
-        right: 2px;
-        z-index: 1002;
+        bottom: 50px;
+        right: 5px;
+        top: auto;
     }
 
     #muteButton {
-        width: 30px;
-        height: 30px;
-        font-size: 12px;
-        position: absolute;
-        top: 35px;
-        right: 0;
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
     }
 
     .result-image {
         width: 200px;
         height: 200px;
         margin: 10px auto 15px auto;
-    }
-
-    .access-code-notice {
-        font-size: 11px;
-        padding: 8px;
-        margin: 12px 0;
     }
 
     .labubu-legend {
@@ -812,11 +1109,6 @@ h1.victory {
         margin-bottom: 6px;
     }
 
-    .instructions {
-        font-size: 14px;
-        line-height: 1.2;
-    }
-
     .handle-input {
         font-size: 14px;
         padding: 8px 12px;
@@ -840,107 +1132,14 @@ h1.victory {
     }
 }
 
-@media (max-width: 390px) {
-    #startScreen {
-        padding: 15px 10px 30px 10px;
-        min-height: 100vh;
-    }
+/* ================================================
+   18. iOS SPECIFIC FIXES
+   ================================================ */
 
-    .labubu {
-        min-width: 55px;
-        min-height: 55px;
-    }
-    
-    .floating-score {
-        font-size: 20px;
-    }
-
-    #startButton, .action-button {
-        padding: 12px 25px;
-        font-size: 16px;
-        min-width: 160px;
-        max-width: 240px;
-    }
-
-    .handle-input {
-        font-size: 16px;
-        padding: 10px 15px;
-        width: 95%;
-        max-width: 280px;
-    }
-
-    .instructions {
-        font-size: 14px;
-        line-height: 1.3;
-        max-width: 98vw;
-        margin-bottom: 15px;
-    }
-
-    .goal-text {
-        font-size: 11px;
-    }
-
-    .warning-text {
-        font-size: 12px;
-    }
-
-    .leaderboard-info {
-        font-size: 16px;
-    }
-
-    .leaderboard-section {
-        padding: 15px;
-        margin-top: 20px;
-        max-width: 95vw;
-    }
-
-    .leaderboard-title {
-        font-size: 18px;
-    }
-
-    .leaderboard-entry {
-        font-size: 16px;
-        padding: 8px 12px;
-    }
-
-    .result-image {
-        width: 250px;
-        height: 250px;
-        margin: 10px auto 20px auto;
-    }
-}
-
-@media (max-width: 480px) {
-    .instructions {
-        font-size: 16px;
-        line-height: 1.3;
-    }
-    
-    .labubu-legend {
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-    }
-
-    .result-image {
-        width: 220px;
-        height: 220px;
-    }
-
-    .victory-link {
-        font-size: clamp(12px, 3vw, 14px) !important;
-        padding: 8px 12px !important;
-        min-width: 180px !important;
-        max-width: 250px !important;
-        line-height: 1.2 !important;
-        white-space: normal !important;
-        word-wrap: break-word !important;
-    }
-}
-
-/* Enhanced mobile support for Safari/iOS */
 @supports (-webkit-touch-callout: none) {
-    #startScreen {
-        padding-bottom: 120px;
+    body {
+        height: 100vh;
+        height: -webkit-fill-available;
     }
     
     body.game-active {
@@ -949,20 +1148,15 @@ h1.victory {
         left: 0;
         width: 100%;
         height: 100vh;
+        height: -webkit-fill-available;
         overflow: hidden;
+        overscroll-behavior-y: none;
+        -webkit-overflow-scrolling: none;
     }
-}
-
-/* Add shake animation for invalid input */
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-12px); }
-    75% { transform: translateX(12px); }
-}
-
-/* Countdown animation styles */
-@keyframes countdownPulse {
-    0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
-    50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+    
+    #startScreen {
+        padding-bottom: 120px;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y !important;
+    }
 }
