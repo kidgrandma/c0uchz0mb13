@@ -1,4 +1,4 @@
-/* admin.css - INTERNET OLYMPICS 2 Enhanced */
+/* admin.css - INTERNET OLYMPICS 2 Enhanced - Complete with Scrollable Desktop */
 
 /* Base Reset & Variables */
 :root {
@@ -31,16 +31,84 @@ body {
     user-select: none;
 }
 
-/* Desktop Container */
+/* Admin Container - NEW */
+.admin-container {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Desktop Container - UPDATED */
 .desktop {
     position: relative;
     width: 100%;
     height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
-/* Taskbar */
+/* Desktop Area for Scrolling - NEW */
+.desktop-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 20px;
+    position: relative;
+    height: calc(100vh - 35px);
+    background: var(--bg-gradient);
+}
+
+/* Desktop Icons - UPDATED */
+.desktop-icons {
+    padding: 25px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 85px);
+    gap: 25px;
+    position: relative;
+    min-height: calc(100vh - 35px);
+    padding-bottom: 100px;
+}
+
+/* Windows Container - NEW */
+.windows-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 35px;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.windows-container > * {
+    pointer-events: auto;
+}
+
+/* Custom Scrollbar for Desktop Area - NEW */
+.desktop-area::-webkit-scrollbar {
+    width: 12px;
+}
+
+.desktop-area::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.desktop-area::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.desktop-area::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+    background-clip: padding-box;
+}
+
+/* Taskbar - REMAINS FIXED */
 .taskbar {
     position: fixed;
     bottom: 0;
@@ -120,17 +188,7 @@ body {
     transform: translateY(-1px);
 }
 
-/* Desktop Icons */
-.desktop-icons {
-    padding: 25px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, 85px);
-    gap: 25px;
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-
+/* Desktop Icon Styles */
 .desktop-icon {
     width: 85px;
     text-align: center;
@@ -318,6 +376,11 @@ body {
     font-size: 56px;
     margin-bottom: 15px;
     animation: pulse 2s infinite;
+}
+
+.login-message {
+    margin-bottom: 20px;
+    color: var(--text-light);
 }
 
 @keyframes pulse {
@@ -752,6 +815,11 @@ textarea.text-input {
 
 .tab-content {
     padding: 20px 0;
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
 }
 
 /* Character Cards */
@@ -1345,7 +1413,7 @@ textarea.text-input {
     border-top: 2px solid #E0E0E0;
 }
 
-/* Minimized Bar */
+/* Minimized Bar - UPDATED */
 .minimized-bar {
     position: fixed;
     bottom: 35px;
@@ -1391,6 +1459,24 @@ textarea.text-input {
 
 .toast.show {
     display: block;
+}
+
+.toast.success {
+    border-color: var(--success-green);
+    background: #E8F5E8;
+    color: var(--success-green);
+}
+
+.toast.error {
+    border-color: var(--danger-red);
+    background: #FFE8E8;
+    color: var(--danger-red);
+}
+
+.toast.warning {
+    border-color: var(--warning-yellow);
+    background: #FFF8DC;
+    color: #8B6914;
 }
 
 @keyframes slideIn {
@@ -1446,12 +1532,17 @@ textarea.text-input {
     background: var(--primary-dark);
 }
 
-/* Mobile Responsive */
+/* Mobile Responsive - UPDATED */
 @media (max-width: 768px) {
     .desktop-icons {
         grid-template-columns: repeat(auto-fill, 70px);
         gap: 20px;
         padding: 20px;
+        padding-bottom: 120px;
+    }
+    
+    .desktop-area {
+        -webkit-overflow-scrolling: touch;
     }
     
     .desktop-icon .icon {

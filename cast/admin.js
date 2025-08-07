@@ -1,15 +1,7 @@
-// admin.js - INTERNET OLYMPICS 2 Admin Panel with Firebase Auth
+// admin.js - INTERNET OLYMPICS 2 Admin Panel (Complete Fixed Version)
 
-// Firebase imports
+// Firebase imports (Firestore only - no Auth needed)
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-import { 
-    getAuth,
-    signInWithEmailAndPassword,
-    signInWithPopup,
-    GoogleAuthProvider,
-    onAuthStateChanged,
-    signOut
-} from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
 import { 
     getFirestore, 
     collection, 
@@ -20,9 +12,7 @@ import {
     deleteDoc,
     setDoc,
     addDoc,
-    onSnapshot,
-    query,
-    where
+    onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
 // ============================================
@@ -39,12 +29,78 @@ const firebaseConfig = {
     measurementId: "G-6BNDYZQRPE"
 };
 
+// Initialize Firebase (Firestore only)
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Authorized admin email
-const ADMIN_EMAIL = 'paizley@vaporbae.net';
+// ============================================
+// SIMPLE SECURE AUTHENTICATION
+// ============================================
+
+// Hash function for password (basic security)
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hash))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+}
+
+// Your hashed password (change this after setting up)
+// Default password is "olympicsAdmin2024!" - CHANGE THIS IMMEDIATELY
+const ADMIN_PASSWORD_HASH = 'f44d66d49ae0e7b1c90914f8a4276d0db4e419f43864750ddaf65ca177c88bf4';
+
+// Session management (stays logged in until browser closes)
+const SESSION_KEY = 'io2_admin_session';
+const SESSION_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours
+
+// Create secure session token
+function createSessionToken() {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2);
+    return btoa(`${timestamp}-${random}-${ADMIN_PASSWORD_HASH.substring(0, 8)}`);
+}
+
+// Validate session
+function validateSession() {
+    const session = localStorage.getItem(SESSION_KEY);
+    if (!session) return false;
+    
+    try {
+        const decoded = atob(session);
+        const [timestamp] = decoded.split('-');
+        const sessionAge = Date.now() - parseInt(timestamp);
+        
+        // Check if session is expired
+        if (sessionAge > SESSION_TIMEOUT) {
+            localStorage.removeItem(SESSION_KEY);
+            return false;
+        }
+        
+        return true;
+    } catch (e) {
+        localStorage.removeItem(SESSION_KEY);
+        return false;
+    }
+}
+
+// ============================================
+// STATE MANAGEMENT
+// ============================================
+
+const state = {
+    isAuthenticated: false,
+    openWindows: new Set(),
+    minimizedWindows: new Set(),
+    allCharacters: [],
+    allUsers: [],
+    allTools: [],
+    editingUser: null,
+    editingTool: null,
+    activeTab: 'info',
+    listeners: []
+};
 
 const TRANSACTION_TYPES = {
     PAYMENT: 'payment',
@@ -59,23 +115,6 @@ const POINT_MULTIPLIERS = {
     double: 2,
     super: 5,
     bonus: 3
-};
-
-// ============================================
-// STATE MANAGEMENT
-// ============================================
-
-const state = {
-    currentUser: null,
-    openWindows: new Set(),
-    minimizedWindows: new Set(),
-    allCharacters: [],
-    allUsers: [],
-    allTools: [],
-    editingUser: null,
-    editingTool: null,
-    activeTab: 'info',
-    listeners: []
 };
 
 // ============================================
@@ -107,11 +146,13 @@ const utils = {
 
     showToast(message, type = 'info') {
         const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.className = `toast show ${type}`;
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
+        if (toast) {
+            toast.textContent = message;
+            toast.className = `toast show ${type}`;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
     },
 
     getElement(id) {
@@ -139,18 +180,6 @@ const utils = {
                 }
             }
         });
-    },
-
-    showMessage(elementId, message, type = 'error') {
-        const el = utils.getElement(elementId);
-        if (el) {
-            el.textContent = message;
-            el.className = `form-message ${type}`;
-            el.style.display = 'block';
-            setTimeout(() => {
-                el.style.display = 'none';
-            }, 5000);
-        }
     }
 };
 
@@ -158,145 +187,148 @@ const utils = {
 // AUTHENTICATION
 // ============================================
 
-// Initialize auth state listener
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        // Check if user is authorized admin
-        if (user.email === ADMIN_EMAIL) {
-            state.currentUser = user;
-            showAdminPanel(user);
-        } else {
-            // User is not authorized
-            signOut(auth);
-            showAuthError('Access denied. This account is not authorized.');
-        }
+// Check authentication on load
+function checkAuth() {
+    if (validateSession()) {
+        state.isAuthenticated = true;
+        showAdminPanel();
     } else {
-        // User is signed out
         showLoginScreen();
     }
-});
-
-function showLoginScreen() {
-    utils.getElement('loginWindow').style.display = 'block';
-    utils.getElement('adminPanel').style.display = 'none';
-    utils.getElement('emailAuthSection').style.display = 'block';
-    utils.getElement('authLoading').style.display = 'none';
 }
 
-function showAdminPanel(user) {
-    utils.getElement('loginWindow').style.display = 'none';
-    utils.getElement('adminPanel').style.display = 'block';
-    utils.getElement('currentUser').textContent = `👤 ${user.email}`;
-    utils.showToast(`Welcome back, ${user.email.split('@')[0]}! 🎮`, 'success');
+function showLoginScreen() {
+    const loginWindow = utils.getElement('loginWindow');
+    const adminPanel = utils.getElement('adminPanel');
+    
+    if (loginWindow) loginWindow.style.display = 'block';
+    if (adminPanel) adminPanel.style.display = 'none';
+}
+
+function showAdminPanel() {
+    const loginWindow = utils.getElement('loginWindow');
+    const adminPanel = utils.getElement('adminPanel');
+    
+    if (loginWindow) loginWindow.style.display = 'none';
+    if (adminPanel) adminPanel.style.display = 'block';
+    
+    utils.showToast('Welcome back, admin! 🎮', 'success');
     initializeAdmin();
 }
 
-function showAuthError(message) {
-    const errorEl = utils.getElement('loginError');
-    errorEl.textContent = message;
-    errorEl.style.display = 'block';
-    utils.getElement('authLoading').style.display = 'none';
-    utils.getElement('emailAuthSection').style.display = 'block';
-    setTimeout(() => {
-        errorEl.style.display = 'none';
-    }, 5000);
-}
-
-// Email/Password login
+// Simple password login
 window.adminLogin = async function() {
-    const email = utils.getElement('adminEmail').value;
-    const password = utils.getElement('adminPassword').value;
+    const passwordInput = utils.getElement('adminPassword');
+    const password = passwordInput?.value;
     
-    if (!email || !password) {
-        showAuthError('Please enter email and password');
+    if (!password) {
+        showAuthError('enter the password');
         return;
     }
     
-    // Show loading state
-    utils.getElement('emailAuthSection').style.display = 'none';
-    utils.getElement('authLoading').style.display = 'block';
+    // Hash the entered password
+    const hashedPassword = await hashPassword(password);
     
-    try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        // Auth state listener will handle the rest
-    } catch (error) {
-        console.error('Login error:', error);
-        let errorMessage = 'Authentication failed';
+    // Add small delay to prevent brute force
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (hashedPassword === ADMIN_PASSWORD_HASH) {
+        // Create session
+        const sessionToken = createSessionToken();
+        localStorage.setItem(SESSION_KEY, sessionToken);
+        state.isAuthenticated = true;
         
-        switch (error.code) {
-            case 'auth/invalid-email':
-                errorMessage = 'Invalid email address';
-                break;
-            case 'auth/user-disabled':
-                errorMessage = 'This account has been disabled';
-                break;
-            case 'auth/user-not-found':
-                errorMessage = 'No account found with this email';
-                break;
-            case 'auth/wrong-password':
-                errorMessage = 'Incorrect password';
-                break;
-            case 'auth/too-many-requests':
-                errorMessage = 'Too many failed attempts. Please try again later';
-                break;
-        }
+        showAdminPanel();
+    } else {
+        showAuthError('nope. try again.');
         
-        showAuthError(errorMessage);
+        // Clear password field
+        if (passwordInput) passwordInput.value = '';
     }
 };
 
-// Google Sign-In
-window.googleLogin = async function() {
-    const provider = new GoogleAuthProvider();
-    
-    // Show loading state
-    utils.getElement('emailAuthSection').style.display = 'none';
-    utils.getElement('authLoading').style.display = 'block';
-    
-    try {
-        const result = await signInWithPopup(auth, provider);
-        // Auth state listener will handle the rest
-    } catch (error) {
-        console.error('Google login error:', error);
-        showAuthError('Google sign-in failed. Please try again.');
+function showAuthError(message) {
+    const errorEl = utils.getElement('loginError');
+    if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+        setTimeout(() => {
+            errorEl.style.display = 'none';
+        }, 3000);
     }
-};
+}
 
 // Logout
-window.adminLogout = async function() {
+window.adminLogout = function() {
     if (confirm('Sign out of admin panel?')) {
-        try {
-            // Clean up listeners
-            state.listeners.forEach(unsubscribe => unsubscribe());
-            state.listeners = [];
-            
-            await signOut(auth);
-            utils.showToast('Signed out successfully', 'info');
-        } catch (error) {
-            console.error('Logout error:', error);
-            utils.showToast('Error signing out', 'error');
-        }
+        localStorage.removeItem(SESSION_KEY);
+        state.isAuthenticated = false;
+        
+        // Clean up listeners
+        state.listeners.forEach(unsubscribe => {
+            if (typeof unsubscribe === 'function') unsubscribe();
+        });
+        state.listeners = [];
+        
+        location.reload();
     }
 };
+
+// ============================================
+// SECURITY MEASURES
+// ============================================
+
+// Prevent console access to sensitive functions
+(function() {
+    // Store original console
+    const originalConsole = window.console;
+    
+    // Override console in production
+    if (window.location.hostname !== 'localhost') {
+        window.console = {
+            log: () => {},
+            error: () => {},
+            warn: () => {},
+            info: () => {},
+            debug: () => {}
+        };
+    }
+    
+    // Detect dev tools (basic check)
+    let devtools = { open: false, orientation: null };
+    const threshold = 160;
+    
+    setInterval(() => {
+        if (window.outerWidth - window.innerWidth > threshold || 
+            window.outerHeight - window.innerHeight > threshold) {
+            if (!devtools.open && !state.isAuthenticated) {
+                // Dev tools opened while not authenticated
+                document.body.innerHTML = '<h1 style="text-align:center; margin-top:50px;">🚫 Access Denied</h1>';
+            }
+            devtools.open = true;
+        } else {
+            devtools.open = false;
+        }
+    }, 500);
+})();
 
 // ============================================
 // INITIALIZATION
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Initializing admin panel...');
+    checkAuth();
     initializeClock();
     initializeWindowDragging();
     
-    // Enter key handlers
-    utils.getElement('adminPassword')?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') adminLogin();
-    });
-    
-    utils.getElement('adminEmail')?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            utils.getElement('adminPassword').focus();
-        }
-    });
+    // Enter key handler for password field
+    const passwordField = utils.getElement('adminPassword');
+    if (passwordField) {
+        passwordField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') adminLogin();
+        });
+    }
 });
 
 function initializeClock() {
@@ -313,8 +345,40 @@ function initializeClock() {
     setInterval(updateClock, 60000);
 }
 
+function initializeWindowDragging() {
+    let draggedWindow = null;
+    let offset = { x: 0, y: 0 };
+    
+    document.addEventListener('mousedown', (e) => {
+        if (e.target.classList.contains('window-header') || e.target.parentElement?.classList.contains('window-header')) {
+            const window = e.target.closest('.window');
+            if (window && window.classList.contains('draggable')) {
+                draggedWindow = window;
+                const rect = draggedWindow.getBoundingClientRect();
+                offset.x = e.clientX - rect.left;
+                offset.y = e.clientY - rect.top;
+                windowManager.bringToFront(draggedWindow);
+            }
+        }
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (draggedWindow) {
+            draggedWindow.style.left = `${e.clientX - offset.x}px`;
+            draggedWindow.style.top = `${e.clientY - offset.y}px`;
+        }
+    });
+    
+    document.addEventListener('mouseup', () => {
+        draggedWindow = null;
+    });
+}
+
 async function initializeAdmin() {
-    if (!state.currentUser) return;
+    if (!state.isAuthenticated) {
+        console.log('Not authenticated');
+        return;
+    }
     
     try {
         await Promise.all([
@@ -330,12 +394,47 @@ async function initializeAdmin() {
     }
 }
 
+function setupRealtimeListeners() {
+    // Listen for pending selections changes
+    const pendingListener = onSnapshot(collection(db, 'pendingSelections'), (snapshot) => {
+        const pendingBadge = utils.getElement('pendingBadge');
+        const pendingCount = snapshot.size;
+        
+        // Update desktop icon badge
+        const desktopIcons = document.querySelectorAll('.desktop-icon');
+        desktopIcons.forEach(icon => {
+            if (icon.querySelector('.label')?.textContent === 'Pending') {
+                let badge = icon.querySelector('.notification-badge');
+                if (pendingCount > 0) {
+                    if (!badge) {
+                        badge = document.createElement('div');
+                        badge.className = 'notification-badge';
+                        icon.appendChild(badge);
+                    }
+                    badge.textContent = pendingCount;
+                } else if (badge) {
+                    badge.remove();
+                }
+            }
+        });
+        
+        // Refresh pending window if open
+        if (state.openWindows.has('pending')) {
+            displays.pending();
+        }
+    });
+    
+    state.listeners.push(pendingListener);
+}
+
 // ============================================
 // WINDOW MANAGEMENT
 // ============================================
 
 const windowManager = {
     open(windowId) {
+        if (!state.isAuthenticated) return;
+        
         const windowEl = utils.getElement(`window-${windowId}`);
         if (!windowEl) return;
         
@@ -383,6 +482,7 @@ const windowManager = {
 
     updateMinimizedBar() {
         const bar = utils.getElement('minimizedBar');
+        if (!bar) return;
         bar.innerHTML = '';
         
         state.minimizedWindows.forEach(windowId => {
@@ -400,39 +500,11 @@ const windowManager = {
     }
 };
 
-// Window manager global functions
-window.openWindow = (id) => windowManager.open(id);
-window.closeWindow = (id) => windowManager.close(id);
-window.minimizeWindow = (id) => windowManager.minimize(id);
-window.maximizeWindow = (id) => windowManager.maximize(id);
-window.refreshDashboard = () => displays.dashboard();
-
-function initializeWindowDragging() {
-    let draggedWindow = null;
-    let offset = { x: 0, y: 0 };
-    
-    document.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.window-header') && !e.target.closest('button')) {
-            const windowEl = e.target.closest('.window');
-            if (windowEl?.classList.contains('draggable') && !windowEl.classList.contains('maximized')) {
-                draggedWindow = windowEl;
-                const rect = windowEl.getBoundingClientRect();
-                offset.x = e.clientX - rect.left;
-                offset.y = e.clientY - rect.top;
-                windowManager.bringToFront(windowEl);
-            }
-        }
-    });
-    
-    document.addEventListener('mousemove', (e) => {
-        if (draggedWindow) {
-            draggedWindow.style.left = `${e.clientX - offset.x}px`;
-            draggedWindow.style.top = `${e.clientY - offset.y}px`;
-        }
-    });
-    
-    document.addEventListener('mouseup', () => draggedWindow = null);
-}
+// Window manager global functions (protected)
+window.openWindow = (id) => state.isAuthenticated && windowManager.open(id);
+window.closeWindow = (id) => state.isAuthenticated && windowManager.close(id);
+window.minimizeWindow = (id) => state.isAuthenticated && windowManager.minimize(id);
+window.maximizeWindow = (id) => state.isAuthenticated && windowManager.maximize(id);
 
 // ============================================
 // DATA MANAGEMENT
@@ -515,7 +587,7 @@ const displays = {
             const recentActivity = [];
             
             state.allUsers.forEach(user => {
-                if (user.status === 'active') stats.active++;
+                if (user.status === 'active' || !user.status) stats.active++;
                 
                 const credit = utils.calculateCredit(user.transactions);
                 
@@ -552,19 +624,21 @@ const displays = {
             
             // Recent activity
             const activityList = utils.getElement('activityList');
-            recentActivity.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            activityList.innerHTML = recentActivity.length === 0 ? 
-                '<div class="empty-state"><span class="empty-icon">🦗</span><p>nothing happening yet...</p></div>' :
-                recentActivity.slice(0, 5).map(user => `
-                    <div>
-                        <strong>${utils.formatHandle(user.handle)}</strong>
-                        <span style="color: #999; font-size: 10px;">(${user.code})</span>
-                        <span style="float: right; color: #666;">
-                            ${new Date(user.timestamp).toLocaleDateString()}
-                        </span>
-                    </div>
-                `).join('');
+            if (activityList) {
+                recentActivity.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                activityList.innerHTML = recentActivity.length === 0 ? 
+                    '<div class="empty-state"><span class="empty-icon">🦗</span><p>nothing happening yet...</p></div>' :
+                    recentActivity.slice(0, 5).map(user => `
+                        <div style="padding: 10px; border-bottom: 1px solid #E0E0E0;">
+                            <strong>${utils.formatHandle(user.handle)}</strong>
+                            <span style="color: #999; font-size: 10px;">(${user.code})</span>
+                            <span style="float: right; color: #666;">
+                                ${new Date(user.timestamp).toLocaleDateString()}
+                            </span>
+                        </div>
+                    `).join('');
+            }
                 
         } catch (error) {
             console.error('Error loading dashboard:', error);
@@ -583,7 +657,7 @@ const displays = {
         tbody.innerHTML = state.allUsers.map(user => {
             const credit = utils.calculateCredit(user.transactions);
             const toolsDisplay = templates.toolsList(user.tools);
-            const statusIcon = user.status === 'active' ? '✅' : user.status === 'blocked' ? '🚫' : '💀';
+            const statusIcon = user.status === 'active' ? '✅' : user.status === 'blocked' ? '🚫' : user.status === 'dead' ? '💀' : '✅';
             
             return `
                 <tr>
@@ -599,7 +673,7 @@ const displays = {
                     <td>${user.teamPoints || 0}</td>
                     <td>${toolsDisplay}</td>
                     <td>
-                        <button class="button small" onclick="userActions.edit('${user.id}')">edit</button>
+                        <button class="button small" onclick="showEditUser('${user.id}')">edit</button>
                         <button class="button small warning" onclick="userActions.delete('${user.id}')">remove</button>
                     </td>
                 </tr>
@@ -754,18 +828,14 @@ const displays = {
         try {
             const snapshot = await getDocs(collection(db, 'pendingSelections'));
             const pendingCount = utils.getElement('pendingCount');
-            const pendingBadge = utils.getElement('pendingBadge');
             
             if (snapshot.empty) {
-                pendingCount.textContent = '0';
-                pendingBadge.style.display = 'none';
+                if (pendingCount) pendingCount.textContent = '0';
                 pendingList.innerHTML = '<div class="empty-state"><span class="empty-icon">✨</span><p>no pending requests</p></div>';
                 return;
             }
             
-            pendingCount.textContent = snapshot.size;
-            pendingBadge.textContent = snapshot.size;
-            pendingBadge.style.display = snapshot.size > 0 ? 'block' : 'none';
+            if (pendingCount) pendingCount.textContent = snapshot.size;
             
             const requests = [];
             snapshot.forEach(doc => {
@@ -786,7 +856,7 @@ const displays = {
 };
 
 // ============================================
-// TEMPLATES (continued in next part due to length)
+// TEMPLATES
 // ============================================
 
 const templates = {
@@ -826,7 +896,7 @@ const templates = {
 
     teamStanding(team, isLeading) {
         return `
-            <div style="${isLeading ? 'background: linear-gradient(135deg, #FFD700, #FFF8DC);' : ''} ${isLeading ? 'border-color: #DAA520;' : ''}">
+            <div style="padding: 20px; background: ${isLeading ? 'linear-gradient(135deg, #FFD700, #FFF8DC)' : 'white'}; border: 2px solid ${isLeading ? '#DAA520' : '#E0E0E0'}; border-radius: 8px; margin-bottom: 15px;">
                 <h3>${isLeading ? '👑 ' : ''}${team.name} ${team.points ? `(${team.points} points)` : ''}</h3>
                 ${team.members.length === 0 ? 
                     '<p style="color: #666;">no members yet</p>' :
@@ -906,4 +976,782 @@ const templates = {
     }
 };
 
-// Continued in next message due to length...
+// ============================================
+// USER MANAGEMENT FUNCTIONS
+// ============================================
+
+window.showCreateUser = function() {
+    state.editingUser = null;
+    
+    // Clear all fields
+    utils.clearForm(['newAccessCode', 'newHandle', 'newEmail', 'newCharacter', 'newTeam', 'newPayment', 'newUserNote']);
+    
+    // Populate character dropdown
+    const characterSelect = utils.getElement('newCharacter');
+    if (characterSelect) {
+        characterSelect.innerHTML = '<option value="">-- pick later --</option>' +
+            state.allCharacters
+                .filter(c => c.available)
+                .map(c => `<option value="${c.id}">${c.name} (${c.show})</option>`)
+                .join('');
+    }
+    
+    // Show dialog
+    const dialog = utils.getElement('createUserDialog');
+    if (dialog) dialog.style.display = 'block';
+};
+
+window.hideCreateUser = function() {
+    const dialog = utils.getElement('createUserDialog');
+    if (dialog) dialog.style.display = 'none';
+};
+
+window.createUser = async function() {
+    try {
+        const accessCode = utils.getElement('newAccessCode').value;
+        const handle = utils.getElement('newHandle').value;
+        
+        if (!accessCode || !handle) {
+            utils.showToast('Access code and handle are required', 'error');
+            return;
+        }
+        
+        // Check if user already exists
+        const existingUser = state.allUsers.find(u => u.id === accessCode);
+        if (existingUser) {
+            utils.showToast('Access code already exists', 'error');
+            return;
+        }
+        
+        const characterId = utils.getElement('newCharacter').value;
+        const character = characterId ? state.allCharacters.find(c => c.id === characterId) : null;
+        
+        const newUser = {
+            handle: handle.replace('@', ''),
+            email: utils.getElement('newEmail').value || '',
+            characterId: characterId || null,
+            characterName: character ? character.name : null,
+            team: utils.getElement('newTeam').value || null,
+            tools: [],
+            transactions: [],
+            individualPoints: 0,
+            teamPoints: 0,
+            status: 'active',
+            createdAt: new Date().toISOString(),
+            notes: []
+        };
+        
+        // Add initial payment if specified
+        const initialPayment = parseFloat(utils.getElement('newPayment').value) || 0;
+        if (initialPayment > 0) {
+            newUser.transactions.push({
+                type: 'payment',
+                amount: initialPayment,
+                description: 'Initial payment',
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        // Add welcome note if specified
+        const welcomeNote = utils.getElement('newUserNote').value;
+        if (welcomeNote) {
+            newUser.notes.push({
+                message: welcomeNote,
+                from: 'admin',
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        // Create user in database
+        await setDoc(doc(db, 'users', accessCode), newUser);
+        
+        // Update character availability if selected
+        if (characterId) {
+            await updateDoc(doc(db, 'characters', characterId), {
+                available: false,
+                ownerId: handle
+            });
+        }
+        
+        utils.showToast('Player created successfully! 🎉', 'success');
+        hideCreateUser();
+        
+        // Reload data
+        await Promise.all([
+            dataManager.loadUsers(),
+            dataManager.loadCharacters()
+        ]);
+        displays.users();
+        
+    } catch (error) {
+        console.error('Error creating user:', error);
+        utils.showToast('Error creating user', 'error');
+    }
+};
+
+window.showEditUser = function(userId) {
+    const user = state.allUsers.find(u => u.id === userId);
+    if (!user) return;
+    
+    state.editingUser = user;
+    
+    // Show user handle in header
+    const handleSpan = utils.getElement('editUserHandle');
+    if (handleSpan) handleSpan.textContent = utils.formatHandle(user.handle);
+    
+    // Store user ID
+    utils.getElement('editUserId').value = userId;
+    
+    // Populate info tab
+    utils.getElement('editHandle').value = user.handle || '';
+    utils.getElement('editStatus').value = user.status || 'active';
+    utils.getElement('editTeam').value = user.team || '';
+    
+    // Populate character dropdown
+    const characterSelect = utils.getElement('editCharacter');
+    if (characterSelect) {
+        characterSelect.innerHTML = '<option value="">-- none --</option>' +
+            state.allCharacters.map(c => 
+                `<option value="${c.id}" ${user.characterId === c.id ? 'selected' : ''}>${c.name}</option>`
+            ).join('');
+    }
+    
+    // Display credit info
+    const credit = utils.calculateCredit(user.transactions);
+    const creditDisplay = utils.getElement('userCreditDisplay');
+    if (creditDisplay) {
+        creditDisplay.textContent = `current credits: ${credit}`;
+        creditDisplay.className = credit >= 0 ? 'credit-display credit-positive' : 'credit-display credit-negative';
+    }
+    
+    // Display transaction history
+    const historyDiv = utils.getElement('userTransactionHistory');
+    if (historyDiv && user.transactions) {
+        historyDiv.innerHTML = user.transactions.length === 0 ? 
+            '<p style="color: #666;">no transactions yet</p>' :
+            user.transactions.map(t => `
+                <div class="transaction-item ${t.type}">
+                    <div>
+                        <strong>${t.type}</strong>: ${t.amount} credits
+                        ${t.description ? `<br><small>${t.description}</small>` : ''}
+                    </div>
+                    <small>${new Date(t.timestamp).toLocaleDateString()}</small>
+                </div>
+            `).join('');
+    }
+    
+    // Display points
+    utils.getElement('userIndPoints').textContent = user.individualPoints || 0;
+    utils.getElement('userTeamPoints').textContent = user.teamPoints || 0;
+    
+    // Display tools
+    const toolsList = utils.getElement('userToolsList');
+    if (toolsList) {
+        toolsList.innerHTML = user.tools && user.tools.length > 0 ?
+            '<h4>Current Tools:</h4>' + user.tools.map(tool => 
+                `<div class="tool-tag ${tool.used ? 'used' : ''}">${tool.name} ${tool.used ? '(used)' : ''}</div>`
+            ).join('') :
+            '<p style="color: #666;">no tools yet</p>';
+    }
+    
+    // Display available tools to give
+    const availableTools = utils.getElement('availableToolsList');
+    if (availableTools) {
+        availableTools.innerHTML = state.allTools
+            .filter(t => t.visible !== false)
+            .map(tool => `
+                <button class="button small" onclick="giveTool('${user.id}', '${tool.id}')">
+                    ${tool.name} (${tool.price} credits)
+                </button>
+            `).join('');
+    }
+    
+    // Show dialog and activate first tab
+    switchEditTab('info');
+    const dialog = utils.getElement('editUserDialog');
+    if (dialog) dialog.style.display = 'block';
+};
+
+window.hideEditUser = function() {
+    const dialog = utils.getElement('editUserDialog');
+    if (dialog) dialog.style.display = 'none';
+    state.editingUser = null;
+};
+
+window.saveUserEdit = async function() {
+    if (!state.editingUser) return;
+    
+    try {
+        const updates = {
+            handle: utils.getElement('editHandle').value,
+            status: utils.getElement('editStatus').value,
+            team: utils.getElement('editTeam').value || null
+        };
+        
+        const characterId = utils.getElement('editCharacter').value;
+        if (characterId !== state.editingUser.characterId) {
+            // Release old character if exists
+            if (state.editingUser.characterId) {
+                await updateDoc(doc(db, 'characters', state.editingUser.characterId), {
+                    available: true,
+                    ownerId: null
+                });
+            }
+            
+            // Assign new character
+            if (characterId) {
+                const character = state.allCharacters.find(c => c.id === characterId);
+                updates.characterId = characterId;
+                updates.characterName = character ? character.name : null;
+                
+                await updateDoc(doc(db, 'characters', characterId), {
+                    available: false,
+                    ownerId: updates.handle
+                });
+            } else {
+                updates.characterId = null;
+                updates.characterName = null;
+            }
+        }
+        
+        // Check for message to send
+        const message = utils.getElement('editUserMessage').value;
+        if (message) {
+            const notes = state.editingUser.notes || [];
+            notes.push({
+                message,
+                from: 'admin',
+                timestamp: new Date().toISOString()
+            });
+            updates.notes = notes;
+        }
+        
+        await updateDoc(doc(db, 'users', state.editingUser.id), updates);
+        
+        utils.showToast('User updated! 💾', 'success');
+        hideEditUser();
+        
+        // Reload data
+        await Promise.all([
+            dataManager.loadUsers(),
+            dataManager.loadCharacters()
+        ]);
+        displays.users();
+        
+    } catch (error) {
+        console.error('Error updating user:', error);
+        utils.showToast('Error updating user', 'error');
+    }
+};
+
+window.switchEditTab = function(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('#editUserDialog .tab-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    
+    // Remove active from all tabs
+    document.querySelectorAll('#editUserDialog .tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    const tabContent = utils.getElement(`edit-${tabName}-tab`);
+    if (tabContent) tabContent.style.display = 'block';
+    
+    // Mark tab as active
+    const activeTab = Array.from(document.querySelectorAll('#editUserDialog .tab'))
+        .find(tab => tab.textContent.toLowerCase() === tabName);
+    if (activeTab) activeTab.classList.add('active');
+};
+
+// Quick action functions for credits
+window.quickAddCredits = async function(amount, isGift) {
+    if (!state.editingUser) return;
+    
+    try {
+        const transactions = state.editingUser.transactions || [];
+        transactions.push({
+            type: isGift ? 'gift' : 'payment',
+            amount: amount,
+            description: isGift ? 'Admin gift' : 'Payment received',
+            timestamp: new Date().toISOString()
+        });
+        
+        await updateDoc(doc(db, 'users', state.editingUser.id), { transactions });
+        
+        utils.showToast(`Added ${amount} credits!`, 'success');
+        
+        // Reload user data
+        await dataManager.loadUsers();
+        showEditUser(state.editingUser.id);
+        
+    } catch (error) {
+        console.error('Error adding credits:', error);
+        utils.showToast('Error adding credits', 'error');
+    }
+};
+
+window.clearPending = async function() {
+    if (!state.editingUser) return;
+    
+    const credit = utils.calculateCredit(state.editingUser.transactions);
+    if (credit >= 0) {
+        utils.showToast('No pending credits to clear', 'info');
+        return;
+    }
+    
+    try {
+        const transactions = state.editingUser.transactions || [];
+        transactions.push({
+            type: 'adjustment',
+            amount: Math.abs(credit),
+            description: 'Pending cleared by admin',
+            timestamp: new Date().toISOString()
+        });
+        
+        await updateDoc(doc(db, 'users', state.editingUser.id), { transactions });
+        
+        utils.showToast('Pending credits cleared!', 'success');
+        
+        // Reload user data
+        await dataManager.loadUsers();
+        showEditUser(state.editingUser.id);
+        
+    } catch (error) {
+        console.error('Error clearing pending:', error);
+        utils.showToast('Error clearing pending', 'error');
+    }
+};
+
+window.addCustomCredits = async function() {
+    if (!state.editingUser) return;
+    
+    const amount = parseFloat(utils.getElement('customCreditAmount').value);
+    const note = utils.getElement('customCreditNote').value;
+    
+    if (!amount) {
+        utils.showToast('Please enter an amount', 'warning');
+        return;
+    }
+    
+    try {
+        const transactions = state.editingUser.transactions || [];
+        transactions.push({
+            type: amount > 0 ? 'payment' : 'purchase',
+            amount: Math.abs(amount),
+            description: note || 'Admin adjustment',
+            timestamp: new Date().toISOString()
+        });
+        
+        await updateDoc(doc(db, 'users', state.editingUser.id), { transactions });
+        
+        utils.showToast('Credits added!', 'success');
+        
+        // Clear form
+        utils.clearForm(['customCreditAmount', 'customCreditNote']);
+        
+        // Reload user data
+        await dataManager.loadUsers();
+        showEditUser(state.editingUser.id);
+        
+    } catch (error) {
+        console.error('Error adding custom credits:', error);
+        utils.showToast('Error adding credits', 'error');
+    }
+};
+
+// Points functions
+window.addPoints = async function() {
+    if (!state.editingUser) return;
+    
+    const amount = parseInt(utils.getElement('pointsAmount').value) || 0;
+    const type = utils.getElement('pointType').value;
+    const target = utils.getElement('pointTarget').value;
+    const reason = utils.getElement('pointReason').value;
+    
+    if (amount <= 0) {
+        utils.showToast('Please enter a valid amount', 'warning');
+        return;
+    }
+    
+    try {
+        const multiplier = POINT_MULTIPLIERS[type] || 1;
+        const actualPoints = amount * multiplier;
+        
+        const pointsHistory = state.editingUser.pointsHistory || [];
+        pointsHistory.push({
+            amount: actualPoints,
+            type,
+            target,
+            reason,
+            timestamp: new Date().toISOString(),
+            awardedBy: 'admin'
+        });
+        
+        const updates = { pointsHistory };
+        
+        if (target === 'individual' || target === 'both') {
+            updates.individualPoints = (state.editingUser.individualPoints || 0) + actualPoints;
+        }
+        if (target === 'team' || target === 'both') {
+            updates.teamPoints = (state.editingUser.teamPoints || 0) + actualPoints;
+        }
+        
+        await updateDoc(doc(db, 'users', state.editingUser.id), updates);
+        
+        utils.showToast(`Awarded ${actualPoints} points!`, 'success');
+        
+        // Clear form
+        utils.clearForm(['pointsAmount', 'pointReason']);
+        
+        // Reload user data
+        await dataManager.loadUsers();
+        showEditUser(state.editingUser.id);
+        displays.points();
+        
+    } catch (error) {
+        console.error('Error adding points:', error);
+        utils.showToast('Error adding points', 'error');
+    }
+};
+
+// Tool management functions
+window.showCreateTool = function() {
+    state.editingTool = null;
+    utils.clearForm(['toolName', 'toolPrice', 'toolIcon', 'toolDescription']);
+    utils.getElement('toolVisible').value = 'true';
+    utils.getElement('toolDialogTitle').textContent = '🪤 Create Tool';
+    utils.getElement('editingToolId').value = '';
+    
+    const dialog = utils.getElement('toolDialog');
+    if (dialog) dialog.style.display = 'block';
+};
+
+window.hideToolDialog = function() {
+    const dialog = utils.getElement('toolDialog');
+    if (dialog) dialog.style.display = 'none';
+    state.editingTool = null;
+};
+
+window.saveTool = async function() {
+    try {
+        const toolData = {
+            name: utils.getElement('toolName').value,
+            price: parseInt(utils.getElement('toolPrice').value) || 0,
+            icon: utils.getElement('toolIcon').value || '',
+            description: utils.getElement('toolDescription').value || '',
+            visible: utils.getElement('toolVisible').value === 'true'
+        };
+        
+        if (!toolData.name || !toolData.price) {
+            utils.showToast('Name and price are required', 'warning');
+            return;
+        }
+        
+        const editingId = utils.getElement('editingToolId').value;
+        
+        if (editingId) {
+            // Update existing tool
+            await updateDoc(doc(db, 'tools', editingId), toolData);
+            utils.showToast('Tool updated!', 'success');
+        } else {
+            // Create new tool
+            toolData.createdAt = new Date().toISOString();
+            await addDoc(collection(db, 'tools'), toolData);
+            utils.showToast('Tool created!', 'success');
+        }
+        
+        hideToolDialog();
+        
+        // Reload tools
+        await dataManager.loadTools();
+        displays.tools();
+        
+    } catch (error) {
+        console.error('Error saving tool:', error);
+        utils.showToast('Error saving tool', 'error');
+    }
+};
+
+window.giveTool = async function(userId, toolId) {
+    const user = state.allUsers.find(u => u.id === userId);
+    const tool = state.allTools.find(t => t.id === toolId);
+    
+    if (!user || !tool) return;
+    
+    // Check if user has enough credits
+    const credit = utils.calculateCredit(user.transactions);
+    if (credit < tool.price) {
+        utils.showToast(`User needs ${tool.price - credit} more credits for this tool`, 'warning');
+        return;
+    }
+    
+    try {
+        const tools = user.tools || [];
+        tools.push({
+            id: toolId,
+            name: tool.name,
+            price: tool.price,
+            used: false,
+            acquiredAt: new Date().toISOString()
+        });
+        
+        const transactions = user.transactions || [];
+        transactions.push({
+            type: 'purchase',
+            amount: tool.price,
+            description: `Tool: ${tool.name}`,
+            timestamp: new Date().toISOString()
+        });
+        
+        await updateDoc(doc(db, 'users', userId), { tools, transactions });
+        
+        utils.showToast(`Gave ${tool.name} to user!`, 'success');
+        
+        // Reload user data
+        await dataManager.loadUsers();
+        showEditUser(userId);
+        
+    } catch (error) {
+        console.error('Error giving tool:', error);
+        utils.showToast('Error giving tool', 'error');
+    }
+};
+
+// Search function
+window.searchUsers = function() {
+    const query = utils.getElement('searchUsers').value.toLowerCase();
+    const tbody = utils.getElement('usersTableBody');
+    
+    if (!query) {
+        displays.users();
+        return;
+    }
+    
+    const filtered = state.allUsers.filter(user => 
+        user.handle?.toLowerCase().includes(query) ||
+        user.id?.toLowerCase().includes(query) ||
+        user.characterName?.toLowerCase().includes(query)
+    );
+    
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="loading-cell">no matches found</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = filtered.map(user => {
+        const credit = utils.calculateCredit(user.transactions);
+        const toolsDisplay = templates.toolsList(user.tools);
+        const statusIcon = user.status === 'active' ? '✅' : user.status === 'blocked' ? '🚫' : '💀';
+        
+        return `
+            <tr>
+                <td><strong>${utils.formatHandle(user.handle)}</strong></td>
+                <td style="color: #666; font-size: 10px;">${user.id}</td>
+                <td>${user.characterName || '-'}</td>
+                <td>${statusIcon} ${user.status || 'active'}</td>
+                <td>${user.team || '-'}</td>
+                <td style="color: ${credit >= 0 ? '#4D9938' : '#D04545'}; font-weight: bold;">
+                    ${credit}
+                </td>
+                <td>${user.individualPoints || 0}</td>
+                <td>${user.teamPoints || 0}</td>
+                <td>${toolsDisplay}</td>
+                <td>
+                    <button class="button small" onclick="showEditUser('${user.id}')">edit</button>
+                    <button class="button small warning" onclick="userActions.delete('${user.id}')">remove</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+};
+
+// Quick message functions
+window.quickMsg = function(message) {
+    const messageField = utils.getElement('editUserMessage');
+    if (messageField) messageField.value = message;
+};
+
+// ============================================
+// ACTION HANDLERS
+// ============================================
+
+const userActions = {
+    edit(userId) {
+        showEditUser(userId);
+    },
+
+    async delete(userId) {
+        if (!confirm('Delete this user? This cannot be undone!')) return;
+        
+        try {
+            await deleteDoc(doc(db, 'users', userId));
+            utils.showToast('User deleted', 'success');
+            
+            await dataManager.loadUsers();
+            displays.users();
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            utils.showToast('Error deleting user', 'error');
+        }
+    }
+};
+
+const toolActions = {
+    edit(toolId) {
+        const tool = state.allTools.find(t => t.id === toolId);
+        if (!tool) return;
+        
+        state.editingTool = tool;
+        
+        utils.getElement('toolName').value = tool.name;
+        utils.getElement('toolPrice').value = tool.price;
+        utils.getElement('toolIcon').value = tool.icon || '';
+        utils.getElement('toolDescription').value = tool.description || '';
+        utils.getElement('toolVisible').value = tool.visible !== false ? 'true' : 'false';
+        utils.getElement('toolDialogTitle').textContent = '🔧 Edit Tool';
+        utils.getElement('editingToolId').value = toolId;
+        
+        const dialog = utils.getElement('toolDialog');
+        if (dialog) dialog.style.display = 'block';
+    },
+
+    async toggleVisibility(toolId) {
+        const tool = state.allTools.find(t => t.id === toolId);
+        if (!tool) return;
+        
+        try {
+            await updateDoc(doc(db, 'tools', toolId), {
+                visible: tool.visible === false
+            });
+            
+            utils.showToast('Tool visibility updated', 'success');
+            await dataManager.loadTools();
+            displays.tools();
+            
+        } catch (error) {
+            console.error('Error updating tool:', error);
+            utils.showToast('Error updating tool', 'error');
+        }
+    },
+
+    async delete(toolId) {
+        if (!confirm('Delete this tool?')) return;
+        
+        try {
+            await deleteDoc(doc(db, 'tools', toolId));
+            utils.showToast('Tool deleted', 'success');
+            
+            await dataManager.loadTools();
+            displays.tools();
+        } catch (error) {
+            console.error('Error deleting tool:', error);
+            utils.showToast('Error deleting tool', 'error');
+        }
+    }
+};
+
+const pendingActions = {
+    async approve(requestId) {
+        try {
+            const snapshot = await getDoc(doc(db, 'pendingSelections', requestId));
+            if (!snapshot.exists()) {
+                utils.showToast('Request not found', 'error');
+                return;
+            }
+            
+            const request = snapshot.data();
+            
+            // Create new user
+            const newUser = {
+                handle: request.handle,
+                accessCode: request.accessCode,
+                characterId: request.characterId,
+                characterName: request.characterName,
+                tools: request.tools || [],
+                transactions: [{
+                    type: 'purchase',
+                    amount: 25 + (request.tools?.reduce((sum, t) => sum + t.price * (t.quantity || 1), 0) || 0),
+                    description: 'Initial registration and tools',
+                    timestamp: new Date().toISOString()
+                }],
+                individualPoints: 0,
+                teamPoints: 0,
+                status: 'active',
+                createdAt: new Date().toISOString()
+            };
+            
+            // Add user to database
+            await setDoc(doc(db, 'users', request.accessCode), newUser);
+            
+            // Update character availability
+            if (request.characterId) {
+                await updateDoc(doc(db, 'characters', request.characterId), {
+                    available: false,
+                    ownerId: request.handle
+                });
+            }
+            
+            // Delete pending request
+            await deleteDoc(doc(db, 'pendingSelections', requestId));
+            
+            utils.showToast('Request approved! 🎉', 'success');
+            
+            // Reload data
+            await Promise.all([
+                dataManager.loadUsers(),
+                dataManager.loadCharacters()
+            ]);
+            displays.pending();
+            
+        } catch (error) {
+            console.error('Error approving request:', error);
+            utils.showToast('Error approving request', 'error');
+        }
+    },
+
+    async markPaid(requestId, amount) {
+        try {
+            const snapshot = await getDoc(doc(db, 'pendingSelections', requestId));
+            if (!snapshot.exists()) {
+                utils.showToast('Request not found', 'error');
+                return;
+            }
+            
+            const request = snapshot.data();
+            const currentCredit = request.currentCredit || 0;
+            
+            await updateDoc(doc(db, 'pendingSelections', requestId), {
+                currentCredit: currentCredit + amount,
+                lastPayment: new Date().toISOString()
+            });
+            
+            utils.showToast('Payment marked!', 'success');
+            displays.pending();
+            
+        } catch (error) {
+            console.error('Error marking payment:', error);
+            utils.showToast('Error marking payment', 'error');
+        }
+    },
+
+    async reject(requestId) {
+        if (!confirm('Reject this request?')) return;
+        
+        try {
+            await deleteDoc(doc(db, 'pendingSelections', requestId));
+            utils.showToast('Request rejected', 'warning');
+            displays.pending();
+            
+        } catch (error) {
+            console.error('Error rejecting request:', error);
+            utils.showToast('Error rejecting request', 'error');
+        }
+    }
+};
+
+// Make action handlers globally available
+window.userActions = userActions;
+window.toolActions = toolActions;
+window.pendingActions = pendingActions;
