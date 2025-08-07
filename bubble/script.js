@@ -114,12 +114,10 @@ this.isTouch = ('ontouchstart' in window) ||
       this.burnSound = document.getElementById('burnSound');
 
         
-        // Prevent double-tap zoom on game container
         this.preventDoubleTapZoom();
     }
     
     preventDoubleTapZoom() {
-        // Prevent double-tap zoom on game container
         let lastTouchEnd = 0;
         this.gameContainer.addEventListener('touchend', (e) => {
             const now = Date.now();
@@ -130,14 +128,12 @@ this.isTouch = ('ontouchstart' in window) ||
             lastTouchEnd = now;
         }, { passive: false });
         
-        // Prevent pinch zoom
         this.gameContainer.addEventListener('touchstart', (e) => {
             if (e.touches.length > 1) {
                 e.preventDefault();
             }
         }, { passive: false });
         
-        // Prevent any zoom gestures
         document.addEventListener('gesturestart', (e) => {
             e.preventDefault();
         }, { passive: false });
@@ -145,8 +141,6 @@ this.isTouch = ('ontouchstart' in window) ||
         document.addEventListener('gesturechange', (e) => {
             e.preventDefault();
         }, { passive: false });
-        
-        // Disable double-click zoom
         this.gameContainer.addEventListener('dblclick', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -157,7 +151,6 @@ this.isTouch = ('ontouchstart' in window) ||
         this.startButton.addEventListener('click', () => this.handleStartClick());
         this.muteButton.addEventListener('click', () => this.toggleSound());
         
-        // Enter key support for start
         this.handleInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.handleStartClick();
@@ -199,8 +192,6 @@ this.isTouch = ('ontouchstart' in window) ||
         this.playerHandleDisplay.textContent = this.playerHandle;
         this.playerInfo.style.display = 'block';
         
-        // Always enable audio when starting the game
-        // (user interaction allows audio to play)
         this.enableAudio();
         this.startGame();
     }
@@ -247,7 +238,6 @@ this.isTouch = ('ontouchstart' in window) ||
                 this.bubblePopSound.currentTime = 0;
                 this.bubblePopSound.volume = 0.4 + Math.random() * 0.2; 
                 this.bubblePopSound.play().catch(e => {
-                    // Silently handle autoplay errors
                 });
             } catch (e) {
                 console.log('Bubble sound error:', e);
@@ -455,13 +445,11 @@ this.isTouch = ('ontouchstart' in window) ||
     e.preventDefault();
     e.stopPropagation();
     
-    // Check if already popping
     if (labubu.classList.contains('popping')) return;
     
     this.popLabubu(labubu);
 };
 
-// Add click handler for all devices
 labubu.addEventListener('click', handlePop);
 
         if (this.isTouch) {
@@ -469,19 +457,16 @@ labubu.addEventListener('click', handlePop);
         e.preventDefault();
         e.stopPropagation();
         
-        // Only check if already popping
         if (labubu.classList.contains('popping')) return;
         
         this.popLabubu(labubu);
     }, { passive: false });
     
-    // Prevent any drag behavior
     labubu.addEventListener('touchmove', (e) => {
         e.preventDefault();
         e.stopPropagation();
     }, { passive: false });
     
-    // Prevent touch end from triggering click
     labubu.addEventListener('touchend', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -511,12 +496,12 @@ labubu.addEventListener('click', handlePop);
 
     handleLabubuTap(e, labubu) {
         if (e.touches && e.touches.length > 1) {
-            return; // Ignore multi-touch
+            return; 
         }
         
         const now = Date.now();
-        if (this.isMobile && (now - this.lastTapTime) < 50) { // Reduced from 100ms to 50ms
-            return; // Too fast, ignore
+        if (this.isMobile && (now - this.lastTapTime) < 50) { 
+            return; 
         }
         this.lastTapTime = now;
         
@@ -535,7 +520,7 @@ labubu.addEventListener('click', handlePop);
         let dx = (Math.random() - 0.5) * 4 * this.baseSpeed; 
         let dy = (Math.random() - 0.5) * 4 * this.baseSpeed;
         
-        const moveInterval = this.isMobile ? 40 : 30;  // 25fps on mobile, 33fps on desktop
+        const moveInterval = this.isMobile ? 40 : 30;  
         
         labubu.moveInterval = setInterval(() => {
             if (!labubu.parentNode || !this.gameRunning) {
@@ -742,9 +727,7 @@ labubu.addEventListener('click', handlePop);
         if (victory) {
             const deviceNote = this.isMobile ? ' ON MOBILE MODE!' : '';
             resultMessage = `🔪🔥 OH HELLLL YA${deviceNote}! 🔥🔪<br><br>
-                <strong style="color: #ff3366;">PLAY INTERNET OLYMPICS 4 FREEEEEE</strong><br>
-                📸 Screenshot this & send to @kidgrandma on instagram<br>
-                your score has been saved to the leaderboard.`;
+        `;
             resultEmoji = '🔥 VICTORY 🔥';
             linksHtml = `
                 <div class="victory-links">
@@ -807,7 +790,6 @@ labubu.addEventListener('click', handlePop);
         this.gameContainer.appendChild(newStartScreen);
         this.startScreen = newStartScreen;
         
-        // Load and display leaderboard
         await this.loadAndDisplayLeaderboard();
     }
 
@@ -867,12 +849,9 @@ labubu.addEventListener('click', handlePop);
 }
 }
 
-// Initialize game when page loads
 window.addEventListener('load', () => {
     new LabubuWitchHunt();
 });
 
-// Handle window resize
 window.addEventListener('resize', () => {
-    // Game adapts automatically due to responsive CSS
 });

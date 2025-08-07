@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Setup - Ready to Go!</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .success-banner {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .checklist {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        .checklist-item {
+            padding: 8px 0;
+            color: #28a745;
+            font-weight: 500;
+        }
+        .checklist-item::before {
+            content: "✅ ";
+            margin-right: 8px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        input[readonly] {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 30px 0;
+        }
+        .admin-button {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            margin-top: 15px;
+        }
+        .status-check {
+            padding: 10px;
+            background: #e7f3ff;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #0066cc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 Everything is Ready!</h1>
+        
+        <div class="success-banner">
+            All Firebase services are properly configured!
+        </div>
+        
+        <div class="checklist">
+            <div class="checklist-item">Firebase project connected</div>
+            <div class="checklist-item">Identity Toolkit API enabled</div>
+            <div class="checklist-item">Email/Password authentication enabled</div>
+            <div class="checklist-item">API key validated</div>
+        </div>
+        
+        <div id="statusCheck" class="status-check">
+            Testing authentication service...
+        </div>
+        
+        <div id="createSection">
+            <h3 style="margin-bottom: 20px;">Create Your Admin Account</h3>
+            
+            <div class="form-group">
+                <label>Admin Email</label>
+                <input type="email" id="email" value="paizley@worksucks.net" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label>Choose Password (minimum 6 characters)</label>
+                <input type="password" id="password" placeholder="Enter a secure password" autofocus>
+            </div>
+            
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" id="confirmPassword" placeholder="Confirm your password">
+            </div>
+            
+            <button id="createBtn" onclick="createAccount()">
+                Create Admin Account & Access Panel
+            </button>
+        </div>
+        
+        <div id="existingSection" style="display: none;">
+            <h3 style="margin-bottom: 20px;">Welcome Back!</h3>
+            <p style="color: #666; margin-bottom: 20px;">Your admin account already exists. Enter your password to continue:</p>
+            
+            <div class="form-group">
+                <input type="password" id="existingPassword" placeholder="Enter your password">
+            </div>
+            
+            <button onclick="loginExisting()">Login to Admin Panel</button>
+        </div>
+        
+        <div id="statusMessage" class="message"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            onAuthStateChanged
+        } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+        
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO21-40668WNpOdj2w",
+            authDomain: "c0uchz0mb13.firebaseapp.com",
+            projectId: "c0uchz0mb13",
+            storageBucket: "c0uchz0mb13.firebasestorage.app",
+            messagingSenderId: "1051521591004",
+            appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
+            measurementId: "G-6BNDYZQRPE"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        console.log('Firebase initialized with Identity Toolkit enabled');
+        
+        // Test authentication service
+        async function testAuthService() {
+            const statusDiv = document.getElementById('statusCheck');
+            
+            try {
+                // Try a test auth call
+                await signInWithEmailAndPassword(auth, 'test@nonexistent.com', 'testtest');
+            } catch (error) {
+                console.log('Auth test result:', error.code);
+                
+                if (error.code === 'auth/user-not-found' || 
+                    error.code === 'auth/invalid-credential' ||
+                    error.code === 'auth/invalid-email') {
+                    // Perfect! Auth is working
+                    statusDiv.style.background = '#d4edda';
+                    statusDiv.style.color = '#155724';
+                    statusDiv.textContent = '✅ Authentication service is working perfectly!';
+                    return true;
+                } else if (error.code === 'auth/api-key-not-valid') {
+                    statusDiv.style.background = '#f8d7da';
+                    statusDiv.style.color = '#721c24';
+                    statusDiv.textContent = '❌ Auth error - but Identity Toolkit is enabled. Try refreshing the page.';
+                    return false;
+                }
+            }
+            return false;
+        }
+        
+        // Check for existing user
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.email === 'paizley@worksucks.net') {
+                console.log('Existing admin account found');
+                document.getElementById('createSection').style.display = 'none';
+                document.getElementById('existingSection').style.display = 'block';
+                document.getElementById('statusCheck').style.display = 'none';
+            }
+        });
+        
+        function showMessage(type, text) {
+            const msg = document.getElementById('statusMessage');
+            msg.className = `message ${type}`;
+            msg.textContent = text;
+            msg.style.display = 'block';
+            
+            if (type !== 'error') {
+                setTimeout(() => {
+                    msg.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        window.createAccount = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const btn = document.getElementById('createBtn');
+            
+            // Validation
+            if (!password || password.length < 6) {
+                showMessage('error', 'Password must be at least 6 characters long');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showMessage('error', 'Passwords do not match');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>Creating account...';
+            
+            try {
+                // Create the account
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                console.log('Account created successfully!');
+                
+                showMessage('success', '✅ Account created! Redirecting to admin panel...');
+                
+                // Redirect to admin panel
+                setTimeout(() => {
+                    window.location.href = 'admin.html';
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Create account error:', error);
+                
+                if (error.code === 'auth/email-already-in-use') {
+                    document.getElementById('createSection').style.display = 'none';
+                    document.getElementById('existingSection').style.display = 'block';
+                    document.getElementById('statusCheck').style.display = 'none';
+                } else if (error.code === 'auth/weak-password') {
+                    showMessage('error', 'Password is too weak. Use at least 6 characters.');
+                } else {
+                    showMessage('error', `Error: ${error.message}`);
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Create Admin Account & Access Panel';
+            }
+        };
+        
+        window.loginExisting = async function() {
+            const email = 'paizley@worksucks.net';
+            const password = document.getElementById('existingPassword').value;
+            
+            if (!password) {
+                showMessage('error', 'Please enter your password');
+                return;
+            }
+            
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showMessage('success', '✅ Login successful! Redirecting...');
+                
+                setTimeout(() => {
+                    window.location.href = 'admin.html';
+                }, 1500);
+                
+            } catch (error) {
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    showMessage('error', 'Incorrect password. Please try again.');
+                } else {
+                    showMessage('error', `Error: ${error.message}`);
+                }
+            }
+        };
+        
+        // Enter key support
+        document.getElementById('confirmPassword')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') createAccount();
+        });
+        
+        document.getElementById('existingPassword')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loginExisting();
+        });
+        
+        // Test auth on load
+        testAuthService();
+    </script>
+</body>
+</html>

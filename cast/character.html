@@ -7,24 +7,20 @@
     <link rel="stylesheet" href="character.css">
 </head>
 <body>
-    <!-- Video Background -->
     <video class="video-bg" id="videoBg" autoplay muted loop playsinline>
         <source src="../assets/cast/cast-access.mp4" type="video/mp4">
     </video>
     
-    <!-- Background Music -->
     <audio id="bgMusic" autoplay loop>
         <source src="../assets/cast/encore.mp3" type="audio/mpeg">
     </audio>
     
     <div class="main-container">
-        <!-- Header -->
         <div class="header">
             <h1>INTERNET OLYMPICS 2</h1>
             <p class="subtitle">SELECT UR CHARACTER</p>
         </div>
 
-        <!-- Access Code Entry -->
         <div class="access-code-container window-95" id="accessCodeContainer">
             <h2>ENTER ACCESS CODE</h2>
             <input type="text" 
@@ -36,13 +32,11 @@
             <div class="error-message" id="errorMessage">INVALID ACCESS CODE</div>
         </div>
 
-        <!-- View Toggle -->
         <div class="view-toggle" id="viewToggle">
             <button class="toggle-btn active" data-view="carousel">CAROUSEL</button>
             <button class="toggle-btn" data-view="grid">GRID</button>
         </div>
 
-        <!-- Character Selection - Carousel -->
         <div class="carousel-wrapper" id="carouselWrapper">
             <div class="carousel" id="carousel">
                 <div class="loading">Loading character discs...</div>
@@ -51,7 +45,6 @@
             <button class="nav-arrow next" id="nextBtn">›</button>
         </div>
 
-        <!-- Character Selection - Grid -->
         <div class="grid-wrapper" id="gridWrapper">
             <div class="discs-grid" id="discsGrid">
                 <div class="loading">Loading character discs...</div>
@@ -62,7 +55,6 @@
             ▓▒░ CLICK THE DISC TO SELECT UR CHARACTER ░▒▓
         </p>
 
-        <!-- Pending Status -->
         <div class="pending-status window-95" id="pendingStatus">
             <h3>YOUR SELECTION IS PENDING APPROVAL</h3>
             <div class="pending-disc" id="pendingDisc"></div>
@@ -71,13 +63,11 @@
             <button class="change-selection-btn" id="changeSelectionBtn">CHANGE SELECTION</button>
         </div>
 
-        <!-- Player Profile -->
         <div class="player-profile window-95" id="playerProfile">
             <div class="profile-title-container">
                 <h3><span id="profileTitle">YOUR PROFILE</span></h3>
             </div>
             
-            <!-- Moderator Note -->
             <div id="moderatorNote" class="moderator-note">
                 <p> 🎱 <span id="noteText"></span></p>
             </div>
@@ -85,13 +75,11 @@
             <div class="profile-disc" id="profileDisc"></div>
             <div class="profile-info" id="profileInfo"></div>
             
-            <!-- Credit Section -->
             <div id="creditSection" class="credit-section">
                 <h3>YOUR CREDITS: <span id="creditAmount">0</span></h3>
                 <button id="reopenShopBtn">SPEND CREDITS ON TOOLS</button>
             </div>
             
-            <!-- Payment Due -->
             <div id="paymentDue" class="payment-due">
                 <h3>FUNDS DUE: <span id="amountOwed">0</span></h3>
                 <p>Send dollaz to @worksucksdotnet</p>
@@ -102,7 +90,6 @@
         </div>
     </div>
 
-    <!-- Character Selection Modal (First Step) -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content window-95">
             <div class="modal-header">
@@ -116,7 +103,6 @@
                 <h2 class="character-name" id="characterName"></h2>
                 <p class="character-show" id="characterShow"></p>
                 
-                <!-- Add-ons Question Modal -->
                 <div class="addons-question" id="addonsQuestion">
                     <div class="weapons-preview">
                         <img src="../assets/cast/weapons.png" alt="Cool Weapons" class="weapons-preview-img">
@@ -129,7 +115,6 @@
                     </div>
                 </div>
                 
-                <!-- Weapons Section (Hidden initially) -->
                 <div class="weapons-section" id="weaponsSection" style="display: none;">
                     <h3 class="weapons-title">▓▒░ COOL STUFF & WEAP0NZ ░▒▓</h3>
                     <div class="weapons-grid" id="weaponsGrid"></div>
@@ -139,7 +124,6 @@
                         <button class="checkout-btn" id="checkoutBtn">ADD TO TAB & CHECKOUT →</button>
                         <button class="skip-btn" id="skipBtn">ACTUALLY, SKIP WEAPONS →</button>
                         
-                        <!-- Payment Instructions -->
                         <div class="payment-modal pending" id="paymentModal">
                             <div class="pending-badge">PENDING!</div>
                             <h3>🍓🎱CHILL N WAIT 4 MOD APPROVAL🍓🎱</h3>
@@ -169,7 +153,6 @@
         </div>
     </div>
 
-    <!-- Firebase Scripts -->
     <script type="module" src="character.js"></script>
 </body>
 </html>

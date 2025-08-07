@@ -13,7 +13,6 @@ body {
     position: relative;
 }
 
-/* Video Background */
 .video-bg {
     position: fixed;
     top: 0;
@@ -25,7 +24,6 @@ body {
     opacity: 0.7;
 }
 
-/* Windows 95 Base Styles */
 .window-95 {
     background: #c0c0c0;
     border: 2px solid;
@@ -33,7 +31,6 @@ body {
     box-shadow: inset -1px -1px #808080, inset 1px 1px #dfdfdf;
 }
 
-/* Main Container */
 .main-container {
     min-height: 100vh;
     padding: 20px;
@@ -41,7 +38,6 @@ body {
     background: transparent;
 }
 
-/* Header */
 .header {
     text-align: center;
     margin-bottom: 40px;
@@ -66,7 +62,6 @@ body {
     text-shadow: 2px 2px #000;
 }
 
-/* Access Code Entry */
 .access-code-container {
     max-width: 400px;
     width: 90%;
@@ -127,7 +122,6 @@ body {
     font-weight: bold;
 }
 
-/* View Toggle */
 .view-toggle {
     text-align: center;
     margin-bottom: 30px;
@@ -157,7 +151,6 @@ body {
     box-shadow: inset -1px -1px #00cc00, inset 1px 1px #66ff66;
 }
 
-/* Carousel Styles */
 .carousel-wrapper {
     position: relative;
     max-width: 1200px;
@@ -215,7 +208,6 @@ body {
     pointer-events: none;
 }
 
-/* Navigation Arrows */
 .nav-arrow {
     position: absolute;
     top: 50%;
@@ -247,7 +239,6 @@ body {
 .nav-arrow.prev { left: 10px; }
 .nav-arrow.next { right: 10px; }
 
-/* Grid View */
 .grid-wrapper {
     display: none;
     max-width: 1200px;
@@ -279,7 +270,6 @@ body {
     display: block;
 }
 
-/* Add-ons Question Styles */
 .addons-question {
     text-align: center;
     padding: 20px;
@@ -365,7 +355,6 @@ body {
     border-color: #000000 #ffffff #ffffff #000000;
 }
 
-/* Modal Styles */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -771,7 +760,6 @@ body {
     51%, 100% { opacity: 0.3; }
 }
 
-/* Pending Status */
 .pending-status {
     background: #c0c0c0;
     border: 2px solid;
@@ -819,7 +807,6 @@ body {
     box-shadow: inset -1px -1px #00cccc, inset 1px 1px #66ffff;
 }
 
-/* Player Profile */
 .player-profile {
     background: #c0c0c0;
     border: 2px solid;
@@ -927,7 +914,6 @@ body {
     font-weight: bold;
 }
 
-/* Profile Stats */
 .profile-stats-simple {
     background: #e0e0e0;
     border: 2px solid;
@@ -943,7 +929,6 @@ body {
     justify-content: space-between;
 }
 
-/* Tools Display */
 .tools-simple {
     background: #f0f0f0;
     border: 2px solid;
@@ -1027,7 +1012,6 @@ body {
     line-height: 1.2;
 }
 
-/* Credit Section */
 .credit-section {
     display: none;
     text-align: center;
@@ -1054,7 +1038,6 @@ body {
     text-transform: uppercase;
 }
 
-/* Payment Due */
 .payment-due {
     display: none;
     text-align: center;
@@ -1071,7 +1054,6 @@ body {
     color: #fff;
 }
 
-/* Utility Classes */
 .emoji-line {
     font-size: 24px;
     margin: 20px 0;
@@ -1116,7 +1098,6 @@ body {
     text-shadow: 1px 1px #ff00ff;
 }
 
-/* Responsive Design */
 @media (min-width: 480px) {
     .weapons-grid {
         grid-template-columns: repeat(3, 1fr);
@@ -1140,7 +1121,6 @@ body {
     }
 }
 
-/* Mobile Adjustments */
 @media (max-width: 768px) {
     .modal-content {
         width: 95%;
@@ -1305,7 +1285,6 @@ body {
     }
 }
 
-/* iPhone 12/13/14 and similar (390px) */
 @media (max-width: 390px) {
     .main-container {
         padding: 10px;

@@ -1,4 +1,3 @@
-// Import Firebase modules
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
 import { 
     getFirestore, 
@@ -16,7 +15,6 @@ import {
     arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
-// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO21-40668WNpOdj2w",
     authDomain: "c0uchz0mb13.firebaseapp.com",
@@ -27,13 +25,11 @@ const firebaseConfig = {
     measurementId: "G-6BNDYZQRPE"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 console.log('Character.js loaded');
 
-// Transaction types (matching admin.js)
 const TRANSACTION_TYPES = {
     PAYMENT: 'payment',
     PURCHASE: 'purchase',
@@ -42,7 +38,6 @@ const TRANSACTION_TYPES = {
     GIFT: 'gift'
 };
 
-// Global state management
 const state = {
     characters: [],
     availableCharacters: [],
@@ -58,10 +53,9 @@ const state = {
     allTools: [],
     approvalUnsubscribe: null,
     userCredit: 0,
-    submissionInProgress: false // Add flag to prevent duplicate submissions
+    submissionInProgress: false 
 };
 
-// Tool icon mapping
 const toolIconMap = {
     'LABUBU VOODOO': 'labubu-voodoo.png',
     'KOOL-AID KILLA': 'kool-aid-life.png',
@@ -71,7 +65,6 @@ const toolIconMap = {
     'BLESSED BEYBLADE': 'blessed-beyblade.png'
 };
 
-// Calculate credit from transactions (matching admin.js)
 function calculateCredit(transactions = []) {
     return transactions.reduce((balance, t) => {
         if (['payment', 'refund', 'gift'].includes(t.type)) {
@@ -85,7 +78,6 @@ function calculateCredit(transactions = []) {
     }, 0);
 }
 
-// DOM Elements
 const elements = {
     videoBg: document.getElementById('videoBg'),
     bgMusic: document.getElementById('bgMusic'),
@@ -106,7 +98,6 @@ const elements = {
     weaponsSection: document.getElementById('weaponsSection')
 };
 
-// Initialize music playback
 function initMusic() {
     const bgMusic = elements.bgMusic;
     if (bgMusic) {
@@ -135,7 +126,6 @@ function initMusic() {
     }
 }
 
-// Load tools from Firebase
 async function loadToolsFromFirebase() {
     try {
         const snapshot = await getDocs(collection(db, 'tools'));
@@ -143,7 +133,6 @@ async function loadToolsFromFirebase() {
         
         snapshot.forEach(doc => {
             const toolData = doc.data();
-            // Only add visible tools
             if (toolData.visible !== false) {
                 state.allTools.push({
                     id: doc.id,
@@ -160,7 +149,6 @@ async function loadToolsFromFirebase() {
     }
 }
 
-// Validate access code
 async function validateAccessCode() {
     const code = elements.accessCodeInput.value.toUpperCase();
     console.log('Validating access code:', code);
@@ -175,7 +163,6 @@ async function validateAccessCode() {
             const userData = userDoc.data();
             console.log('User data:', userData);
             
-            // Check if user is blocked or dead
             if (userData.status === 'blocked' || userData.status === 'dead') {
                 elements.errorMessage.textContent = 
                     userData.status === 'blocked' ? 'NO ENTRY - UR BLOCKED 🚫' : 'SORRY UR DEAD 💀 RIP';
@@ -186,26 +173,21 @@ async function validateAccessCode() {
             state.currentAccessCode = code;
             state.currentUser = userData;
             
-            // Load tools from Firebase
             await loadToolsFromFirebase();
             
-            // Switch video background
             if (elements.videoBg) {
                 elements.videoBg.src = '../assets/cast/loop-bg.mp4';
                 elements.videoBg.load();
                 elements.videoBg.play();
             }
             
-            // Hide access code screen
             elements.accessCodeContainer.style.display = 'none';
             
-            // Check if user already has a character
             if (userData.characterId) {
                 console.log('User has character, showing profile');
                 showPlayerProfile(userData);
             } else {
                 console.log('User needs character, showing selection');
-                // Go straight to character selection
                 checkPendingSelection(state.currentAccessCode);
             }
             
@@ -218,7 +200,6 @@ async function validateAccessCode() {
     }
 }
 
-// Check for pending selections
 async function checkPendingSelection(accessCode) {
     const q = query(collection(db, 'pendingSelections'), where('accessCode', '==', accessCode));
     const querySnapshot = await getDocs(q);
@@ -229,7 +210,6 @@ async function checkPendingSelection(accessCode) {
         const pendingData = pendingDoc.data();
         showPendingStatus(pendingData);
     } else {
-        // Show character selection
         elements.viewToggle.style.display = 'block';
         elements.carouselWrapper.style.display = 'block';
         elements.instructions.style.display = 'block';
@@ -237,9 +217,7 @@ async function checkPendingSelection(accessCode) {
     }
 }
 
-// Show pending status
 function showPendingStatus(pendingData) {
-    // Hide character selection elements
     elements.viewToggle.style.display = 'none';
     elements.carouselWrapper.style.display = 'none';
     elements.gridWrapper.style.display = 'none';
@@ -276,18 +254,15 @@ function showPendingStatus(pendingData) {
     
     elements.pendingStatus.style.display = 'block';
     
-    // Start monitoring
     startApprovalMonitoring(state.pendingSelectionId);
 }
 
-// Change selection
 async function changeSelection() {
     if (state.pendingSelectionId) {
         try {
             await deleteDoc(doc(db, 'pendingSelections', state.pendingSelectionId));
             state.pendingSelectionId = null;
             
-            // Hide pending status and show selection
             elements.pendingStatus.style.display = 'none';
             elements.viewToggle.style.display = 'block';
             elements.carouselWrapper.style.display = 'block';
@@ -300,16 +275,13 @@ async function changeSelection() {
     }
 }
 
-// Show player profile
 async function showPlayerProfile(userData) {
-    // Refresh user data
     const userDoc = await getDoc(doc(db, 'users', state.currentAccessCode));
     if (userDoc.exists()) {
         userData = userDoc.data();
         state.currentUser = userData;
     }
     
-    // Hide character selection elements
     elements.viewToggle.style.display = 'none';
     elements.carouselWrapper.style.display = 'none';
     elements.gridWrapper.style.display = 'none';
@@ -321,16 +293,13 @@ async function showPlayerProfile(userData) {
     const discDiv = document.getElementById('profileDisc');
     const infoDiv = document.getElementById('profileInfo');
     
-    // Show disc image
     if (userData.characterId) {
         discDiv.innerHTML = `<img src="../assets/cast/cast-members/${userData.characterId}-disc.png" alt="${userData.characterName}">`;
     }
     
-    // Calculate credits using transaction system
     const credit = userData.credit || calculateCredit(userData.transactions || []);
     console.log('Profile credit:', credit);
     
-    // Show credit or payment due
     if (credit > 0) {
         document.getElementById('creditSection').style.display = 'block';
         document.getElementById('creditAmount').textContent = credit;
@@ -345,7 +314,6 @@ async function showPlayerProfile(userData) {
         document.getElementById('paymentDue').style.display = 'none';
     }
     
-    // Check for moderator note
     if (userData.moderatorNote) {
         document.getElementById('moderatorNote').style.display = 'block';
         document.getElementById('noteText').textContent = userData.moderatorNote;
@@ -353,15 +321,12 @@ async function showPlayerProfile(userData) {
         document.getElementById('moderatorNote').style.display = 'none';
     }
     
-    // Get character info
     const show = await getCharacterShow(userData.characterId);
     
-    // Create tools list with icons
     let toolsList = '';
     const allTools = [...(userData.tools || [])];
     
     if (allTools.length > 0) {
-        // Group tools by name
         const toolCounts = {};
         allTools.forEach(tool => {
             if (!toolCounts[tool.name]) {
@@ -371,7 +336,6 @@ async function showPlayerProfile(userData) {
             if (tool.used) toolCounts[tool.name].used++;
         });
         
-        // Create tools display
         const toolsHtml = Object.entries(toolCounts).map(([toolName, data]) => {
             const iconFile = toolIconMap[toolName] || 'default-tool.png';
             const isUsed = data.used === data.count;
@@ -393,7 +357,6 @@ async function showPlayerProfile(userData) {
         toolsList = '<p style="text-align: center; color: #666;">no weapons yet... get some!! 🛒</p>';
     }
     
-    // Build info HTML
     infoDiv.innerHTML = `
         <p><strong>Character:</strong> ${userData.characterName || 'None'}</p>
         <p><strong>Show:</strong> ${show}</p>
@@ -421,7 +384,6 @@ async function showPlayerProfile(userData) {
     elements.playerProfile.style.display = 'block';
 }
 
-// Get character show info
 async function getCharacterShow(characterId) {
     if (!characterId) return 'No character selected';
     
@@ -436,11 +398,9 @@ async function getCharacterShow(characterId) {
     return 'Unknown Show';
 }
 
-// Switch view between carousel and grid
 function switchView(view) {
     state.currentView = view;
     
-    // Update toggle buttons
     document.querySelectorAll('.toggle-btn').forEach(btn => {
         btn.classList.remove('active');
         if (btn.dataset.view === view) {
@@ -448,7 +408,6 @@ function switchView(view) {
         }
     });
     
-    // Show/hide views
     if (view === 'carousel') {
         elements.carouselWrapper.style.display = 'block';
         elements.gridWrapper.style.display = 'none';
@@ -458,7 +417,6 @@ function switchView(view) {
     }
 }
 
-// Load characters from Firebase
 async function loadCharacters() {
     console.log('Starting to load characters...');
     try {
@@ -487,7 +445,6 @@ async function loadCharacters() {
     }
 }
 
-// Initialize carousel
 function initCarousel() {
     const carousel = elements.carousel;
     carousel.innerHTML = '';
@@ -505,14 +462,12 @@ function initCarousel() {
         sleeve.appendChild(img);
         carousel.appendChild(sleeve);
 
-        // Click handler for disc selection
         sleeve.addEventListener('click', () => selectCharacter(char));
     });
 
     updateCarousel();
 }
 
-// Initialize grid view
 function initGrid() {
     const grid = elements.discsGrid;
     grid.innerHTML = '';
@@ -529,12 +484,10 @@ function initGrid() {
         gridDisc.appendChild(img);
         grid.appendChild(gridDisc);
 
-        // Click handler
         gridDisc.addEventListener('click', () => selectCharacter(char));
     });
 }
 
-// Update carousel positions
 function updateCarousel() {
     const sleeves = document.querySelectorAll('.disc-sleeve');
     
@@ -555,7 +508,6 @@ function updateCarousel() {
     });
 }
 
-// Navigate carousel
 function navigateCarousel(direction) {
     if (direction === 'prev') {
         state.currentIndex = (state.currentIndex - 1 + state.availableCharacters.length) % state.availableCharacters.length;
@@ -565,13 +517,11 @@ function navigateCarousel(direction) {
     updateCarousel();
 }
 
-// Character selection
 async function selectCharacter(character) {
     state.currentCharacter = character;
     state.selectedWeapons = {};
-    state.submissionInProgress = false; // Reset submission flag
+    state.submissionInProgress = false; 
     
-    // Refresh user data to ensure we have latest tools
     try {
         const userDoc = await getDoc(doc(db, 'users', state.currentAccessCode));
         if (userDoc.exists()) {
@@ -582,82 +532,67 @@ async function selectCharacter(character) {
         console.error('Error refreshing user data:', error);
     }
     
-    // Update modal content
     document.getElementById('modalDiscImg').src = `../assets/cast/cast-members/${character.id}-disc.png`;
     document.getElementById('characterName').textContent = character.name;
     document.getElementById('characterShow').textContent = character.show;
     
-    // Check game pass and credit status
     const totalCredit = calculateCredit(state.currentUser.transactions || []);
     const hasGamePass = (state.currentUser.tools || []).some(tool => 
         tool.name && tool.name.toUpperCase() === 'GAME PASS'
     );
     
-    // Update the add-ons question based on status
     const priceNote = document.querySelector('.price-note');
     const questionTitle = document.querySelector('.question-title');
     
     if (!hasGamePass) {
-        // User needs game pass first
         questionTitle.textContent = 'GAME PASS REQUIRED ($25) - WANT ANY WEAPONS TOO?';
         priceNote.innerHTML = `<span style="color: #ff0000;">⚠️ u need game pass to play (${totalCredit >= 25 ? 'using credits' : '$25'})</span>`;
     } else if (totalCredit > 0) {
-        // Has game pass and credits
         questionTitle.textContent = 'WANT TO SPEND YOUR CREDITS ON WEAPONS?';
         priceNote.innerHTML = `u got <span style="color: #00ff00;">${totalCredit} credits</span> to spend!`;
     } else {
-        // Has game pass but no credits
         questionTitle.textContent = 'DO YOU WANT TO BUY ANY ADD-ONS OR WEAPONS?';
         priceNote.innerHTML = 'stuff starts at <span class="small-price">$25</span>';
     }
     
-    // Show add-ons question first, hide weapons section
     elements.addonsQuestion.style.display = 'block';
     elements.weaponsSection.style.display = 'none';
     
     elements.modalOverlay.classList.add('active');
 }
 
-// Handle "Yes" to add-ons
 function showWeaponsStore() {
     elements.addonsQuestion.style.display = 'none';
     elements.weaponsSection.style.display = 'block';
     
-    // Calculate available credits
     const totalCredit = calculateCredit(state.currentUser.transactions || []);
     const hasGamePass = (state.currentUser.tools || []).some(tool => 
         tool.name && tool.name.toUpperCase() === 'GAME PASS'
     );
     
-    // Generate weapons grid
     const weaponsGrid = document.getElementById('weaponsGrid');
     weaponsGrid.innerHTML = '';
     
-    // Add all tools
     state.allTools.forEach((tool, index) => {
         const weaponEl = document.createElement('div');
         weaponEl.className = 'weapon-item';
         weaponEl.dataset.index = index;
         weaponEl.dataset.toolId = tool.id;
         
-        // Check if user already owns this tool
         const userOwnsThis = (state.currentUser.tools || []).some(userTool => 
             userTool.name && userTool.name.toUpperCase() === tool.name.toUpperCase()
         );
         
-        // Special handling for game pass
         if (tool.name === 'GAME PASS') {
             if (userOwnsThis) {
                 weaponEl.className += ' already-owned';
                 weaponEl.style.opacity = '0.5';
                 weaponEl.style.cursor = 'not-allowed';
             } else if (!hasGamePass && totalCredit < 25) {
-                // User needs game pass - auto-select it
                 weaponEl.className += ' required-gamepass';
                 weaponEl.style.border = '3px solid #ff0000';
                 weaponEl.style.background = 'rgba(255, 255, 0, 0.1)';
                 
-                // Auto-select game pass
                 state.selectedWeapons[index] = {
                     tool: tool,
                     quantity: 1,
@@ -681,7 +616,6 @@ function showWeaponsStore() {
             </div>
         `;
         
-        // Only allow clicking if not mandatory game pass AND not already owned
         if (!(tool.name === 'GAME PASS' && !hasGamePass && totalCredit < 25) && !userOwnsThis) {
             weaponEl.addEventListener('click', () => toggleWeapon(index, tool));
         }
@@ -691,7 +625,6 @@ function showWeaponsStore() {
     
     updateTotal();
     
-    // Reset checkout state
     document.getElementById('checkoutBtn').style.display = 'block';
     document.getElementById('skipBtn').style.display = 'block';
     document.getElementById('paymentModal').style.display = 'none';
@@ -700,30 +633,24 @@ function showWeaponsStore() {
     document.getElementById('skipBtn').disabled = false;
 }
 
-// Handle "No" to add-ons - go straight to approval (no weapons modal)
 async function skipAddonsAndCheckout() {
     if (!state.currentCharacter || !state.currentAccessCode || state.submissionInProgress) return;
     
-    state.submissionInProgress = true; // Set flag to prevent duplicate submissions
+    state.submissionInProgress = true; 
     
     console.log('Skip and checkout - submitting selection for:', state.currentAccessCode);
     
-    // Hide add-ons question
     elements.addonsQuestion.style.display = 'none';
-    // Show weapons section container but hide the actual weapons
     elements.weaponsSection.style.display = 'block';
     
-    // Hide the weapons grid and title
     document.getElementById('weaponsGrid').style.display = 'none';
     document.querySelector('.weapons-title').style.display = 'none';
     
-    // Hide checkout/skip buttons, show payment modal
     document.getElementById('checkoutBtn').style.display = 'none';
     document.getElementById('skipBtn').style.display = 'none';
     document.getElementById('paymentModal').style.display = 'block';
     document.getElementById('startOverBtn').style.display = 'block';
     
-    // Hide the total price div since they're not buying weapons
     document.getElementById('totalPriceDiv').style.display = 'none';
     
     try {
@@ -732,15 +659,13 @@ async function skipAddonsAndCheckout() {
         
         console.log('User status:', { hasGamePass, totalCredit });
         
-        // Character is FREE - only need game pass if they don't have it
         const tools = [];
         let totalCost = 0;
         let toolsCost = 0;
         
         if (!hasGamePass) {
-            // Need to buy game pass ONLY
             tools.push({ name: 'GAME PASS', price: 25, used: false });
-            toolsCost = 25; // Only game pass costs money
+            toolsCost = 25;
             totalCost = Math.max(0, 25 - totalCredit);
         }
         
@@ -750,11 +675,11 @@ async function skipAddonsAndCheckout() {
             characterId: state.currentCharacter.id,
             characterName: state.currentCharacter.name,
             tools: tools,
-            totalCost: totalCost,  // Amount they need to pay (after credits)
-            toolsCost: toolsCost,   // Total cost of items (just game pass if needed)
+            totalCost: totalCost, 
+            toolsCost: toolsCost,  
             currentCredit: totalCredit,
             needsGamePass: !hasGamePass,
-            characterCost: 0,  // CHARACTER IS FREE
+            characterCost: 0,  
             status: 'pending',
             submittedAt: new Date().toISOString()
         };
@@ -766,13 +691,11 @@ async function skipAddonsAndCheckout() {
         
         console.log('Successfully created pending selection:', docRef.id);
         
-        // Start monitoring for approval
         startApprovalMonitoring(docRef.id);
         
-        // Update payment message based on game pass status
         const paymentMsg = document.getElementById('paymentMessage');
         if (!hasGamePass) {
-            // Needs game pass ONLY (not character)
+           
             if (totalCost > 0) {
                 paymentMsg.innerHTML = `
                     <span style="font-size: 24px; color: #ffff00;">💸 GAME PASS: <span style="font-size: 14px;">$</span>${totalCost} 💸</span><br>
@@ -780,7 +703,6 @@ async function skipAddonsAndCheckout() {
                 `;
                 document.querySelector('.payment-handles').style.display = 'block';
             } else {
-                // Has credit to cover game pass
                 paymentMsg.innerHTML = `
                     <span style="font-size: 24px; color: #00ff00;">✨ USING CREDITS ✨</span><br>
                     <span style="font-size: 14px;">25 credz for game pass</span>
@@ -788,7 +710,6 @@ async function skipAddonsAndCheckout() {
                 document.querySelector('.payment-handles').style.display = 'none';
             }
         } else {
-            // Already has game pass - character is FREE, no payment needed
             paymentMsg.innerHTML = `
                 <span style="font-size: 24px; color: #00ff00;">✨ CHARACTER READY! ✨</span><br>
                 <span style="font-size: 14px;">u got game pass already!</span>
@@ -803,7 +724,6 @@ async function skipAddonsAndCheckout() {
     }
 }
 
-// Toggle weapon selection
 function toggleWeapon(index, tool) {
     const weaponEl = document.querySelector(`.weapon-item[data-index="${index}"]`);
     if (!weaponEl) return;
@@ -822,7 +742,6 @@ function toggleWeapon(index, tool) {
     updateTotal();
 }
 
-// Update total price
 function updateTotal() {
     let total = 0;
     let hasRequiredGamePass = false;
@@ -842,7 +761,6 @@ function updateTotal() {
     }
 }
 
-// Skip weapons (from weapons view)
 async function skipWeaponsFromStore() {
     if (!state.currentCharacter || !state.currentAccessCode || state.submissionInProgress) return;
     
@@ -850,14 +768,12 @@ async function skipWeaponsFromStore() {
     
     console.log('Skip weapons from store - submitting selection for:', state.currentAccessCode);
     
-    // Hide weapons grid and buttons
     document.getElementById('weaponsGrid').style.display = 'none';
     document.querySelector('.weapons-title').style.display = 'none';
     document.getElementById('checkoutBtn').style.display = 'none';
     document.getElementById('skipBtn').style.display = 'none';
     document.getElementById('totalPriceDiv').style.display = 'none';
     
-    // Show payment modal
     document.getElementById('paymentModal').style.display = 'block';
     document.getElementById('startOverBtn').style.display = 'block';
     
@@ -867,14 +783,13 @@ async function skipWeaponsFromStore() {
         
         console.log('Skip weapons - user status:', { hasGamePass, totalCredit });
         
-        // Character is FREE - only need game pass if they don't have it
         const tools = [];
         let totalCost = 0;
         let toolsCost = 0;
         
         if (!hasGamePass) {
             tools.push({ name: 'GAME PASS', price: 25, used: false });
-            toolsCost = 25; // Only game pass costs money
+            toolsCost = 25; 
             totalCost = Math.max(0, 25 - totalCredit);
         }
         
@@ -884,11 +799,11 @@ async function skipWeaponsFromStore() {
             characterId: state.currentCharacter.id,
             characterName: state.currentCharacter.name,
             tools: tools,
-            totalCost: totalCost,  // Amount they need to pay
-            toolsCost: toolsCost,   // Total cost of items (just game pass)
+            totalCost: totalCost,  
+            toolsCost: toolsCost,   
             currentCredit: totalCredit,
             needsGamePass: !hasGamePass,
-            characterCost: 0,  // CHARACTER IS FREE
+            characterCost: 0,  
             status: 'pending',
             submittedAt: new Date().toISOString()
         };
@@ -902,7 +817,6 @@ async function skipWeaponsFromStore() {
         
         startApprovalMonitoring(docRef.id);
         
-        // Update payment message
         const paymentMsg = document.getElementById('paymentMessage');
         if (!hasGamePass && totalCost > 0) {
             paymentMsg.innerHTML = `
@@ -922,18 +836,16 @@ async function skipWeaponsFromStore() {
         console.error('Error submitting selection:', error);
         alert('Error submitting selection: ' + error.message);
         state.submissionInProgress = false;
-        // Show elements again on error
         document.getElementById('checkoutBtn').style.display = 'block';
         document.getElementById('skipBtn').style.display = 'block';
         document.getElementById('totalPriceDiv').style.display = 'block';
     }
 }
 
-// Proceed to checkout with weapons
 async function proceedToCheckout() {
     if (!state.currentCharacter || !state.currentAccessCode || state.submissionInProgress) return;
     
-    state.submissionInProgress = true; // Set flag to prevent duplicate submissions
+    state.submissionInProgress = true; 
     
     console.log('Proceed to checkout - submitting selection for:', state.currentAccessCode);
     
@@ -943,16 +855,13 @@ async function proceedToCheckout() {
     skipBtn.disabled = true;
     btn.textContent = 'SUBMITTING...';
     
-    // Hide the weapons grid and title after checkout
     document.getElementById('weaponsGrid').style.display = 'none';
     document.querySelector('.weapons-title').style.display = 'none';
     
-    // Hide the checkout buttons and total price
     document.getElementById('checkoutBtn').style.display = 'none';
     document.getElementById('skipBtn').style.display = 'none';
     document.getElementById('totalPriceDiv').style.display = 'none';
     
-    // Show payment modal
     document.getElementById('paymentModal').style.display = 'block';
     document.getElementById('startOverBtn').style.display = 'block';
     
@@ -965,15 +874,13 @@ async function proceedToCheckout() {
         console.log('User has game pass:', hasGamePass);
         console.log('Selected weapons:', state.selectedWeapons);
         
-        // Add game pass if needed
         if (!hasGamePass) {
             selectedTools.push({ name: 'GAME PASS', price: 25, used: false });
             totalToolsCost += 25;
         }
         
-        // Convert selected weapons to array
         for (const [index, data] of Object.entries(state.selectedWeapons)) {
-            // Skip if it's the mandatory game pass (already added above)
+          
             if (data.mandatory && data.tool.name === 'GAME PASS') continue;
             
             for (let i = 0; i < data.quantity; i++) {
@@ -986,7 +893,6 @@ async function proceedToCheckout() {
             totalToolsCost += data.tool.price * data.quantity;
         }
         
-        // Calculate credits
         const totalPayments = calculateCredit(state.currentUser.transactions || []);
         const creditsNeeded = Math.max(0, totalToolsCost - totalPayments);
         
@@ -1013,10 +919,8 @@ async function proceedToCheckout() {
         
         console.log('Successfully created pending selection:', docRef.id);
         
-        // Start monitoring
         startApprovalMonitoring(docRef.id);
         
-        // Update payment message
         const paymentMsg = document.getElementById('paymentMessage');
         if (creditsNeeded > 0) {
             paymentMsg.innerHTML = `
@@ -1039,27 +943,22 @@ async function proceedToCheckout() {
         skipBtn.disabled = false;
         btn.textContent = 'ADD TO TAB & CHECKOUT →';
         state.submissionInProgress = false;
-        // Show elements again on error
         document.getElementById('checkoutBtn').style.display = 'block';
         document.getElementById('skipBtn').style.display = 'block';
         document.getElementById('totalPriceDiv').style.display = 'block';
     }
 }
 
-// Monitor for approval
 function startApprovalMonitoring(pendingId) {
     if (!pendingId) return;
     
-    // Clean up any existing listener
     if (state.approvalUnsubscribe) {
         state.approvalUnsubscribe();
     }
     
-    // Set up real-time listener
     const unsubscribe = onSnapshot(doc(db, 'pendingSelections', pendingId), 
         (doc) => {
             if (!doc.exists()) {
-                // Document was deleted - check if user was approved
                 checkIfApproved();
             }
         },
@@ -1068,18 +967,15 @@ function startApprovalMonitoring(pendingId) {
         }
     );
     
-    // Store unsubscribe function
     state.approvalUnsubscribe = unsubscribe;
 }
 
-// Check if user was approved
 async function checkIfApproved() {
     try {
         const userDoc = await getDoc(doc(db, 'users', state.currentAccessCode));
         if (userDoc.exists()) {
             const userData = userDoc.data();
             if (userData.characterId) {
-                // User was approved!
                 const paymentModal = document.getElementById('paymentModal');
                 paymentModal.innerHTML = `
                     <h3 style="font-size: 32px; color: #ff00ff;">🎉 YESSSSS APPROVED!! 🎉</h3>
@@ -1089,12 +985,10 @@ async function checkIfApproved() {
                     <p style="font-size: 14px; color: #ffff00;">✨ let's gooooo ✨</p>
                 `;
                 
-                // Clean up listener
                 if (state.approvalUnsubscribe) {
                     state.approvalUnsubscribe();
                 }
                 
-                // Redirect after a moment
                 setTimeout(() => {
                     elements.modalOverlay.classList.remove('active');
                     showPlayerProfile(userData);
@@ -1106,12 +1000,9 @@ async function checkIfApproved() {
     }
 }
 
-// Start over
 function startOver() {
-    // Reset submission flag
     state.submissionInProgress = false;
     
-    // Delete pending selection if exists
     if (state.pendingSelectionId) {
         deleteDoc(doc(db, 'pendingSelections', state.pendingSelectionId))
             .then(() => {
@@ -1130,26 +1021,23 @@ function startOver() {
     }
 }
 
-// Close modal
 function closeModal() {
     elements.modalOverlay.classList.remove('active');
     state.selectedWeapons = {};
     state.currentCharacter = null;
-    state.submissionInProgress = false; // Reset submission flag
+    state.submissionInProgress = false; 
     
-    // Reset displays
     elements.addonsQuestion.style.display = 'block';
     elements.weaponsSection.style.display = 'none';
-    document.getElementById('weaponsGrid').style.display = 'grid'; // Reset grid display
-    document.querySelector('.weapons-title').style.display = 'block'; // Reset title display
+    document.getElementById('weaponsGrid').style.display = 'grid';
+    document.querySelector('.weapons-title').style.display = 'block';
     document.getElementById('checkoutBtn').style.display = 'block';
     document.getElementById('skipBtn').style.display = 'block';
-    document.getElementById('totalPriceDiv').style.display = 'block'; // Reset total price display
+    document.getElementById('totalPriceDiv').style.display = 'block';
     document.getElementById('paymentModal').style.display = 'none';
     document.getElementById('startOverBtn').style.display = 'none';
 }
 
-// Touch handling
 function handleTouchStart(e) {
     state.touchStartX = e.changedTouches[0].screenX;
 }
@@ -1170,17 +1058,14 @@ function handleSwipe() {
     }
 }
 
-// Test Firebase connection and collection
 async function testFirebaseConnection() {
     console.log('Testing Firebase connection...');
     
     try {
-        // Test 1: Try to read from pendingSelections
         const testQuery = query(collection(db, 'pendingSelections'));
         const snapshot = await getDocs(testQuery);
         console.log('PendingSelections collection exists, documents:', snapshot.size);
         
-        // Test 2: Try to create a test document
         const testDoc = {
             test: true,
             timestamp: new Date().toISOString(),
@@ -1190,7 +1075,6 @@ async function testFirebaseConnection() {
         const docRef = await addDoc(collection(db, 'pendingSelections'), testDoc);
         console.log('Successfully created test document:', docRef.id);
         
-        // Clean up test document
         await deleteDoc(doc(db, 'pendingSelections', docRef.id));
         console.log('Test document deleted');
         
@@ -1208,12 +1092,9 @@ async function testFirebaseConnection() {
     }
 }
 
-// Initialize event listeners
 function initEventListeners() {
-    // Test Firebase on load
     testFirebaseConnection();
     
-    // Access code validation
     document.getElementById('validateCodeBtn').addEventListener('click', validateAccessCode);
     elements.accessCodeInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -1221,28 +1102,23 @@ function initEventListeners() {
         }
     });
     
-    // View toggle
     document.querySelectorAll('.toggle-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             switchView(e.target.dataset.view);
         });
     });
     
-    // Carousel navigation
     document.getElementById('prevBtn').addEventListener('click', () => navigateCarousel('prev'));
     document.getElementById('nextBtn').addEventListener('click', () => navigateCarousel('next'));
     
-    // Add-ons question handlers
     document.getElementById('yesAddonsBtn').addEventListener('click', showWeaponsStore);
     document.getElementById('noAddonsBtn').addEventListener('click', skipAddonsAndCheckout);
     
-    // Modal controls
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
     document.getElementById('checkoutBtn').addEventListener('click', proceedToCheckout);
     document.getElementById('skipBtn').addEventListener('click', skipWeaponsFromStore);
     document.getElementById('startOverBtn').addEventListener('click', startOver);
     
-    // Profile controls
     document.getElementById('changeSelectionBtn').addEventListener('click', changeSelection);
     const reopenShopBtn = document.getElementById('reopenShopBtn');
     if (reopenShopBtn) {
@@ -1254,11 +1130,9 @@ function initEventListeners() {
         window.location.href = '../index.html';
     });
     
-    // Touch events
     document.addEventListener('touchstart', handleTouchStart);
     document.addEventListener('touchend', handleTouchEnd);
     
-    // Keyboard navigation
     document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowLeft') navigateCarousel('prev');
         if (e.key === 'ArrowRight') navigateCarousel('next');
@@ -1266,7 +1140,6 @@ function initEventListeners() {
     });
 }
 
-// Initialize app
 document.addEventListener('DOMContentLoaded', function() {
     initMusic();
     initEventListeners();
