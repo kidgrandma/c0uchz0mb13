@@ -451,6 +451,19 @@ this.isTouch = ('ontouchstart' in window) ||
         const maxY = window.innerHeight - finalSize;
         labubu.style.left = Math.max(0, Math.random() * maxX) + 'px';
         labubu.style.top = Math.max(0, Math.random() * maxY) + 'px';
+        const handlePop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Check if already popping
+    if (labubu.classList.contains('popping')) return;
+    
+    this.popLabubu(labubu);
+};
+
+// Add click handler for all devices
+labubu.addEventListener('click', handlePop);
+
         if (this.isTouch) {
     labubu.addEventListener('touchstart', (e) => {
         e.preventDefault();

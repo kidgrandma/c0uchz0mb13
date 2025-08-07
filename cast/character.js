@@ -57,7 +57,8 @@ const state = {
     pendingSelectionId: null,
     allTools: [],
     approvalUnsubscribe: null,
-    userCredit: 0
+    userCredit: 0,
+    submissionInProgress: false // Add flag to prevent duplicate submissions
 };
 
 // Tool icon mapping
@@ -100,7 +101,9 @@ const elements = {
     pendingStatus: document.getElementById('pendingStatus'),
     playerProfile: document.getElementById('playerProfile'),
     modalOverlay: document.getElementById('modalOverlay'),
-    gamePassNotice: document.getElementById('gamePassNotice')
+    gamePassNotice: document.getElementById('gamePassNotice'),
+    addonsQuestion: document.getElementById('addonsQuestion'),
+    weaponsSection: document.getElementById('weaponsSection')
 };
 
 // Initialize music playback
@@ -566,6 +569,7 @@ function navigateCarousel(direction) {
 async function selectCharacter(character) {
     state.currentCharacter = character;
     state.selectedWeapons = {};
+    state.submissionInProgress = false; // Reset submission flag
     
     // Refresh user data to ensure we have latest tools
     try {
@@ -581,9 +585,43 @@ async function selectCharacter(character) {
     // Update modal content
     document.getElementById('modalDiscImg').src = `../assets/cast/cast-members/${character.id}-disc.png`;
     document.getElementById('characterName').textContent = character.name;
+    document.getElementById('characterShow').textContent = character.show;
     
-    // Debug logging
-    console.log('Current user tools:', state.currentUser.tools);
+    // Check game pass and credit status
+    const totalCredit = calculateCredit(state.currentUser.transactions || []);
+    const hasGamePass = (state.currentUser.tools || []).some(tool => 
+        tool.name && tool.name.toUpperCase() === 'GAME PASS'
+    );
+    
+    // Update the add-ons question based on status
+    const priceNote = document.querySelector('.price-note');
+    const questionTitle = document.querySelector('.question-title');
+    
+    if (!hasGamePass) {
+        // User needs game pass first
+        questionTitle.textContent = 'GAME PASS REQUIRED ($25) - WANT ANY WEAPONS TOO?';
+        priceNote.innerHTML = `<span style="color: #ff0000;">⚠️ u need game pass to play (${totalCredit >= 25 ? 'using credits' : '$25'})</span>`;
+    } else if (totalCredit > 0) {
+        // Has game pass and credits
+        questionTitle.textContent = 'WANT TO SPEND YOUR CREDITS ON WEAPONS?';
+        priceNote.innerHTML = `u got <span style="color: #00ff00;">${totalCredit} credits</span> to spend!`;
+    } else {
+        // Has game pass but no credits
+        questionTitle.textContent = 'DO YOU WANT TO BUY ANY ADD-ONS OR WEAPONS?';
+        priceNote.innerHTML = 'stuff starts at <span class="small-price">$25</span>';
+    }
+    
+    // Show add-ons question first, hide weapons section
+    elements.addonsQuestion.style.display = 'block';
+    elements.weaponsSection.style.display = 'none';
+    
+    elements.modalOverlay.classList.add('active');
+}
+
+// Handle "Yes" to add-ons
+function showWeaponsStore() {
+    elements.addonsQuestion.style.display = 'none';
+    elements.weaponsSection.style.display = 'block';
     
     // Calculate available credits
     const totalCredit = calculateCredit(state.currentUser.transactions || []);
@@ -591,99 +629,179 @@ async function selectCharacter(character) {
         tool.name && tool.name.toUpperCase() === 'GAME PASS'
     );
     
-    console.log('Has game pass check:', hasGamePass);
-    
-    const needsGamePass = !hasGamePass && totalCredit < 25;
-    
-    const showElement = document.getElementById('characterShow');
-    showElement.innerHTML = `
-        ${character.show}<br>
-        ${totalCredit > 0 ? 
-            `<span style="color: #00ff00;">💰 u got ${totalCredit} credits 2 spend!</span>` : 
-            needsGamePass ? 
-            `<span style="color: #ff0000;">⚠️ u need game pass first (25 credits) ⚠️</span>` :
-            `<span style="color: #ff00ff;">add some cool stuff (or don't lol)</span>`
-        }
-    `;
-    
-    // Reset checkout state
-    document.getElementById('checkoutBtn').style.display = 'block';
-    document.getElementById('skipBtn').style.display = 'block'; // Always show skip option
-    document.getElementById('paymentModal').style.display = 'none';
-    document.getElementById('startOverBtn').style.display = 'none';
-    document.getElementById('checkoutBtn').disabled = false;
-    document.getElementById('skipBtn').disabled = false;
-    document.getElementById('checkoutBtn').textContent = 'ADD TO TAB & CHECKOUT →';
-    document.getElementById('skipBtn').textContent = 'SKIP WEAPONS - COMPLETE PROFILE ↓';
-    
     // Generate weapons grid
     const weaponsGrid = document.getElementById('weaponsGrid');
     weaponsGrid.innerHTML = '';
     
-    // Find game pass in tools
-    const gamePassTool = state.allTools.find(t => t.name === 'GAME PASS');
-    const gamePassIndex = state.allTools.findIndex(t => t.name === 'GAME PASS');
-    
-    // Add all tools including game pass
+    // Add all tools
     state.allTools.forEach((tool, index) => {
-    const weaponEl = document.createElement('div');
-    weaponEl.className = 'weapon-item';
-    weaponEl.dataset.index = index;
-    weaponEl.dataset.toolId = tool.id;
-    
-    // Check if user already owns this tool
-    const userOwnsThis = (state.currentUser.tools || []).some(userTool => 
-        userTool.name && userTool.name.toUpperCase() === tool.name.toUpperCase()
-    );
-    
-    // Special handling for game pass
-    if (tool.name === 'GAME PASS') {
-        if (userOwnsThis) {
-            // User already has game pass - dim it out
-            weaponEl.className += ' already-owned';
-            weaponEl.style.opacity = '0.5';
-            weaponEl.style.cursor = 'not-allowed';
-        } else {
-            // User needs game pass - auto-select it
-            weaponEl.className += ' required-gamepass';
-            weaponEl.style.border = '3px solid #ff0000';
-            weaponEl.style.background = 'rgba(255, 255, 0, 0.1)';
-            
-            // Auto-select game pass
-            state.selectedWeapons[index] = {
-                tool: tool,
-                quantity: 1,
-                mandatory: true
-            };
+        const weaponEl = document.createElement('div');
+        weaponEl.className = 'weapon-item';
+        weaponEl.dataset.index = index;
+        weaponEl.dataset.toolId = tool.id;
+        
+        // Check if user already owns this tool
+        const userOwnsThis = (state.currentUser.tools || []).some(userTool => 
+            userTool.name && userTool.name.toUpperCase() === tool.name.toUpperCase()
+        );
+        
+        // Special handling for game pass
+        if (tool.name === 'GAME PASS') {
+            if (userOwnsThis) {
+                weaponEl.className += ' already-owned';
+                weaponEl.style.opacity = '0.5';
+                weaponEl.style.cursor = 'not-allowed';
+            } else if (!hasGamePass && totalCredit < 25) {
+                // User needs game pass - auto-select it
+                weaponEl.className += ' required-gamepass';
+                weaponEl.style.border = '3px solid #ff0000';
+                weaponEl.style.background = 'rgba(255, 255, 0, 0.1)';
+                
+                // Auto-select game pass
+                state.selectedWeapons[index] = {
+                    tool: tool,
+                    quantity: 1,
+                    mandatory: true
+                };
+            }
         }
-    }
+        
+        const iconFile = toolIconMap[tool.name] || tool.icon || 'default-tool.png';
+        
+        weaponEl.innerHTML = `
+            <div class="weapon-icon">
+                <img src="../assets/cast/${iconFile}" alt="${tool.name}"
+                     onerror="this.src='../assets/cast/default-tool.png'">
+            </div>
+            <div class="weapon-name">${tool.name}${tool.name === 'GAME PASS' && !userOwnsThis && totalCredit < 25 ? ' 🚨 NEED THIS' : ''}${userOwnsThis ? ' ✓ OWNED' : ''}</div>
+            ${tool.description ? `<div class="tool-description">${tool.description}</div>` : ''}
+            <div class="weapon-price">${userOwnsThis ? 'OWNED' : tool.price + ' credz'}</div>
+            <div class="weapon-quantity" ${tool.name === 'GAME PASS' && !userOwnsThis && totalCredit < 25 ? 'style="display: flex; background: #ff0000; color: white;"' : ''}>
+                ${tool.name === 'GAME PASS' && !userOwnsThis && totalCredit < 25 ? '1' : '0'}
+            </div>
+        `;
+        
+        // Only allow clicking if not mandatory game pass AND not already owned
+        if (!(tool.name === 'GAME PASS' && !hasGamePass && totalCredit < 25) && !userOwnsThis) {
+            weaponEl.addEventListener('click', () => toggleWeapon(index, tool));
+        }
+        
+        weaponsGrid.appendChild(weaponEl);
+    });
     
-    const iconFile = toolIconMap[tool.name] || tool.icon || 'default-tool.png';
-    
-    weaponEl.innerHTML = `
-        <div class="weapon-icon">
-            <img src="../assets/cast/${iconFile}" alt="${tool.name}"
-                 onerror="this.src='../assets/cast/default-tool.png'">
-        </div>
-        <div class="weapon-name">${tool.name}${tool.name === 'GAME PASS' && !userOwnsThis ? ' 🚨 NEED THIS' : ''}${userOwnsThis ? ' ✓ OWNED' : ''}</div>
-        ${tool.description ? `<div class="tool-description">${tool.description}</div>` : ''}
-        <div class="weapon-price">${userOwnsThis ? 'OWNED' : tool.price + ' credz'}</div>
-        <div class="weapon-quantity" ${tool.name === 'GAME PASS' && !userOwnsThis ? 'style="display: flex; background: #ff0000; color: white;"' : ''}>
-            ${tool.name === 'GAME PASS' && !userOwnsThis ? '1' : '0'}
-        </div>
-    `;
-    
-    // Only allow clicking if not mandatory game pass AND not already owned
-    if (!(tool.name === 'GAME PASS' && !userOwnsThis) && !userOwnsThis) {
-        weaponEl.addEventListener('click', () => toggleWeapon(index, tool));
-    }
-    
-    weaponsGrid.appendChild(weaponEl);
-});
     updateTotal();
-    elements.modalOverlay.classList.add('active');
-}
     
+    // Reset checkout state
+    document.getElementById('checkoutBtn').style.display = 'block';
+    document.getElementById('skipBtn').style.display = 'block';
+    document.getElementById('paymentModal').style.display = 'none';
+    document.getElementById('startOverBtn').style.display = 'none';
+    document.getElementById('checkoutBtn').disabled = false;
+    document.getElementById('skipBtn').disabled = false;
+}
+
+// Handle "No" to add-ons - go straight to approval (no weapons modal)
+async function skipAddonsAndCheckout() {
+    if (!state.currentCharacter || !state.currentAccessCode || state.submissionInProgress) return;
+    
+    state.submissionInProgress = true; // Set flag to prevent duplicate submissions
+    
+    console.log('Skip and checkout - submitting selection for:', state.currentAccessCode);
+    
+    // Hide add-ons question
+    elements.addonsQuestion.style.display = 'none';
+    // Show weapons section container but hide the actual weapons
+    elements.weaponsSection.style.display = 'block';
+    
+    // Hide the weapons grid and title
+    document.getElementById('weaponsGrid').style.display = 'none';
+    document.querySelector('.weapons-title').style.display = 'none';
+    
+    // Hide checkout/skip buttons, show payment modal
+    document.getElementById('checkoutBtn').style.display = 'none';
+    document.getElementById('skipBtn').style.display = 'none';
+    document.getElementById('paymentModal').style.display = 'block';
+    document.getElementById('startOverBtn').style.display = 'block';
+    
+    // Hide the total price div since they're not buying weapons
+    document.getElementById('totalPriceDiv').style.display = 'none';
+    
+    try {
+        const totalCredit = calculateCredit(state.currentUser.transactions || []);
+        const hasGamePass = (state.currentUser.tools || []).some(tool => tool.name === 'GAME PASS');
+        
+        console.log('User status:', { hasGamePass, totalCredit });
+        
+        // Character is FREE - only need game pass if they don't have it
+        const tools = [];
+        let totalCost = 0;
+        let toolsCost = 0;
+        
+        if (!hasGamePass) {
+            // Need to buy game pass ONLY
+            tools.push({ name: 'GAME PASS', price: 25, used: false });
+            toolsCost = 25; // Only game pass costs money
+            totalCost = Math.max(0, 25 - totalCredit);
+        }
+        
+        const selectionData = {
+            accessCode: state.currentAccessCode,
+            handle: state.currentUser.handle || state.currentAccessCode,
+            characterId: state.currentCharacter.id,
+            characterName: state.currentCharacter.name,
+            tools: tools,
+            totalCost: totalCost,  // Amount they need to pay (after credits)
+            toolsCost: toolsCost,   // Total cost of items (just game pass if needed)
+            currentCredit: totalCredit,
+            needsGamePass: !hasGamePass,
+            characterCost: 0,  // CHARACTER IS FREE
+            status: 'pending',
+            submittedAt: new Date().toISOString()
+        };
+        
+        console.log('Submitting selection data:', selectionData);
+        
+        const docRef = await addDoc(collection(db, 'pendingSelections'), selectionData);
+        state.pendingSelectionId = docRef.id;
+        
+        console.log('Successfully created pending selection:', docRef.id);
+        
+        // Start monitoring for approval
+        startApprovalMonitoring(docRef.id);
+        
+        // Update payment message based on game pass status
+        const paymentMsg = document.getElementById('paymentMessage');
+        if (!hasGamePass) {
+            // Needs game pass ONLY (not character)
+            if (totalCost > 0) {
+                paymentMsg.innerHTML = `
+                    <span style="font-size: 24px; color: #ffff00;">💸 GAME PASS: <span style="font-size: 14px;">$</span>${totalCost} 💸</span><br>
+                    <span style="font-size: 14px; color: #ff00ff;">include ur @handle!</span>
+                `;
+                document.querySelector('.payment-handles').style.display = 'block';
+            } else {
+                // Has credit to cover game pass
+                paymentMsg.innerHTML = `
+                    <span style="font-size: 24px; color: #00ff00;">✨ USING CREDITS ✨</span><br>
+                    <span style="font-size: 14px;">25 credz for game pass</span>
+                `;
+                document.querySelector('.payment-handles').style.display = 'none';
+            }
+        } else {
+            // Already has game pass - character is FREE, no payment needed
+            paymentMsg.innerHTML = `
+                <span style="font-size: 24px; color: #00ff00;">✨ CHARACTER READY! ✨</span><br>
+                <span style="font-size: 14px;">u got game pass already!</span>
+            `;
+            document.querySelector('.payment-handles').style.display = 'none';
+        }
+        
+    } catch (error) {
+        console.error('Error submitting selection:', error);
+        alert('Error submitting selection: ' + error.message);
+        state.submissionInProgress = false;
+    }
+}
 
 // Toggle weapon selection
 function toggleWeapon(index, tool) {
@@ -718,29 +836,47 @@ function updateTotal() {
     
     const totalDiv = document.getElementById('totalPriceDiv');
     if (total > 0) {
-        totalDiv.innerHTML = `TOTAL: <span style="color: #ff00ff; font-size: 24px;">${total}</span> CREDZ ${hasRequiredGamePass ? '<span style="color: #ffff00; font-size: 14px;">(includes ur game pass)</span>' : ''}`;
+        totalDiv.innerHTML = `TOTAL: <span style="color: #ff00ff; font-size: 20px;"><span style="font-size: 14px;">$</span>${total}</span> ${hasRequiredGamePass ? '<span style="color: #ffff00; font-size: 12px;">(includes game pass)</span>' : ''}`;
     } else {
         totalDiv.innerHTML = '▓▒░ SELECT UR WEAPONZ! ░▒▓';
     }
 }
 
-// Skip add-ons and checkout
-async function skipAndCheckout() {
-    if (!state.currentCharacter || !state.currentAccessCode) return;
+// Skip weapons (from weapons view)
+async function skipWeaponsFromStore() {
+    if (!state.currentCharacter || !state.currentAccessCode || state.submissionInProgress) return;
     
-    const skipBtn = document.getElementById('skipBtn');
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    skipBtn.disabled = true;
-    checkoutBtn.disabled = true;
-    skipBtn.textContent = 'PROCESSING...';
+    state.submissionInProgress = true;
+    
+    console.log('Skip weapons from store - submitting selection for:', state.currentAccessCode);
+    
+    // Hide weapons grid and buttons
+    document.getElementById('weaponsGrid').style.display = 'none';
+    document.querySelector('.weapons-title').style.display = 'none';
+    document.getElementById('checkoutBtn').style.display = 'none';
+    document.getElementById('skipBtn').style.display = 'none';
+    document.getElementById('totalPriceDiv').style.display = 'none';
+    
+    // Show payment modal
+    document.getElementById('paymentModal').style.display = 'block';
+    document.getElementById('startOverBtn').style.display = 'block';
     
     try {
         const totalCredit = calculateCredit(state.currentUser.transactions || []);
         const hasGamePass = (state.currentUser.tools || []).some(tool => tool.name === 'GAME PASS');
         
-        // If they don't have game pass, they need to buy it
-        const tools = hasGamePass ? [] : [{ name: 'GAME PASS', price: 25, used: false }];
-        const totalCost = hasGamePass ? 0 : Math.max(0, 25 - totalCredit);
+        console.log('Skip weapons - user status:', { hasGamePass, totalCredit });
+        
+        // Character is FREE - only need game pass if they don't have it
+        const tools = [];
+        let totalCost = 0;
+        let toolsCost = 0;
+        
+        if (!hasGamePass) {
+            tools.push({ name: 'GAME PASS', price: 25, used: false });
+            toolsCost = 25; // Only game pass costs money
+            totalCost = Math.max(0, 25 - totalCredit);
+        }
         
         const selectionData = {
             accessCode: state.currentAccessCode,
@@ -748,54 +884,58 @@ async function skipAndCheckout() {
             characterId: state.currentCharacter.id,
             characterName: state.currentCharacter.name,
             tools: tools,
-            totalCost: totalCost,
+            totalCost: totalCost,  // Amount they need to pay
+            toolsCost: toolsCost,   // Total cost of items (just game pass)
             currentCredit: totalCredit,
+            needsGamePass: !hasGamePass,
+            characterCost: 0,  // CHARACTER IS FREE
             status: 'pending',
             submittedAt: new Date().toISOString()
         };
         
+        console.log('Submitting selection data:', selectionData);
+        
         const docRef = await addDoc(collection(db, 'pendingSelections'), selectionData);
         state.pendingSelectionId = docRef.id;
         
-        // Start monitoring for approval
+        console.log('Successfully created pending selection:', docRef.id);
+        
         startApprovalMonitoring(docRef.id);
         
         // Update payment message
         const paymentMsg = document.getElementById('paymentMessage');
-        if (totalCost > 0) {
+        if (!hasGamePass && totalCost > 0) {
             paymentMsg.innerHTML = `
-                <span style="font-size: 24px;">🎮 GOTTA GET GAME PASS FIRST 🎮</span><br>
-                <span style="font-size: 20px; color: #ff00ff;">send ${totalCost} credz plz</span><br>
-                <span style="font-size: 14px; color: #ffff00;">then u can play!! ✨</span>
+                <span style="font-size: 24px; color: #ffff00;">💸 GAME PASS: <span style="font-size: 14px;">$</span>${totalCost} 💸</span><br>
+                <span style="font-size: 14px; color: #ff00ff;">include ur @handle!</span>
             `;
             document.querySelector('.payment-handles').style.display = 'block';
         } else {
             paymentMsg.innerHTML = `
-                <span style="font-size: 24px;">✨ WOO CHARACTER PICKED! ✨</span><br>
-                <span style="color: #ff00ff;">hang tight... waiting 4 mod...</span><br>
-                <span style="font-size: 14px;">they're prob eating hot pockets 🍕</span>
+                <span style="font-size: 24px; color: #00ff00;">✨ CHARACTER READY! ✨</span><br>
+                ${!hasGamePass ? `<span style="font-size: 14px;">using 25 credz for game pass</span>` : ''}
             `;
             document.querySelector('.payment-handles').style.display = 'none';
         }
         
-        // Show payment modal
-        document.getElementById('checkoutBtn').style.display = 'none';
-        document.getElementById('skipBtn').style.display = 'none';
-        document.getElementById('paymentModal').style.display = 'block';
-        document.getElementById('startOverBtn').style.display = 'block';
-        
     } catch (error) {
         console.error('Error submitting selection:', error);
-        alert('Error submitting selection. Please try again.');
-        skipBtn.disabled = false;
-        checkoutBtn.disabled = false;
-        skipBtn.textContent = 'select character only (no tools) ↓';
+        alert('Error submitting selection: ' + error.message);
+        state.submissionInProgress = false;
+        // Show elements again on error
+        document.getElementById('checkoutBtn').style.display = 'block';
+        document.getElementById('skipBtn').style.display = 'block';
+        document.getElementById('totalPriceDiv').style.display = 'block';
     }
 }
 
-// Proceed to checkout
+// Proceed to checkout with weapons
 async function proceedToCheckout() {
-    if (!state.currentCharacter || !state.currentAccessCode) return;
+    if (!state.currentCharacter || !state.currentAccessCode || state.submissionInProgress) return;
+    
+    state.submissionInProgress = true; // Set flag to prevent duplicate submissions
+    
+    console.log('Proceed to checkout - submitting selection for:', state.currentAccessCode);
     
     const btn = document.getElementById('checkoutBtn');
     const skipBtn = document.getElementById('skipBtn');
@@ -803,15 +943,39 @@ async function proceedToCheckout() {
     skipBtn.disabled = true;
     btn.textContent = 'SUBMITTING...';
     
+    // Hide the weapons grid and title after checkout
+    document.getElementById('weaponsGrid').style.display = 'none';
+    document.querySelector('.weapons-title').style.display = 'none';
+    
+    // Hide the checkout buttons and total price
+    document.getElementById('checkoutBtn').style.display = 'none';
+    document.getElementById('skipBtn').style.display = 'none';
+    document.getElementById('totalPriceDiv').style.display = 'none';
+    
+    // Show payment modal
+    document.getElementById('paymentModal').style.display = 'block';
+    document.getElementById('startOverBtn').style.display = 'block';
+    
     try {
         const selectedTools = [];
         let totalToolsCost = 0;
         
-        // Check if user has game pass
         const hasGamePass = (state.currentUser.tools || []).some(tool => tool.name === 'GAME PASS');
         
-        // Convert to array
+        console.log('User has game pass:', hasGamePass);
+        console.log('Selected weapons:', state.selectedWeapons);
+        
+        // Add game pass if needed
+        if (!hasGamePass) {
+            selectedTools.push({ name: 'GAME PASS', price: 25, used: false });
+            totalToolsCost += 25;
+        }
+        
+        // Convert selected weapons to array
         for (const [index, data] of Object.entries(state.selectedWeapons)) {
+            // Skip if it's the mandatory game pass (already added above)
+            if (data.mandatory && data.tool.name === 'GAME PASS') continue;
+            
             for (let i = 0; i < data.quantity; i++) {
                 selectedTools.push({ 
                     name: data.tool.name, 
@@ -826,12 +990,7 @@ async function proceedToCheckout() {
         const totalPayments = calculateCredit(state.currentUser.transactions || []);
         const creditsNeeded = Math.max(0, totalToolsCost - totalPayments);
         
-        console.log('Checkout calculation:', {
-            hasGamePass,
-            totalPayments,
-            totalToolsCost,
-            creditsNeeded
-        });
+        console.log('Checkout calculation:', { totalToolsCost, totalPayments, creditsNeeded });
         
         const selectionData = {
             accessCode: state.currentAccessCode,
@@ -847,8 +1006,12 @@ async function proceedToCheckout() {
             submittedAt: new Date().toISOString()
         };
         
+        console.log('Submitting selection data:', selectionData);
+        
         const docRef = await addDoc(collection(db, 'pendingSelections'), selectionData);
         state.pendingSelectionId = docRef.id;
+        
+        console.log('Successfully created pending selection:', docRef.id);
         
         // Start monitoring
         startApprovalMonitoring(docRef.id);
@@ -857,40 +1020,40 @@ async function proceedToCheckout() {
         const paymentMsg = document.getElementById('paymentMessage');
         if (creditsNeeded > 0) {
             paymentMsg.innerHTML = `
-                <span style="font-size: 18px; color: #00ff00;">ur bank: ${totalPayments} credz</span><br>
-                <span style="font-size: 18px; color: #ff00ff;">ur tab: ${totalToolsCost} credz</span><br>
-                <span style="font-size: 28px; color: #ffff00;">💸 SEND ${creditsNeeded} 2 UNLOCK 💸</span><br>
-                <span style="font-size: 14px;">then we can party!! 🎉</span>
+                <span style="font-size: 24px; color: #ffff00;">💸 SEND <span style="font-size: 14px;">$</span>${creditsNeeded} 💸</span><br>
+                <span style="font-size: 14px; color: #ff00ff;">include ur @handle in memo!</span>
             `;
             document.querySelector('.payment-handles').style.display = 'block';
         } else {
             paymentMsg.innerHTML = `
-                <span style="font-size: 24px;">✨ OMG UR ALL SET!! ✨</span><br>
-                <span style="font-size: 18px;">using ${totalToolsCost} of ur ${totalPayments} credz</span><br>
-                <span style="color: #ff00ff;">mod is checking this out rn...</span><br>
-                <span style="font-size: 14px;">📟 beep boop approval incoming 📟</span>
+                <span style="font-size: 24px; color: #00ff00;">✨ UR ALL SET!! ✨</span><br>
+                <span style="font-size: 14px;">using ${totalToolsCost} of ur ${totalPayments} credz</span>
             `;
             document.querySelector('.payment-handles').style.display = 'none';
         }
         
-        // Show payment modal
-        document.getElementById('checkoutBtn').style.display = 'none';
-        document.getElementById('skipBtn').style.display = 'none';
-        document.getElementById('paymentModal').style.display = 'block';
-        document.getElementById('startOverBtn').style.display = 'block';
-        
     } catch (error) {
         console.error('Error submitting selection:', error);
-        alert('Error submitting selection. Please try again.');
+        alert('Error submitting selection: ' + error.message);
         btn.disabled = false;
         skipBtn.disabled = false;
-        btn.textContent = 'ADD TO CART & CHECKOUT →';
+        btn.textContent = 'ADD TO TAB & CHECKOUT →';
+        state.submissionInProgress = false;
+        // Show elements again on error
+        document.getElementById('checkoutBtn').style.display = 'block';
+        document.getElementById('skipBtn').style.display = 'block';
+        document.getElementById('totalPriceDiv').style.display = 'block';
     }
 }
 
 // Monitor for approval
 function startApprovalMonitoring(pendingId) {
     if (!pendingId) return;
+    
+    // Clean up any existing listener
+    if (state.approvalUnsubscribe) {
+        state.approvalUnsubscribe();
+    }
     
     // Set up real-time listener
     const unsubscribe = onSnapshot(doc(db, 'pendingSelections', pendingId), 
@@ -943,76 +1106,28 @@ async function checkIfApproved() {
     }
 }
 
-// Reopen tool shop for credit purchases
-function reopenToolShop() {
-    const creditAmount = parseInt(document.getElementById('creditAmount').textContent);
-    if (creditAmount <= 0) return;
-    
-    state.selectedWeapons = {};
-    state.userCredit = creditAmount;
-    
-    // Show modal
-    elements.modalOverlay.classList.add('active');
-    
-    // Modify modal for credit shopping
-    document.getElementById('modalDiscImg').style.display = 'none';
-    document.getElementById('characterName').textContent = '🛒 WEAPON SHOP 🔪';
-    document.getElementById('characterShow').innerHTML = `u got <span style="color: #00ff00; font-size: 24px;">${state.userCredit}</span> credz 2 spend!<br><span style="font-size: 14px;">go crazy go stupid</span>`;
-    
-    // Load tools
-    const weaponsGrid = document.getElementById('weaponsGrid');
-    weaponsGrid.innerHTML = '';
-    
-    state.allTools.forEach((tool, index) => {
-        const weaponEl = document.createElement('div');
-        weaponEl.className = 'weapon-item';
-        weaponEl.dataset.index = index;
-        
-        // Disable if can't afford
-        if (tool.price > state.userCredit) {
-            weaponEl.style.opacity = '0.5';
-            weaponEl.style.cursor = 'not-allowed';
-        }
-        
-        const iconFile = toolIconMap[tool.name] || tool.icon || 'default-tool.png';
-        
-        weaponEl.innerHTML = `
-            <div class="weapon-icon">
-                <img src="../assets/cast/${iconFile}" alt="${tool.name}"
-                     onerror="this.src='../assets/cast/default-tool.png'">
-            </div>
-            <div class="weapon-name">${tool.name}</div>
-            <div class="weapon-price">${tool.price} credits</div>
-            <div class="weapon-quantity">0</div>
-        `;
-        
-        if (tool.price <= state.userCredit) {
-            weaponEl.addEventListener('click', () => toggleWeapon(index, tool));
-        }
-        
-        weaponsGrid.appendChild(weaponEl);
-    });
-    
-    // Update buttons
-    document.getElementById('checkoutBtn').textContent = 'PURCHASE WITH CREDITS';
-    document.getElementById('checkoutBtn').onclick = purchaseWithCredits;
-    document.getElementById('skipBtn').style.display = 'none';
-    document.getElementById('paymentModal').style.display = 'none';
-    document.getElementById('startOverBtn').style.display = 'none';
-    
-    updateTotal();
-}
-
-// Purchase with credits
-async function purchaseWithCredits() {
-    alert('sry credit shopping is thru the admin rn!! bug the mod about it 📟💿');
-    closeModal();
-}
-
 // Start over
 function startOver() {
-    closeModal();
-    checkPendingSelection(state.currentAccessCode);
+    // Reset submission flag
+    state.submissionInProgress = false;
+    
+    // Delete pending selection if exists
+    if (state.pendingSelectionId) {
+        deleteDoc(doc(db, 'pendingSelections', state.pendingSelectionId))
+            .then(() => {
+                state.pendingSelectionId = null;
+                closeModal();
+                checkPendingSelection(state.currentAccessCode);
+            })
+            .catch(error => {
+                console.error('Error deleting pending selection:', error);
+                closeModal();
+                checkPendingSelection(state.currentAccessCode);
+            });
+    } else {
+        closeModal();
+        checkPendingSelection(state.currentAccessCode);
+    }
 }
 
 // Close modal
@@ -1020,9 +1135,18 @@ function closeModal() {
     elements.modalOverlay.classList.remove('active');
     state.selectedWeapons = {};
     state.currentCharacter = null;
+    state.submissionInProgress = false; // Reset submission flag
     
-    // Reset onclick handler
-    document.getElementById('checkoutBtn').onclick = proceedToCheckout;
+    // Reset displays
+    elements.addonsQuestion.style.display = 'block';
+    elements.weaponsSection.style.display = 'none';
+    document.getElementById('weaponsGrid').style.display = 'grid'; // Reset grid display
+    document.querySelector('.weapons-title').style.display = 'block'; // Reset title display
+    document.getElementById('checkoutBtn').style.display = 'block';
+    document.getElementById('skipBtn').style.display = 'block';
+    document.getElementById('totalPriceDiv').style.display = 'block'; // Reset total price display
+    document.getElementById('paymentModal').style.display = 'none';
+    document.getElementById('startOverBtn').style.display = 'none';
 }
 
 // Touch handling
@@ -1046,8 +1170,49 @@ function handleSwipe() {
     }
 }
 
+// Test Firebase connection and collection
+async function testFirebaseConnection() {
+    console.log('Testing Firebase connection...');
+    
+    try {
+        // Test 1: Try to read from pendingSelections
+        const testQuery = query(collection(db, 'pendingSelections'));
+        const snapshot = await getDocs(testQuery);
+        console.log('PendingSelections collection exists, documents:', snapshot.size);
+        
+        // Test 2: Try to create a test document
+        const testDoc = {
+            test: true,
+            timestamp: new Date().toISOString(),
+            message: 'Test document - can be deleted'
+        };
+        
+        const docRef = await addDoc(collection(db, 'pendingSelections'), testDoc);
+        console.log('Successfully created test document:', docRef.id);
+        
+        // Clean up test document
+        await deleteDoc(doc(db, 'pendingSelections', docRef.id));
+        console.log('Test document deleted');
+        
+        return true;
+    } catch (error) {
+        console.error('Firebase test failed:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        
+        if (error.code === 'permission-denied') {
+            console.error('PERMISSION DENIED - Check Firebase security rules');
+        }
+        
+        return false;
+    }
+}
+
 // Initialize event listeners
 function initEventListeners() {
+    // Test Firebase on load
+    testFirebaseConnection();
+    
     // Access code validation
     document.getElementById('validateCodeBtn').addEventListener('click', validateAccessCode);
     elements.accessCodeInput.addEventListener('keypress', (e) => {
@@ -1067,17 +1232,23 @@ function initEventListeners() {
     document.getElementById('prevBtn').addEventListener('click', () => navigateCarousel('prev'));
     document.getElementById('nextBtn').addEventListener('click', () => navigateCarousel('next'));
     
+    // Add-ons question handlers
+    document.getElementById('yesAddonsBtn').addEventListener('click', showWeaponsStore);
+    document.getElementById('noAddonsBtn').addEventListener('click', skipAddonsAndCheckout);
+    
     // Modal controls
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
     document.getElementById('checkoutBtn').addEventListener('click', proceedToCheckout);
-    document.getElementById('skipBtn').addEventListener('click', skipAndCheckout);
+    document.getElementById('skipBtn').addEventListener('click', skipWeaponsFromStore);
     document.getElementById('startOverBtn').addEventListener('click', startOver);
     
     // Profile controls
     document.getElementById('changeSelectionBtn').addEventListener('click', changeSelection);
     const reopenShopBtn = document.getElementById('reopenShopBtn');
     if (reopenShopBtn) {
-        reopenShopBtn.addEventListener('click', reopenToolShop);
+        reopenShopBtn.addEventListener('click', () => {
+            alert('sry credit shopping is thru the admin rn!! bug the mod about it 📟💿');
+        });
     }
     document.getElementById('homeBtn').addEventListener('click', () => {
         window.location.href = '../index.html';

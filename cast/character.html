@@ -36,7 +36,6 @@
             <div class="error-message" id="errorMessage">INVALID ACCESS CODE</div>
         </div>
 
-
         <!-- View Toggle -->
         <div class="view-toggle" id="viewToggle">
             <button class="toggle-btn active" data-view="carousel">CAROUSEL</button>
@@ -80,7 +79,7 @@
             
             <!-- Moderator Note -->
             <div id="moderatorNote" class="moderator-note">
-                <p>mod letterz 💿🔪  <span id="noteText"></span></p>
+                <p> 🎱 <span id="noteText"></span></p>
             </div>
 
             <div class="profile-disc" id="profileDisc"></div>
@@ -103,7 +102,7 @@
         </div>
     </div>
 
-    <!-- Character Selection Modal -->
+    <!-- Character Selection Modal (First Step) -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content window-95">
             <div class="modal-header">
@@ -117,39 +116,54 @@
                 <h2 class="character-name" id="characterName"></h2>
                 <p class="character-show" id="characterShow"></p>
                 
-                <div class="weapons-section">
-                    <h3 class="weapons-title">▓▒░ COOL STUFF & WEAP0NZ ░▒▓</h3>
-                    <button class="skip-btn" id="skipBtn">SKIP WEAPONS - COMPLETE PROFILE ↓</button>
-                    <div class="weapons-grid" id="weaponsGrid"></div>
-                </div>
-
-                <div class="cart-summary">
-                    <div class="total-price" id="totalPriceDiv">SELECT YOUR WEAPONZ!</div>
-                    <button class="checkout-btn" id="checkoutBtn">ADD TO TAB & CHECKOUT →</button>                    
-                    <!-- Payment Instructions -->
-                    <div class="payment-modal pending" id="paymentModal">
-                        <div class="pending-badge">PENDING!</div>
-                        <h3>🍓🎱CHILL N WAIT 4 MOD APPROVAL🍓🎱</h3>
-                        <div class="emoji-line">💿🔋🔪🐰🍄</div>
-                        <p id="paymentMessage"></p>
-                        <div class="payment-handles">
-                            <strong>VENMO: @worksucksdotnet</strong>
-                            <strong>ZELLE: paizley@worksucks.net</strong>
-                        </div>
-                        <p class="payment-note">
-                            IMPORTANT: Include your Instagram handle in the payment description!
-                        </p>
-                        <div class="emoji-line">🐳🍄🎱💊🧸🔌</div>
-                        <p class="approval-status">
-                            ⚡ watching for mod approval... refresh or wait! ⚡
-                        </p>
-                        <p class="mod-message">
-                            SEE U SOOOOON XOXOXOXOX ♥♥♥<br>
-                            - mod
-                        </p>
+                <!-- Add-ons Question Modal -->
+                <div class="addons-question" id="addonsQuestion">
+                    <div class="weapons-preview">
+                        <img src="../assets/cast/weapons.png" alt="Cool Weapons" class="weapons-preview-img">
                     </div>
+                    <h3 class="question-title">DO YOU WANT TO BUY ANY ADD-ONS OR WEAPONS?</h3>
+                    <p class="price-note">stuff starts at <span class="small-price">$25</span></p>
+                    <div class="question-buttons">
+                        <button class="question-btn yes-btn" id="yesAddonsBtn">YES! SHOW ME THE GOODS</button>
+                        <button class="question-btn no-btn" id="noAddonsBtn">NO THANKS, JUST THE CHARACTER</button>
+                    </div>
+                </div>
+                
+                <!-- Weapons Section (Hidden initially) -->
+                <div class="weapons-section" id="weaponsSection" style="display: none;">
+                    <h3 class="weapons-title">▓▒░ COOL STUFF & WEAP0NZ ░▒▓</h3>
+                    <div class="weapons-grid" id="weaponsGrid"></div>
                     
-                    <button class="start-over-btn" id="startOverBtn">START OVER</button>
+                    <div class="cart-summary">
+                        <div class="total-price" id="totalPriceDiv">SELECT YOUR WEAPONZ!</div>
+                        <button class="checkout-btn" id="checkoutBtn">ADD TO TAB & CHECKOUT →</button>
+                        <button class="skip-btn" id="skipBtn">ACTUALLY, SKIP WEAPONS →</button>
+                        
+                        <!-- Payment Instructions -->
+                        <div class="payment-modal pending" id="paymentModal">
+                            <div class="pending-badge">PENDING!</div>
+                            <h3>🍓🎱CHILL N WAIT 4 MOD APPROVAL🍓🎱</h3>
+                            <div class="emoji-line">💿🔋🔪🐰🍄</div>
+                            <p id="paymentMessage"></p>
+                            <div class="payment-handles">
+                                <strong>VENMO: @worksucksdotnet</strong>
+                                <strong>ZELLE: paizley@worksucks.net</strong>
+                            </div>
+                            <p class="payment-note">
+                                IMPORTANT: Include your Instagram handle in the payment description!
+                            </p>
+                            <div class="emoji-line">🐳🍄🎱💊🧸🔌</div>
+                            <p class="approval-status">
+                                ⚡ watching for mod approval... refresh or wait! ⚡
+                            </p>
+                            <p class="mod-message">
+                                SEE U SOOOOON XOXOXOXOX ♥♥♥<br>
+                                - mod
+                            </p>
+                        </div>
+                        
+                        <button class="start-over-btn" id="startOverBtn">START OVER</button>
+                    </div>
                 </div>
             </div>
         </div>
