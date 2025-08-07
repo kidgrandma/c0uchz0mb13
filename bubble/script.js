@@ -41,11 +41,14 @@ class LabubuWitchHunt {
         this.gameEndTime = null;
         this.unlockShown = false;
         this.labubuKilled = 0;
-        
-        // Device detection
         this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                        ('ontouchstart' in window);
-        this.isTouch = 'ontouchstart' in window;
+                ('ontouchstart' in window) ||
+                (navigator.maxTouchPoints > 0) ||
+                (navigator.msMaxTouchPoints > 0);
+
+this.isTouch = ('ontouchstart' in window) || 
+               (navigator.maxTouchPoints > 0) || 
+               (navigator.msMaxTouchPoints > 0);
         
         
         this.deviceDifficulty = {
@@ -108,6 +111,8 @@ class LabubuWitchHunt {
         this.loserSong = document.getElementById('loserSong');
         this.startGameSound = document.getElementById('startGameSound');
         this.countdownSound = document.getElementById('countdownSound');
+      this.burnSound = document.getElementById('burnSound');
+
         
         // Prevent double-tap zoom on game container
         this.preventDoubleTapZoom();
@@ -171,12 +176,14 @@ class LabubuWitchHunt {
             this.loserSong.volume = 0.9;
             this.startGameSound.volume = 0.9;
             this.countdownSound.volume = 1.0;
-        } catch (e) {
-            console.log('Audio initialization warning:', e);
-        }
-        
-        this.muteButton.textContent = '🔇';
+              this.burnSound = document.getElementById('burnSound');
+        if (this.burnSound) this.burnSound.volume = 0.9;
+    } catch (e) {
+        console.log('Audio initialization warning:', e);
     }
+    
+    this.muteButton.textContent = '🔇';
+}
 
     handleStartClick() {
         const handle = this.handleInput.value.trim();
@@ -444,19 +451,35 @@ class LabubuWitchHunt {
         const maxY = window.innerHeight - finalSize;
         labubu.style.left = Math.max(0, Math.random() * maxX) + 'px';
         labubu.style.top = Math.max(0, Math.random() * maxY) + 'px';
-        
         if (this.isTouch) {
-            labubu.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleLabubuTap(e, labubu);
-            }, { passive: false });
-        } else {
-            labubu.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.popLabubu(labubu);
-            });
-        }
+    labubu.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Only check if already popping
+        if (labubu.classList.contains('popping')) return;
+        
+        this.popLabubu(labubu);
+    }, { passive: false });
+    
+    // Prevent any drag behavior
+    labubu.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }, { passive: false });
+    
+    // Prevent touch end from triggering click
+    labubu.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }, { passive: false });
+} else {
+    labubu.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (labubu.classList.contains('popping')) return;
+        this.popLabubu(labubu);
+    });
+}
         
         this.gameContainer.appendChild(labubu);
         this.labubus.push(labubu);
@@ -596,8 +619,9 @@ class LabubuWitchHunt {
         this.progressElement.textContent = progress + '%';
         if (this.score >= this.targetScore && !this.unlockShown) {
     this.unlockShown = true;
-
-    this.playSound(this.burnSound);
+    if (this.burnSound && this.soundEnabled) {
+        this.playSound(this.burnSound);
+    }
     const unlockMsg = document.createElement('div');
     unlockMsg.className = 'countdown-number'; 
     unlockMsg.textContent = 'SUCCESS!';
@@ -675,7 +699,6 @@ class LabubuWitchHunt {
         
         await this.saveScore(gameData);
         await this.showResults(victory, gameTime);
-        await this.generateFlyer();
     }
 
     async saveScore(gameData) {
