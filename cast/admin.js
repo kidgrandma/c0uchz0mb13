@@ -44,8 +44,8 @@ try {
 // SIMPLE SECURE AUTHENTICATION
 // ============================================
 
-// Hash function for password (basic security)
-async function hashPassword(password) {
+// Hash function for password (basic security) - Made global for testing
+window.hashPassword = async function(password) {
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
     const hash = await crypto.subtle.digest('SHA-256', data);
@@ -56,6 +56,8 @@ async function hashPassword(password) {
 
 // Your hashed password (change this after setting up)
 // Default password is "olympicsAdmin2024!" - CHANGE THIS IMMEDIATELY
+// To generate a new hash, uncomment the line below temporarily, check console, then update the hash
+// console.log('Hash for olympicsAdmin2024!:', await hashPassword('olympicsAdmin2024!'));
 const ADMIN_PASSWORD_HASH = 'f44d66d49ae0e7b1c90914f8a4276d0db4e419f43864750ddaf65ca177c88bf4';
 
 // Session management (stays logged in until browser closes)
@@ -227,27 +229,46 @@ function showAdminPanel() {
     }, 100);
 }
 
-// Simple password login - FIXED VERSION
+// Simple password login - FIXED VERSION with direct DOM access
 window.adminLogin = async function() {
-    // Add null checks for all elements
-    const passwordInput = utils.getElement('adminPassword');
+    // Use direct DOM access instead of utils
+    const passwordInput = document.getElementById('adminPassword');
     
     if (!passwordInput) {
         console.error('Password input field not found');
-        showAuthError('Login form not loaded properly');
+        const errorEl = document.getElementById('loginError');
+        if (errorEl) {
+            errorEl.textContent = 'Login form not loaded properly';
+            errorEl.style.display = 'block';
+        }
         return;
     }
     
     const password = passwordInput.value;
     
     if (!password) {
-        showAuthError('enter the password');
+        const errorEl = document.getElementById('loginError');
+        if (errorEl) {
+            errorEl.textContent = 'enter the password';
+            errorEl.style.display = 'block';
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 3000);
+        }
         return;
     }
     
     try {
-        // Hash the entered password
-        const hashedPassword = await hashPassword(password);
+        // Hash the entered password using global function
+        const hashedPassword = await window.hashPassword(password);
+        
+        // Debug logging (remove in production)
+        console.log('Login attempt...');
+        console.log('Entered password:', password);
+        console.log('Entered password length:', password.length);
+        console.log('Generated hash:', hashedPassword);
+        console.log('Expected hash:', ADMIN_PASSWORD_HASH);
+        console.log('Hashes match:', hashedPassword === ADMIN_PASSWORD_HASH);
         
         // Add small delay to prevent brute force
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -258,16 +279,54 @@ window.adminLogin = async function() {
             localStorage.setItem(SESSION_KEY, sessionToken);
             state.isAuthenticated = true;
             
-            showAdminPanel();
+            // Show admin panel directly
+            const loginWindow = document.getElementById('loginWindow');
+            const adminPanel = document.getElementById('adminPanel');
+            
+            if (loginWindow) loginWindow.style.display = 'none';
+            if (adminPanel) adminPanel.style.display = 'block';
+            
+            // Show success message
+            const toast = document.getElementById('toast');
+            if (toast) {
+                toast.textContent = 'Welcome back, admin! 🎮';
+                toast.className = 'toast show success';
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+            
+            // Initialize admin after small delay
+            setTimeout(() => {
+                initializeAdmin();
+            }, 100);
+            
         } else {
-            showAuthError('nope. try again.');
+            const errorEl = document.getElementById('loginError');
+            if (errorEl) {
+                errorEl.textContent = 'nope. try again.';
+                errorEl.style.display = 'block';
+                setTimeout(() => {
+                    errorEl.style.display = 'none';
+                }, 3000);
+            }
+            
+            // Show hint for debugging (remove in production)
+            console.log('Password hint: should be "olympicsAdmin2024!"');
             
             // Clear password field
             passwordInput.value = '';
         }
     } catch (error) {
         console.error('Login error:', error);
-        showAuthError('Login failed. Please try again.');
+        const errorEl = document.getElementById('loginError');
+        if (errorEl) {
+            errorEl.textContent = 'Login failed. Please try again.';
+            errorEl.style.display = 'block';
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 3000);
+        }
     }
 };
 
@@ -374,6 +433,22 @@ function initializePage() {
             }
         });
     }
+    
+    // TEMPORARY: Password reset helper (REMOVE IN PRODUCTION)
+    // Type "resetpassword" in console to generate a new password hash
+    window.resetpassword = async function() {
+        const newPassword = prompt('Enter new admin password:');
+        if (newPassword) {
+            const newHash = await hashPassword(newPassword);
+            console.log('New password hash (update ADMIN_PASSWORD_HASH with this):');
+            console.log(newHash);
+            console.log('Copy the hash above and replace ADMIN_PASSWORD_HASH in the code');
+        }
+    };
+    
+    // TEMPORARY: Quick login for testing (REMOVE IN PRODUCTION)
+    // Uncomment the line below to auto-fill password for testing
+    // if (adminPassword) adminPassword.value = 'olympicsAdmin2024!';
 }
 
 // Multiple initialization attempts to ensure DOM is ready
@@ -1237,8 +1312,577 @@ window.createUser = async function() {
     }
 };
 
-// Continue with all other functions with similar null checks...
-// (Rest of the functions remain the same but with added null checks for DOM elements)
+window.showEditUser = function(userId) {
+    const user = state.allUsers.find(u => u.id === userId);
+    if (!user) {
+        utils.showToast('User not found', 'error');
+        return;
+    }
+    
+    state.editingUser = user;
+    
+    // Show user handle in header
+    const handleSpan = utils.getElement('editUserHandle');
+    if (handleSpan) handleSpan.textContent = utils.formatHandle(user.handle);
+    
+    // Store user ID
+    const userIdEl = utils.getElement('editUserId');
+    if (userIdEl) userIdEl.value = userId;
+    
+    // Populate info tab
+    const handleEl = utils.getElement('editHandle');
+    const statusEl = utils.getElement('editStatus');
+    const teamEl = utils.getElement('editTeam');
+    
+    if (handleEl) handleEl.value = user.handle || '';
+    if (statusEl) statusEl.value = user.status || 'active';
+    if (teamEl) teamEl.value = user.team || '';
+    
+    // Populate character dropdown
+    const characterSelect = utils.getElement('editCharacter');
+    if (characterSelect) {
+        characterSelect.innerHTML = '<option value="">-- none --</option>' +
+            state.allCharacters.map(c => 
+                `<option value="${c.id}" ${user.characterId === c.id ? 'selected' : ''}>${c.name}</option>`
+            ).join('');
+    }
+    
+    // Display credit info
+    const credit = utils.calculateCredit(user.transactions);
+    const creditDisplay = utils.getElement('userCreditDisplay');
+    if (creditDisplay) {
+        creditDisplay.textContent = `current credits: ${credit}`;
+        creditDisplay.className = credit >= 0 ? 'credit-display credit-positive' : 'credit-display credit-negative';
+    }
+    
+    // Display transaction history
+    const historyDiv = utils.getElement('userTransactionHistory');
+    if (historyDiv && user.transactions) {
+        historyDiv.innerHTML = user.transactions.length === 0 ? 
+            '<p style="color: #666;">no transactions yet</p>' :
+            user.transactions.map(t => `
+                <div class="transaction-item ${t.type}">
+                    <div>
+                        <strong>${t.type}</strong>: ${t.amount} credits
+                        ${t.description ? `<br><small>${t.description}</small>` : ''}
+                    </div>
+                    <small>${new Date(t.timestamp).toLocaleDateString()}</small>
+                </div>
+            `).join('');
+    }
+    
+    // Display points
+    const indPointsEl = utils.getElement('userIndPoints');
+    const teamPointsEl = utils.getElement('userTeamPoints');
+    if (indPointsEl) indPointsEl.textContent = user.individualPoints || 0;
+    if (teamPointsEl) teamPointsEl.textContent = user.teamPoints || 0;
+    
+    // Display tools
+    const toolsList = utils.getElement('userToolsList');
+    if (toolsList) {
+        toolsList.innerHTML = user.tools && user.tools.length > 0 ?
+            '<h4>Current Tools:</h4>' + user.tools.map(tool => 
+                `<div class="tool-tag ${tool.used ? 'used' : ''}">${tool.name} ${tool.used ? '(used)' : ''}</div>`
+            ).join('') :
+            '<p style="color: #666;">no tools yet</p>';
+    }
+    
+    // Display available tools to give
+    const availableTools = utils.getElement('availableToolsList');
+    if (availableTools) {
+        availableTools.innerHTML = state.allTools
+            .filter(t => t.visible !== false)
+            .map(tool => `
+                <button class="button small" onclick="giveTool('${user.id}', '${tool.id}')">
+                    ${tool.name} (${tool.price} credits)
+                </button>
+            `).join('');
+    }
+    
+    // Show dialog and activate first tab
+    switchEditTab('info');
+    const dialog = utils.getElement('editUserDialog');
+    if (dialog) dialog.style.display = 'block';
+};
+
+window.hideEditUser = function() {
+    const dialog = utils.getElement('editUserDialog');
+    if (dialog) dialog.style.display = 'none';
+    state.editingUser = null;
+};
+
+window.saveUserEdit = async function() {
+    if (!state.editingUser) {
+        utils.showToast('No user being edited', 'error');
+        return;
+    }
+    
+    try {
+        const handleEl = utils.getElement('editHandle');
+        const statusEl = utils.getElement('editStatus');
+        const teamEl = utils.getElement('editTeam');
+        const characterEl = utils.getElement('editCharacter');
+        
+        if (!handleEl || !statusEl) {
+            utils.showToast('Required form elements not found', 'error');
+            return;
+        }
+        
+        const updates = {
+            handle: handleEl.value,
+            status: statusEl.value,
+            team: teamEl ? teamEl.value : null
+        };
+        
+        const characterId = characterEl ? characterEl.value : '';
+        if (characterId !== state.editingUser.characterId) {
+            // Release old character if exists
+            if (state.editingUser.characterId) {
+                await updateDoc(doc(db, 'characters', state.editingUser.characterId), {
+                    available: true,
+                    ownerId: null
+                });
+            }
+            
+            // Assign new character
+            if (characterId) {
+                const character = state.allCharacters.find(c => c.id === characterId);
+                updates.characterId = characterId;
+                updates.characterName = character ? character.name : null;
+                
+                await updateDoc(doc(db, 'characters', characterId), {
+                    available: false,
+                    ownerId: updates.handle
+                });
+            } else {
+                updates.characterId = null;
+                updates.characterName = null;
+            }
+        }
+        
+        // Check for message to send
+        const messageEl = utils.getElement('editUserMessage');
+        const message = messageEl ? messageEl.value : '';
+        if (message) {
+            const notes = state.editingUser.notes || [];
+            notes.push({
+                message,
+                from: 'admin',
+                timestamp: new Date().toISOString()
+            });
+            updates.notes = notes;
+            
+            // Clear message field after adding
+            messageEl.value = '';
+        }
+        
+        await updateDoc(doc(db, 'users', state.editingUser.id), updates);
+        
+        utils.showToast('User updated! 💾', 'success');
+        hideEditUser();
+        
+        // Reload data
+        await Promise.all([
+            dataManager.loadUsers(),
+            dataManager.loadCharacters()
+        ]);
+        displays.users();
+        
+    } catch (error) {
+        console.error('Error updating user:', error);
+        utils.showToast('Error updating user', 'error');
+    }
+};
+
+window.switchEditTab = function(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('#editUserDialog .tab-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    
+    // Remove active from all tabs
+    document.querySelectorAll('#editUserDialog .tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    const tabContent = utils.getElement(`edit-${tabName}-tab`);
+    if (tabContent) tabContent.style.display = 'block';
+    
+    // Mark tab as active
+    const activeTab = Array.from(document.querySelectorAll('#editUserDialog .tab'))
+        .find(tab => tab.textContent.toLowerCase() === tabName);
+    if (activeTab) activeTab.classList.add('active');
+    
+    state.activeTab = tabName;
+};
+
+// Quick action functions for credits
+window.quickAddCredits = async function(amount, isGift) {
+    if (!state.editingUser) {
+        utils.showToast('No user selected', 'error');
+        return;
+    }
+    
+    try {
+        const transactions = state.editingUser.transactions || [];
+        transactions.push({
+            type: isGift ? 'gift' : 'payment',
+            amount: amount,
+            description: isGift ? 'Admin gift' : 'Payment received',
+            timestamp: new Date().toISOString()
+        });
+        
+        await updateDoc(doc(db, 'users', state.editingUser.id), { transactions });
+        
+        utils.showToast(`Added ${amount} credits!`, 'success');
+        
+        // Reload user data
+        await dataManager.loadUsers();
+        showEditUser(state.editingUser.id);
+        
+    } catch (error) {
+        console.error('Error adding credits:', error);
+        utils.showToast('Error adding credits', 'error');
+    }
+};
+
+window.clearPending = async function() {
+    if (!state.editingUser) {
+        utils.showToast('No user selected', 'error');
+        return;
+    }
+    
+    const credit = utils.calculateCredit(state.editingUser.transactions);
+    if (credit >= 0) {
+        utils.showToast('No pending credits to clear', 'info');
+        return;
+    }
+    
+    try {
+        const transactions = state.editingUser.transactions || [];
+        transactions.push({
+            type: 'adjustment',
+            amount: Math.abs(credit),
+            description: 'Pending cleared by admin',
+            timestamp: new Date().toISOString()
+        });
+        
+        await updateDoc(doc(db, 'users', state.editingUser.id), { transactions });
+        
+        utils.showToast('Pending credits cleared!', 'success');
+        
+        // Reload user data
+        await dataManager.loadUsers();
+        showEditUser(state.editingUser.id);
+        
+    } catch (error) {
+        console.error('Error clearing pending:', error);
+        utils.showToast('Error clearing pending', 'error');
+    }
+};
+
+window.addCustomCredits = async function() {
+    if (!state.editingUser) {
+        utils.showToast('No user selected', 'error');
+        return;
+    }
+    
+    const amountEl = utils.getElement('customCreditAmount');
+    const noteEl = utils.getElement('customCreditNote');
+    
+    if (!amountEl) {
+        utils.showToast('Credit amount field not found', 'error');
+        return;
+    }
+    
+    const amount = parseFloat(amountEl.value);
+    const note = noteEl ? noteEl.value : '';
+    
+    if (!amount || isNaN(amount)) {
+        utils.showToast('Please enter a valid amount', 'warning');
+        return;
+    }
+    
+    try {
+        const transactions = state.editingUser.transactions || [];
+        transactions.push({
+            type: amount > 0 ? 'payment' : 'purchase',
+            amount: Math.abs(amount),
+            description: note || 'Admin adjustment',
+            timestamp: new Date().toISOString()
+        });
+        
+        await updateDoc(doc(db, 'users', state.editingUser.id), { transactions });
+        
+        utils.showToast('Credits added!', 'success');
+        
+        // Clear form
+        amountEl.value = '';
+        if (noteEl) noteEl.value = '';
+        
+        // Reload user data
+        await dataManager.loadUsers();
+        showEditUser(state.editingUser.id);
+        
+    } catch (error) {
+        console.error('Error adding custom credits:', error);
+        utils.showToast('Error adding credits', 'error');
+    }
+};
+
+// Points functions
+window.addPoints = async function() {
+    if (!state.editingUser) {
+        utils.showToast('No user selected', 'error');
+        return;
+    }
+    
+    const amountEl = utils.getElement('pointsAmount');
+    const typeEl = utils.getElement('pointType');
+    const targetEl = utils.getElement('pointTarget');
+    const reasonEl = utils.getElement('pointReason');
+    
+    if (!amountEl || !typeEl || !targetEl) {
+        utils.showToast('Required point fields not found', 'error');
+        return;
+    }
+    
+    const amount = parseInt(amountEl.value) || 0;
+    const type = typeEl.value;
+    const target = targetEl.value;
+    const reason = reasonEl ? reasonEl.value : '';
+    
+    if (amount <= 0) {
+        utils.showToast('Please enter a valid amount', 'warning');
+        return;
+    }
+    
+    try {
+        const multiplier = POINT_MULTIPLIERS[type] || 1;
+        const actualPoints = amount * multiplier;
+        
+        const pointsHistory = state.editingUser.pointsHistory || [];
+        pointsHistory.push({
+            amount: actualPoints,
+            type,
+            target,
+            reason,
+            timestamp: new Date().toISOString(),
+            awardedBy: 'admin'
+        });
+        
+        const updates = { pointsHistory };
+        
+        if (target === 'individual' || target === 'both') {
+            updates.individualPoints = (state.editingUser.individualPoints || 0) + actualPoints;
+        }
+        if (target === 'team' || target === 'both') {
+            updates.teamPoints = (state.editingUser.teamPoints || 0) + actualPoints;
+        }
+        
+        await updateDoc(doc(db, 'users', state.editingUser.id), updates);
+        
+        utils.showToast(`Awarded ${actualPoints} points!`, 'success');
+        
+        // Clear form
+        amountEl.value = '';
+        if (reasonEl) reasonEl.value = '';
+        
+        // Reload user data
+        await dataManager.loadUsers();
+        showEditUser(state.editingUser.id);
+        displays.points();
+        
+    } catch (error) {
+        console.error('Error adding points:', error);
+        utils.showToast('Error adding points', 'error');
+    }
+};
+
+// Tool giving function
+window.giveTool = async function(userId, toolId) {
+    const user = state.allUsers.find(u => u.id === userId);
+    const tool = state.allTools.find(t => t.id === toolId);
+    
+    if (!user || !tool) {
+        utils.showToast('User or tool not found', 'error');
+        return;
+    }
+    
+    // Check if user has enough credits
+    const credit = utils.calculateCredit(user.transactions);
+    if (credit < tool.price) {
+        utils.showToast(`User needs ${tool.price - credit} more credits for this tool`, 'warning');
+        return;
+    }
+    
+    try {
+        const tools = user.tools || [];
+        tools.push({
+            id: toolId,
+            name: tool.name,
+            price: tool.price,
+            used: false,
+            acquiredAt: new Date().toISOString()
+        });
+        
+        const transactions = user.transactions || [];
+        transactions.push({
+            type: 'purchase',
+            amount: tool.price,
+            description: `Tool: ${tool.name}`,
+            timestamp: new Date().toISOString()
+        });
+        
+        await updateDoc(doc(db, 'users', userId), { tools, transactions });
+        
+        utils.showToast(`Gave ${tool.name} to user!`, 'success');
+        
+        // Reload user data
+        await dataManager.loadUsers();
+        showEditUser(userId);
+        
+    } catch (error) {
+        console.error('Error giving tool:', error);
+        utils.showToast('Error giving tool', 'error');
+    }
+};
+
+// Search function
+window.searchUsers = function() {
+    const searchEl = utils.getElement('searchUsers');
+    if (!searchEl) return;
+    
+    const query = searchEl.value.toLowerCase();
+    const tbody = utils.getElement('usersTableBody');
+    
+    if (!tbody) return;
+    
+    if (!query) {
+        displays.users();
+        return;
+    }
+    
+    const filtered = state.allUsers.filter(user => 
+        user.handle?.toLowerCase().includes(query) ||
+        user.id?.toLowerCase().includes(query) ||
+        user.characterName?.toLowerCase().includes(query)
+    );
+    
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="loading-cell">no matches found</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = filtered.map(user => {
+        const credit = utils.calculateCredit(user.transactions);
+        const toolsDisplay = templates.toolsList(user.tools);
+        const statusIcon = user.status === 'active' ? '✅' : user.status === 'blocked' ? '🚫' : '💀';
+        
+        return `
+            <tr>
+                <td><strong>${utils.formatHandle(user.handle)}</strong></td>
+                <td style="color: #666; font-size: 10px;">${user.id}</td>
+                <td>${user.characterName || '-'}</td>
+                <td>${statusIcon} ${user.status || 'active'}</td>
+                <td>${user.team || '-'}</td>
+                <td style="color: ${credit >= 0 ? '#4D9938' : '#D04545'}; font-weight: bold;">
+                    ${credit}
+                </td>
+                <td>${user.individualPoints || 0}</td>
+                <td>${user.teamPoints || 0}</td>
+                <td>${toolsDisplay}</td>
+                <td>
+                    <button class="button small" onclick="showEditUser('${user.id}')">edit</button>
+                    <button class="button small warning" onclick="userActions.delete('${user.id}')">remove</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+};
+
+// Quick message functions
+window.quickMsg = function(message) {
+    const messageField = utils.getElement('editUserMessage');
+    if (messageField) messageField.value = message;
+};
+
+// Tool management functions
+window.showCreateTool = function() {
+    state.editingTool = null;
+    utils.clearForm(['toolName', 'toolPrice', 'toolIcon', 'toolDescription']);
+    
+    const visibleEl = utils.getElement('toolVisible');
+    if (visibleEl) visibleEl.value = 'true';
+    
+    const titleEl = utils.getElement('toolDialogTitle');
+    if (titleEl) titleEl.textContent = '🪤 Create Tool';
+    
+    const idEl = utils.getElement('editingToolId');
+    if (idEl) idEl.value = '';
+    
+    const dialog = utils.getElement('toolDialog');
+    if (dialog) dialog.style.display = 'block';
+};
+
+window.hideToolDialog = function() {
+    const dialog = utils.getElement('toolDialog');
+    if (dialog) dialog.style.display = 'none';
+    state.editingTool = null;
+};
+
+window.saveTool = async function() {
+    try {
+        const nameEl = utils.getElement('toolName');
+        const priceEl = utils.getElement('toolPrice');
+        const iconEl = utils.getElement('toolIcon');
+        const descEl = utils.getElement('toolDescription');
+        const visibleEl = utils.getElement('toolVisible');
+        const idEl = utils.getElement('editingToolId');
+        
+        if (!nameEl || !priceEl) {
+            utils.showToast('Required tool fields not found', 'error');
+            return;
+        }
+        
+        const toolData = {
+            name: nameEl.value,
+            price: parseInt(priceEl.value) || 0,
+            icon: iconEl ? iconEl.value : '',
+            description: descEl ? descEl.value : '',
+            visible: visibleEl ? visibleEl.value === 'true' : true
+        };
+        
+        if (!toolData.name || !toolData.price) {
+            utils.showToast('Name and price are required', 'warning');
+            return;
+        }
+        
+        const editingId = idEl ? idEl.value : '';
+        
+        if (editingId) {
+            // Update existing tool
+            await updateDoc(doc(db, 'tools', editingId), toolData);
+            utils.showToast('Tool updated!', 'success');
+        } else {
+            // Create new tool
+            toolData.createdAt = new Date().toISOString();
+            await addDoc(collection(db, 'tools'), toolData);
+            utils.showToast('Tool created!', 'success');
+        }
+        
+        hideToolDialog();
+        
+        // Reload tools
+        await dataManager.loadTools();
+        displays.tools();
+        
+    } catch (error) {
+        console.error('Error saving tool:', error);
+        utils.showToast('Error saving tool', 'error');
+    }
+};
 
 // Make action handlers globally available
 window.userActions = {
