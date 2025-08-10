@@ -6,22 +6,39 @@
     <title>BLIND B0SS 🧸 admin panel</title>
     <link rel="stylesheet" href="blind.css">
     <style>
+        body {
+            overflow-y: auto;
+            min-height: 100vh;
+        }
+        .container {
+            min-height: 100vh;
+            overflow-y: auto;
+        }
         .admin-grid {
             display: grid;
             grid-template-columns: 1fr 2fr;
             gap: 20px;
             padding: 20px;
+            min-height: calc(100vh - 100px);
         }
         .control-panel {
             background: #ececec;
             border: 2px solid #0054e3;
             padding: 15px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
         }
-        .box-editor {
+        .box-editor, .challenge-editor {
             background: white;
             border: 2px solid #0054e3;
-            padding: 10px;
+            padding: 20px;
             margin-bottom: 10px;
+        }
+        .box-grid-editor {
+            height: fit-content;
         }
         .save-indicator {
             position: fixed;
@@ -31,9 +48,138 @@
             background: #90ee90;
             display: none;
         }
+        .editor-box {
+            aspect-ratio: 1;
+            background: white;
+            border: 2px solid #0054e3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.8em;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .editor-box:hover {
+            background: #e0f0ff;
+            transform: scale(1.05);
+        }
+        .editor-box.unavailable {
+            background: #f0f0f0;
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .editor-box.available {
+            border-color: #00aa00;
+            background: #e0ffe0;
+        }
+        .editor-box.has-bully {
+            border-color: #ff9900;
+            background: #fff4e0;
+        }
+        .editor-box.has-mega {
+            border-color: #ff0000;
+            background: #ffe0e0;
+        }
+        .challenge-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+        }
+        .challenge-modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 3px solid #0054e3;
+            padding: 30px;
+            min-width: 500px;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .challenge-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0054e3;
+        }
+        .close-modal {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .challenge-field {
+            margin-bottom: 15px;
+        }
+        .challenge-field label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        .challenge-field input,
+        .challenge-field textarea,
+        .challenge-field select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+        .challenge-field textarea {
+            min-height: 60px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .xp-button {
+            background: linear-gradient(180deg, #fff, #e0e0e0);
+            border: 2px solid #999;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 3px;
+            box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+        }
+        .xp-button:hover {
+            background: linear-gradient(180deg, #f0f0f0, #d0d0d0);
+        }
+        .xp-button.primary {
+            background: linear-gradient(180deg, #90ee90, #7dd87d);
+            border-color: #5cb85c;
+        }
+        .xp-button.danger {
+            background: linear-gradient(180deg, #ff9999, #ff6666);
+            border-color: #ff4444;
+        }
+        .labubu-preview {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            border: 2px solid #ccc;
+            padding: 5px;
+            background: white;
+        }
         @media (max-width: 768px) {
             .admin-grid {
                 grid-template-columns: 1fr;
+            }
+            .challenge-modal-content {
+                min-width: 90vw;
+                padding: 20px;
             }
         }
     </style>
@@ -77,15 +223,16 @@
                     <button class="xp-button" onclick="resetBoard()">Reset All Boxes</button>
                     <button class="xp-button" onclick="clearTeamScores()">Clear Team Scores</button>
                     <button class="xp-button" onclick="exportGameState()">Export Game State</button>
+                    <button class="xp-button primary" onclick="openChallengeEditor()">Edit Challenges</button>
                 </div>
 
                 <div class="control-section">
                     <h4>Quick Stats</h4>
                     <div id="gameStats">
-                        <p>Boxes Opened: <span id="boxesOpened">0/25</span></p>
+                        <p>Boxes Available: <span id="boxesAvailable">5/25</span></p>
+                        <p>Boxes Opened: <span id="boxesOpened">0/5</span></p>
                         <p>Team 1: <span id="team1Score">0</span></p>
                         <p>Team 2: <span id="team2Score">0</span></p>
-                        <p>Team 3: <span id="team3Score">0</span></p>
                     </div>
                 </div>
 
@@ -99,14 +246,25 @@
                     <textarea id="specialCardText" placeholder="special card message (if applicable)" rows="3"></textarea>
                     <button class="xp-button" onclick="applySpecialCard()">Apply to Selected Box</button>
                 </div>
+
+                <div class="control-section">
+                    <h4>Available Labubu Images</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                        <img src="/assets/b04rd/labubu-sports-drunk.png" class="labubu-preview" title="Drunk">
+                        <img src="/assets/b04rd/labubu-sports-heart.png" class="labubu-preview" title="Heart">
+                        <img src="/assets/b04rd/labubu-sports-life.png" class="labubu-preview" title="Life">
+                        <img src="/assets/b04rd/labubu-sports-turkey.png" class="labubu-preview" title="Turkey">
+                        <img src="/assets/b04rd/labubu-bully.png" class="labubu-preview" title="Bully (Special)">
+                    </div>
+                </div>
             </div>
 
             <!-- Right Panel - Box Grid Editor -->
             <div class="box-grid-editor">
                 <h3>📦 Box Configuration</h3>
-                <p class="hint">click any box to edit its contents</p>
+                <p class="hint">Only 5 boxes are available (one per collection). Click to edit challenges.</p>
                 
-                <div class="editor-grid" id="editorGrid">
+                <div class="editor-grid" id="editorGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
                     <!-- 25 boxes will be generated here -->
                 </div>
 
@@ -115,73 +273,121 @@
                     <h4>Editing Box: <span id="currentBoxId"></span></h4>
                     
                     <div class="editor-field">
-                        <label>Collection:</label>
-                        <select id="boxCollection">
-                            <option value="collection1">Collection 1</option>
-                            <option value="collection2">Collection 2</option>
-                            <option value="collection3">Collection 3</option>
-                            <option value="collection4">Collection 4</option>
-                            <option value="collection5">Collection 5</option>
-                        </select>
-                    </div>
-
-                    <div class="editor-field">
-                        <label>Labubu Name:</label>
-                        <input type="text" id="labubuName" placeholder="cursed doll #47">
-                    </div>
-
-                    <div class="editor-field">
-                        <label>Image Path:</label>
-                        <input type="text" id="imagePath" placeholder="/assets/b04rd/labubu1.png">
-                    </div>
-
-                    <div class="editor-field">
-                        <label>Team Challenge:</label>
-                        <textarea id="teamChallenge" rows="2" placeholder="do something weird together"></textarea>
-                        <input type="number" id="teamPoints" placeholder="5000" step="500">
-                    </div>
-
-                    <div class="editor-field">
-                        <label>3v3 Challenge:</label>
-                        <textarea id="individualChallenge" rows="2" placeholder="fight each other or whatever"></textarea>
-                        <input type="number" id="individualPoints" placeholder="1000" step="100">
-                    </div>
-
-                    <div class="editor-field">
-                        <label>Card Type:</label>
-                        <select id="cardType">
-                            <option value="regular">Regular</option>
-                            <option value="bully">Labubu Bully</option>
-                            <option value="mega">Mega Bubu</option>
-                        </select>
-                    </div>
-
-                    <div class="editor-field" id="specialField" style="display: none;">
-                        <label>Special Message:</label>
-                        <textarea id="specialMessage" rows="3" placeholder="congrats u broke everything"></textarea>
-                    </div>
-
-                    <div class="editor-field">
-                        <label>Status:</label>
-                        <select id="boxStatus">
+                        <label>Box Status:</label>
+                        <select id="boxStatus" onchange="toggleBoxAvailability()">
+                            <option value="unavailable">Unavailable</option>
                             <option value="available">Available</option>
                             <option value="opened">Opened</option>
                             <option value="claimed">Claimed</option>
                         </select>
                     </div>
 
-                    <div class="editor-field">
-                        <label>Claimed By:</label>
-                        <select id="claimedBy">
-                            <option value="">None</option>
-                            <option value="team1">Team 1</option>
-                            <option value="team2">Team 2</option>
-                            <option value="team3">Team 3</option>
-                        </select>
+                    <div id="boxConfigFields" style="display: none;">
+                        <div class="editor-field">
+                            <label>Labubu Name:</label>
+                            <input type="text" id="labubuName" placeholder="cursed doll #47">
+                        </div>
+
+                        <div class="editor-field">
+                            <label>Image Path:</label>
+                            <select id="imagePath">
+                                <option value="labubu-sports-drunk.png">Drunk Labubu</option>
+                                <option value="labubu-sports-heart.png">Heart Labubu</option>
+                                <option value="labubu-sports-life.png">Life Labubu</option>
+                                <option value="labubu-sports-turkey.png">Turkey Labubu</option>
+                                <option value="labubu-bully.png">Bully (Special)</option>
+                            </select>
+                        </div>
+
+                        <div class="editor-field">
+                            <label>Card Type:</label>
+                            <select id="cardType">
+                                <option value="regular">Regular</option>
+                                <option value="bully">Labubu Bully</option>
+                            </select>
+                        </div>
+
+                        <div class="editor-field" id="specialField" style="display: none;">
+                            <label>Special Message:</label>
+                            <textarea id="specialMessage" rows="3" placeholder="congrats u broke everything"></textarea>
+                        </div>
+
+                        <div class="editor-field">
+                            <label>Claimed By:</label>
+                            <select id="claimedBy">
+                                <option value="">None</option>
+                                <option value="team1">Team 1</option>
+                                <option value="team2">Team 2</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <button class="xp-button" onclick="saveBox()">Save Box</button>
-                    <button class="xp-button secondary" onclick="closeBoxEditor()">Cancel</button>
+                    <button class="xp-button primary" onclick="saveBox()">Save Box</button>
+                    <button class="xp-button" onclick="closeBoxEditor()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Challenge Editor Modal -->
+        <div class="challenge-modal" id="challengeModal">
+            <div class="challenge-modal-content">
+                <div class="challenge-modal-header">
+                    <h2>📝 Edit Challenges for <span id="challengeBoxId"></span></h2>
+                    <button class="close-modal" onclick="closeChallengeModal()">×</button>
+                </div>
+
+                <div class="challenge-field">
+                    <label>Labubu Name:</label>
+                    <input type="text" id="challenge_labubuName" placeholder="Enter Labubu name">
+                </div>
+
+                <div class="challenge-field">
+                    <label>Labubu Image:</label>
+                    <select id="challenge_imagePath">
+                        <option value="labubu-sports-drunk.png">Drunk Labubu</option>
+                        <option value="labubu-sports-heart.png">Heart Labubu</option>
+                        <option value="labubu-sports-life.png">Life Labubu</option>
+                        <option value="labubu-sports-turkey.png">Turkey Labubu</option>
+                        <option value="labubu-bully.png">Bully (Special)</option>
+                    </select>
+                </div>
+
+                <div class="challenge-field">
+                    <label>Team Challenge Description:</label>
+                    <textarea id="challenge_teamChallenge" placeholder="Enter team challenge description"></textarea>
+                </div>
+
+                <div class="challenge-field">
+                    <label>Team Challenge Points:</label>
+                    <input type="number" id="challenge_teamPoints" placeholder="5000" step="500">
+                </div>
+
+                <div class="challenge-field">
+                    <label>3v3 Battle Description:</label>
+                    <textarea id="challenge_individualChallenge" placeholder="Enter 3v3 battle description"></textarea>
+                </div>
+
+                <div class="challenge-field">
+                    <label>3v3 Battle Points:</label>
+                    <input type="number" id="challenge_individualPoints" placeholder="1000" step="100">
+                </div>
+
+                <div class="challenge-field">
+                    <label>Card Type:</label>
+                    <select id="challenge_cardType" onchange="toggleSpecialMessage()">
+                        <option value="regular">Regular</option>
+                        <option value="bully">Labubu Bully</option>
+                    </select>
+                </div>
+
+                <div class="challenge-field" id="challenge_specialField" style="display: none;">
+                    <label>Special Message:</label>
+                    <textarea id="challenge_specialMessage" placeholder="Special card message"></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button class="xp-button primary" onclick="saveChallenges()">Save Challenges</button>
+                    <button class="xp-button" onclick="closeChallengeModal()">Cancel</button>
                 </div>
             </div>
         </div>
@@ -189,8 +395,21 @@
 
     <script type="module" src="blind.js"></script>
     <script>
+        // Available boxes (only 5, one per collection)
+        const AVAILABLE_BOXES = ['christmas-1', 'coke-1', 'energy-1', 'mart-1', 'sports-1'];
+        
+        // Labubu image mapping for the 5 available boxes
+        const LABUBU_IMAGES = {
+            'christmas-1': 'labubu-sports-drunk.png',
+            'coke-1': 'labubu-sports-heart.png', 
+            'energy-1': 'labubu-sports-life.png',
+            'mart-1': 'labubu-sports-turkey.png',
+            'sports-1': 'labubu-bully.png'
+        };
+
         // Admin-specific functions
         window.currentEditingBox = null;
+        window.currentChallengeBox = null;
 
         window.authenticate = async function() {
             const password = document.getElementById('adminPassword').value;
@@ -206,12 +425,179 @@
             }
         }
 
+        window.initializeAdmin = async function() {
+            // Generate editor grid
+            const editorGrid = document.getElementById('editorGrid');
+            if (!editorGrid) return;
+            
+            let gridHTML = '';
+            const collections = [
+                { name: 'christmas', count: 5 },
+                { name: 'coke', count: 5 },
+                { name: 'energy', count: 5 },
+                { name: 'mart', count: 5 },
+                { name: 'sports', count: 5 }
+            ];
+            
+            collections.forEach(collection => {
+                for (let i = 1; i <= collection.count; i++) {
+                    const boxId = `${collection.name}-${i}`;
+                    const isAvailable = AVAILABLE_BOXES.includes(boxId);
+                    const className = isAvailable ? 'available' : 'unavailable';
+                    
+                    gridHTML += `
+                        <div class="editor-box ${className}" id="edit-${boxId}" onclick="${isAvailable ? `openChallengeForBox('${boxId}')` : ''}">
+                            <img src="/assets/b04rd/labubu-box-${collection.name}.png" style="width: 100%; height: 100%; object-fit: contain; opacity: ${isAvailable ? '1' : '0.3'};">
+                            ${isAvailable ? '<div style="position: absolute; top: 5px; right: 5px; background: #00aa00; color: white; padding: 2px 5px; font-size: 10px;">ACTIVE</div>' : ''}
+                        </div>
+                    `;
+                }
+            });
+            
+            editorGrid.innerHTML = gridHTML;
+            
+            // Load current state from Firebase if available
+            if (window.loadGameState) {
+                await window.loadGameState();
+            }
+        }
+
+        window.openChallengeForBox = function(boxId) {
+            window.currentChallengeBox = boxId;
+            document.getElementById('challengeBoxId').textContent = boxId;
+            document.getElementById('challengeModal').style.display = 'block';
+            
+            // Set default image for this box
+            const defaultImage = LABUBU_IMAGES[boxId];
+            if (defaultImage) {
+                document.getElementById('challenge_imagePath').value = defaultImage;
+            }
+            
+            // Load existing challenge data if available
+            loadChallengeData(boxId);
+        }
+
+        window.openChallengeEditor = function() {
+            alert('Click on any of the 5 active (green) boxes to edit their challenges');
+        }
+
+        window.closeChallengeModal = function() {
+            document.getElementById('challengeModal').style.display = 'none';
+            window.currentChallengeBox = null;
+        }
+
+        window.toggleSpecialMessage = function() {
+            const cardType = document.getElementById('challenge_cardType').value;
+            const specialField = document.getElementById('challenge_specialField');
+            
+            if (cardType === 'bully') {
+                specialField.style.display = 'block';
+            } else {
+                specialField.style.display = 'none';
+            }
+        }
+
+        window.saveChallenges = async function() {
+            if (!window.currentChallengeBox) return;
+            
+            const challengeData = {
+                labubuName: document.getElementById('challenge_labubuName').value,
+                imagePath: document.getElementById('challenge_imagePath').value,
+                teamChallenge: document.getElementById('challenge_teamChallenge').value,
+                teamPoints: parseInt(document.getElementById('challenge_teamPoints').value) || 5000,
+                individualChallenge: document.getElementById('challenge_individualChallenge').value,
+                individualPoints: parseInt(document.getElementById('challenge_individualPoints').value) || 1000,
+                cardType: document.getElementById('challenge_cardType').value,
+                specialMessage: document.getElementById('challenge_specialMessage').value,
+                status: 'available',
+                lastUpdated: new Date().toISOString()
+            };
+            
+            try {
+                // Save to Firebase
+                if (window.db) {
+                    await window.setDoc(window.doc(window.db, 'blindBoxes', window.currentChallengeBox), challengeData);
+                }
+                
+                // Update visual indicator
+                const editorBox = document.getElementById(`edit-${window.currentChallengeBox}`);
+                if (challengeData.cardType === 'bully') {
+                    editorBox.classList.add('has-bully');
+                    editorBox.classList.remove('has-mega');
+                } else {
+                    editorBox.classList.remove('has-bully', 'has-mega');
+                }
+                
+                // Show save indicator
+                document.getElementById('saveIndicator').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('saveIndicator').style.display = 'none';
+                }, 2000);
+                
+                closeChallengeModal();
+            } catch (error) {
+                console.error('Error saving challenges:', error);
+                alert('Failed to save challenges. Check console for details.');
+            }
+        }
+
+        window.loadChallengeData = async function(boxId) {
+            // Load from Firebase if available
+            if (window.db && window.getDoc) {
+                try {
+                    const docRef = window.doc(window.db, 'blindBoxes', boxId);
+                    const docSnap = await window.getDoc(docRef);
+                    
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        document.getElementById('challenge_labubuName').value = data.labubuName || '';
+                        document.getElementById('challenge_imagePath').value = data.imagePath || LABUBU_IMAGES[boxId] || '';
+                        document.getElementById('challenge_teamChallenge').value = data.teamChallenge || '';
+                        document.getElementById('challenge_teamPoints').value = data.teamPoints || 5000;
+                        document.getElementById('challenge_individualChallenge').value = data.individualChallenge || '';
+                        document.getElementById('challenge_individualPoints').value = data.individualPoints || 1000;
+                        document.getElementById('challenge_cardType').value = data.cardType || 'regular';
+                        document.getElementById('challenge_specialMessage').value = data.specialMessage || '';
+                        
+                        toggleSpecialMessage();
+                    }
+                } catch (error) {
+                    console.error('Error loading challenge data:', error);
+                }
+            }
+        }
+
         window.editBox = function(boxId) {
             window.currentEditingBox = boxId;
             document.getElementById('currentBoxId').textContent = boxId;
             document.getElementById('boxEditor').style.display = 'block';
-            // Load current box data from Firebase
-            window.loadBoxData(boxId);
+            
+            // Check if box is available
+            const isAvailable = AVAILABLE_BOXES.includes(boxId);
+            document.getElementById('boxStatus').value = isAvailable ? 'available' : 'unavailable';
+            
+            toggleBoxAvailability();
+            
+            if (isAvailable) {
+                // Set default image
+                document.getElementById('imagePath').value = LABUBU_IMAGES[boxId] || '';
+            }
+            
+            // Load current box data from Firebase if available
+            if (window.loadBoxData) {
+                window.loadBoxData(boxId);
+            }
+        }
+
+        window.toggleBoxAvailability = function() {
+            const status = document.getElementById('boxStatus').value;
+            const configFields = document.getElementById('boxConfigFields');
+            
+            if (status === 'available' || status === 'opened' || status === 'claimed') {
+                configFields.style.display = 'block';
+            } else {
+                configFields.style.display = 'none';
+            }
         }
 
         window.closeBoxEditor = function() {
@@ -219,10 +605,73 @@
             window.currentEditingBox = null;
         }
 
+        window.saveBox = async function() {
+            if (!window.currentEditingBox) return;
+            
+            const status = document.getElementById('boxStatus').value;
+            
+            if (status === 'unavailable') {
+                // Just save the status
+                try {
+                    if (window.db) {
+                        await window.setDoc(window.doc(window.db, 'blindBoxes', window.currentEditingBox), {
+                            status: 'unavailable',
+                            lastUpdated: new Date().toISOString()
+                        });
+                    }
+                    
+                    document.getElementById('saveIndicator').style.display = 'block';
+                    setTimeout(() => {
+                        document.getElementById('saveIndicator').style.display = 'none';
+                    }, 2000);
+                    
+                    closeBoxEditor();
+                } catch (error) {
+                    console.error('Error saving box:', error);
+                    alert('Failed to save');
+                }
+                return;
+            }
+            
+            // Save full box data for available boxes
+            const boxData = {
+                labubuName: document.getElementById('labubuName').value,
+                imagePath: document.getElementById('imagePath').value,
+                cardType: document.getElementById('cardType').value,
+                specialMessage: document.getElementById('specialMessage').value,
+                status: status,
+                claimedBy: document.getElementById('claimedBy').value,
+                lastUpdated: new Date().toISOString()
+            };
+            
+            try {
+                if (window.db) {
+                    await window.setDoc(window.doc(window.db, 'blindBoxes', window.currentEditingBox), boxData);
+                }
+                
+                // Update visual indicator
+                const editorBox = document.getElementById(`edit-${window.currentEditingBox}`);
+                if (boxData.cardType === 'bully') {
+                    editorBox.classList.add('has-bully');
+                }
+                
+                // Show save indicator
+                document.getElementById('saveIndicator').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('saveIndicator').style.display = 'none';
+                }, 2000);
+                
+                closeBoxEditor();
+            } catch (error) {
+                console.error('Error saving box:', error);
+                alert('Failed to save');
+            }
+        }
+
         // Check for special card type changes
         document.getElementById('cardType')?.addEventListener('change', (e) => {
             const specialField = document.getElementById('specialField');
-            if (e.target.value === 'bully' || e.target.value === 'mega') {
+            if (e.target.value === 'bully') {
                 specialField.style.display = 'block';
             } else {
                 specialField.style.display = 'none';

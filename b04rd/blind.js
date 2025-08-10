@@ -35,6 +35,12 @@ try {
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     console.log('Firebase initialized successfully');
+    
+    // Export for admin panel
+    window.db = db;
+    window.setDoc = setDoc;
+    window.doc = doc;
+    window.getDoc = getDoc;
 } catch (error) {
     console.error('Failed to initialize Firebase:', error);
 }
@@ -43,31 +49,66 @@ try {
 // GAME STATE
 // ============================================
 
+// Only 5 boxes are available
+const AVAILABLE_BOXES = ['christmas-1', 'coke-1', 'energy-1', 'mart-1', 'sports-1'];
+
+// Labubu mapping for the 5 available boxes (excluding mega)
+const LABUBU_MAPPING = {
+    'christmas-1': { 
+        name: 'Drunk Labubu', 
+        image: 'labubu-sports-drunk.png',
+        teamChallenge: 'Take a team shot together',
+        teamPoints: 5000,
+        individualChallenge: 'Drink contest - last one standing wins',
+        individualPoints: 1000
+    },
+    'coke-1': { 
+        name: 'Heart Labubu', 
+        image: 'labubu-sports-heart.png',
+        teamChallenge: 'Group hug for 30 seconds',
+        teamPoints: 5000,
+        individualChallenge: 'Compliment battle - most creative wins',
+        individualPoints: 1000
+    },
+    'energy-1': { 
+        name: 'Life Labubu', 
+        image: 'labubu-sports-life.png',
+        teamChallenge: 'Share your life philosophy in 30 seconds',
+        teamPoints: 5000,
+        individualChallenge: 'Existential debate - convince us life has meaning',
+        individualPoints: 1000
+    },
+    'mart-1': { 
+        name: 'Turkey Labubu', 
+        image: 'labubu-sports-turkey.png',
+        teamChallenge: 'Do the turkey dance together',
+        teamPoints: 5000,
+        individualChallenge: 'Best turkey impression wins',
+        individualPoints: 1000
+    },
+    'sports-1': { 
+        name: 'Bully Labubu', 
+        image: 'labubu-bully.png',
+        teamChallenge: 'Roast the other teams (keep it friendly)',
+        teamPoints: 5000,
+        individualChallenge: 'Insult battle - funniest burn wins',
+        individualPoints: 1000,
+        cardType: 'bully',
+        specialMessage: 'chaos mode activated. prepare for trouble.'
+    }
+};
+
 let gameState = {
     boxes: {},
     teams: {
         team1: { points: 0, dolls: [] },
-        team2: { points: 0, dolls: [] },
-        team3: { points: 0, dolls: [] }
+        team2: { points: 0, dolls: [] }
     },
     currentUser: null,
     currentTeam: null,
     currentTurn: null,
     selectedBox: null,
-    gameActive: false
-};
-
-// Box to Doll Mapping
-const dollMapping = {
-    // Sports Collection
-    'sports-1': { name: 'Baller Labubu', image: 'labubu-sports-baller.png' },
-    'sports-2': { name: 'Drunk Labubu', image: 'labubu-sports-drunk.png' },
-    'sports-3': { name: 'Heart Labubu', image: 'labubu-sports-heart.png' },
-    'sports-4': { name: 'Life Labubu', image: 'labubu-sports-life.png' },
-    'sports-5': { name: 'Turkey Labubu', image: 'labubu-sports-turkey.png' },
-    
-    // Add mappings for other collections as needed
-    // These can be overridden by admin in Firebase
+    gameActive: true  // Set to true by default now
 };
 
 // ============================================
@@ -96,26 +137,57 @@ window.createSessionToken = function() {
 // ============================================
 
 async function initializeGame() {
-    // Check for login first
-    const savedUser = sessionStorage.getItem('io2_user');
-    if (!savedUser) {
-        document.getElementById('loginModal').style.display = 'block';
-        return;
-    } else {
-        gameState.currentUser = JSON.parse(savedUser);
-        gameState.currentTeam = gameState.currentUser.team;
-    }
+    // No login required - everyone can access
+    gameState.gameActive = true;
 
-    // Set up box click handlers
+    // Set up box click handlers - only for available boxes
     document.querySelectorAll('.blind-box').forEach(box => {
-        box.addEventListener('click', handleBoxClick);
+        const boxId = box.dataset.boxId;
+        
+        if (AVAILABLE_BOXES.includes(boxId)) {
+            box.addEventListener('click', handleBoxClick);
+        } else {
+            // Mark unavailable boxes
+            box.classList.add('unavailable');
+            box.style.opacity = '0.3';
+            box.style.cursor = 'not-allowed';
+        }
     });
+
+    // Initialize available boxes in Firebase
+    await initializeAvailableBoxes();
 
     // Load game state from Firebase
     await loadGameState();
 
     // Set up real-time listeners
     setupRealtimeListeners();
+}
+
+// ============================================
+// INITIALIZE AVAILABLE BOXES
+// ============================================
+
+async function initializeAvailableBoxes() {
+    for (const boxId of AVAILABLE_BOXES) {
+        const boxData = LABUBU_MAPPING[boxId];
+        
+        try {
+            // Check if box already exists
+            const boxDoc = await getDoc(doc(db, 'blindBoxes', boxId));
+            
+            if (!boxDoc.exists()) {
+                // Create box with default data
+                await setDoc(doc(db, 'blindBoxes', boxId), {
+                    ...boxData,
+                    status: 'available',
+                    createdAt: new Date().toISOString()
+                });
+            }
+        } catch (error) {
+            console.error(`Error initializing box ${boxId}:`, error);
+        }
+    }
 }
 
 // ============================================
@@ -126,13 +198,8 @@ function handleBoxClick(e) {
     const box = e.currentTarget;
     const boxId = box.dataset.boxId;
     
-    // Check if it's this team's turn
-    if (!gameState.gameActive) {
-        return;
-    }
-    
-    if (gameState.currentTurn !== gameState.currentTeam) {
-        alert(`not your turn. waiting for ${gameState.currentTurn || 'moderator to start'}`);
+    // Only allow clicks on available boxes
+    if (!AVAILABLE_BOXES.includes(boxId)) {
         return;
     }
     
@@ -161,7 +228,6 @@ async function updateBoxSelection(boxId) {
     try {
         await setDoc(doc(db, 'gameState', 'current'), {
             selectedBox: boxId,
-            selectedBy: gameState.currentTeam,
             selectedAt: new Date().toISOString(),
             status: 'waiting_for_reveal'
         }, { merge: true });
@@ -186,23 +252,25 @@ async function revealBox(boxId, boxData) {
     if (boxData.cardType === 'bully') {
         showSpecialCard('bully', boxData);
         return;
-    } else if (boxData.cardType === 'mega') {
-        showSpecialCard('mega', boxData);
-        return;
     }
     
     // Show normal reveal
     const modal = document.getElementById('revealModal');
-    const dollData = boxData.doll || dollMapping[boxId] || { name: 'Mystery Labubu', image: 'placeholder.png' };
+    
+    // Use data from Firebase or fallback to defaults
+    const dollData = boxData || LABUBU_MAPPING[boxId] || { 
+        name: 'Mystery Labubu', 
+        image: 'placeholder.png' 
+    };
     
     document.getElementById('revealedDoll').src = `/assets/b04rd/${dollData.image}`;
-    document.getElementById('dollName').textContent = dollData.name;
-    document.getElementById('teamPoints').textContent = `$${boxData.teamPoints || 5000}`;
-    document.getElementById('individualPoints').textContent = `$${boxData.individualPoints || 1000}`;
+    document.getElementById('dollName').textContent = dollData.name || dollData.labubuName;
+    document.getElementById('teamPoints').textContent = `$${dollData.teamPoints || 5000}`;
+    document.getElementById('individualPoints').textContent = `$${dollData.individualPoints || 1000}`;
     
     // Set up button handlers
-    document.getElementById('teamBtn').onclick = () => selectChallenge('team', boxData);
-    document.getElementById('individualBtn').onclick = () => selectChallenge('individual', boxData);
+    document.getElementById('teamBtn').onclick = () => selectChallenge('team', dollData);
+    document.getElementById('individualBtn').onclick = () => selectChallenge('individual', dollData);
     
     modal.style.display = 'block';
 }
@@ -212,11 +280,7 @@ function showSpecialCard(type, boxData) {
     const specialSound = document.getElementById('specialSound');
     if (specialSound) specialSound.play();
     
-    if (type === 'mega') {
-        document.getElementById('specialImage').src = '/assets/b04rd/labubu-mega.png';
-        document.getElementById('specialTitle').textContent = 'MEGA BUBU';
-        document.getElementById('specialText').textContent = boxData.specialMessage || 'the final boss has appeared. good luck.';
-    } else {
+    if (type === 'bully') {
         document.getElementById('specialImage').src = '/assets/b04rd/labubu-bully.png';
         document.getElementById('specialTitle').textContent = 'LABUBU BULLY';
         document.getElementById('specialText').textContent = boxData.specialMessage || 'chaos mode activated. prepare for trouble.';
@@ -226,12 +290,6 @@ function showSpecialCard(type, boxData) {
 }
 
 async function selectChallenge(type, boxData) {
-    // Only team members can select team challenges
-    if (type === 'team' && !gameState.currentTeam) {
-        alert('only team members can select team challenges');
-        return;
-    }
-    
     const points = type === 'team' ? boxData.teamPoints : boxData.individualPoints;
     
     // Update Firebase
@@ -242,13 +300,10 @@ async function selectChallenge(type, boxData) {
         status: 'completed'
     }, { merge: true });
     
-    // Update team points
-    if (gameState.currentTeam) {
-        await updateTeamPoints(gameState.currentTeam, points);
-    }
+    // Note: Teams will need to be updated manually by admin since no login
     
     // Mark box as opened
-    document.querySelector(`[data-box-id="${gameState.selectedBox}"]`).classList.add('opened', `claimed-${gameState.currentTeam}`);
+    document.querySelector(`[data-box-id="${gameState.selectedBox}"]`).classList.add('opened');
     
     // Close modal
     document.getElementById('revealModal').style.display = 'none';
@@ -280,18 +335,20 @@ async function loadGameState() {
             updateTurnIndicator();
         }
         
-        // Load boxes
-        const boxesSnapshot = await getDocs(collection(db, 'blindBoxes'));
-        boxesSnapshot.forEach((doc) => {
-            gameState.boxes[doc.id] = doc.data();
-            const boxEl = document.querySelector(`[data-box-id="${doc.id}"]`);
-            if (boxEl && doc.data().status === 'opened') {
-                boxEl.classList.add('opened');
-                if (doc.data().claimedBy) {
-                    boxEl.classList.add(`claimed-${doc.data().claimedBy}`);
+        // Load boxes - only available ones
+        for (const boxId of AVAILABLE_BOXES) {
+            const boxDoc = await getDoc(doc(db, 'blindBoxes', boxId));
+            if (boxDoc.exists()) {
+                gameState.boxes[boxId] = boxDoc.data();
+                const boxEl = document.querySelector(`[data-box-id="${boxId}"]`);
+                if (boxEl && boxDoc.data().status === 'opened') {
+                    boxEl.classList.add('opened');
+                    if (boxDoc.data().claimedBy) {
+                        boxEl.classList.add(`claimed-${boxDoc.data().claimedBy}`);
+                    }
                 }
             }
-        });
+        }
         
         // Load teams
         const teamsSnapshot = await getDocs(collection(db, 'teams'));
@@ -306,6 +363,8 @@ async function loadGameState() {
         console.error('Error loading game state:', error);
     }
 }
+
+window.loadGameState = loadGameState; // Export for admin panel
 
 function setupRealtimeListeners() {
     // Listen to game state changes
@@ -329,11 +388,22 @@ function setupRealtimeListeners() {
         }
     });
     
-    // Listen to box changes
-    onSnapshot(collection(db, 'blindBoxes'), (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-            if (change.type === 'modified' || change.type === 'added') {
-                gameState.boxes[change.doc.id] = change.doc.data();
+    // Listen to box changes - only for available boxes
+    AVAILABLE_BOXES.forEach(boxId => {
+        onSnapshot(doc(db, 'blindBoxes', boxId), (doc) => {
+            if (doc.exists()) {
+                gameState.boxes[boxId] = doc.data();
+                
+                // Update visual state
+                const boxEl = document.querySelector(`[data-box-id="${boxId}"]`);
+                if (boxEl) {
+                    if (doc.data().status === 'opened') {
+                        boxEl.classList.add('opened');
+                        if (doc.data().claimedBy) {
+                            boxEl.classList.add(`claimed-${doc.data().claimedBy}`);
+                        }
+                    }
+                }
             }
         });
     });
@@ -367,50 +437,13 @@ function updateTurnIndicator() {
 }
 
 function updateTeamScores() {
-    ['team1', 'team2', 'team3'].forEach((team, index) => {
+    ['team1', 'team2'].forEach((team, index) => {
         const teamData = gameState.teams[team];
         const scoreEl = document.querySelectorAll('.team-points')[index];
         if (scoreEl) {
             scoreEl.textContent = teamData.points || 0;
         }
     });
-}
-
-// ============================================
-// LOGIN
-// ============================================
-
-window.login = async function() {
-    const accessCode = document.getElementById('accessCode').value;
-    
-    try {
-        const usersSnapshot = await getDocs(collection(db, 'users'));
-        let userFound = false;
-        
-        usersSnapshot.forEach((doc) => {
-            const userData = doc.data();
-            if (userData.accessCode === accessCode) {
-                gameState.currentUser = userData;
-                gameState.currentTeam = userData.team;
-                userFound = true;
-                
-                // Save to session
-                sessionStorage.setItem('io2_user', JSON.stringify(userData));
-            }
-        });
-        
-        if (userFound) {
-            document.getElementById('loginModal').style.display = 'none';
-            console.log(`logged in: ${gameState.currentUser.handle} (${gameState.currentTeam})`);
-            await loadGameState();
-            setupRealtimeListeners();
-        } else {
-            document.getElementById('loginError').textContent = 'wrong code. try again.';
-        }
-    } catch (error) {
-        console.error('Login error:', error);
-        document.getElementById('loginError').textContent = 'something broke. refresh.';
-    }
 }
 
 // ============================================
@@ -429,153 +462,103 @@ window.confirmSpecial = function() {
 // ADMIN FUNCTIONS
 // ============================================
 
-window.initializeAdmin = async function() {
-    // Generate editor grid with actual box images
-    const editorGrid = document.getElementById('editorGrid');
-    if (!editorGrid) return;
-    
-    let gridHTML = '';
-    const collections = [
-        { name: 'christmas', count: 5 },
-        { name: 'coke', count: 5 },
-        { name: 'energy', count: 5 },
-        { name: 'mart', count: 5 },
-        { name: 'sports', count: 5 }
-    ];
-    
-    collections.forEach(collection => {
-        for (let i = 1; i <= collection.count; i++) {
-            const boxId = `${collection.name}-${i}`;
-            gridHTML += `
-                <div class="editor-box" id="edit-${boxId}" onclick="editBox('${boxId}')">
-                    <img src="/assets/b04rd/labubu-box-${collection.name}.png" style="width: 100%; height: 100%; object-fit: contain;">
-                </div>
-            `;
-        }
-    });
-    
-    editorGrid.innerHTML = gridHTML;
-    
-    // Load current state
-    await loadGameState();
-    updateAdminDisplay();
-}
-
-window.editBox = function(boxId) {
-    window.currentEditingBox = boxId;
-    document.getElementById('currentBoxId').textContent = boxId;
-    document.getElementById('boxEditor').style.display = 'block';
-    
-    // Load box data
-    const boxData = gameState.boxes[boxId] || {};
-    const dollData = dollMapping[boxId] || {};
-    
-    document.getElementById('dollName').value = boxData.dollName || dollData.name || '';
-    document.getElementById('dollImage').value = boxData.dollImage || dollData.image || '';
-    document.getElementById('teamChallenge').value = boxData.teamChallenge || '';
-    document.getElementById('teamPoints').value = boxData.teamPoints || 5000;
-    document.getElementById('individualChallenge').value = boxData.individualChallenge || '';
-    document.getElementById('individualPoints').value = boxData.individualPoints || 1000;
-    document.getElementById('cardType').value = boxData.cardType || 'regular';
-    document.getElementById('specialMessage').value = boxData.specialMessage || '';
-    document.getElementById('boxStatus').value = boxData.status || 'available';
-    
-    // Show/hide special message field
-    const specialField = document.getElementById('specialField');
-    if (boxData.cardType === 'bully' || boxData.cardType === 'mega') {
-        specialField.style.display = 'block';
-    } else {
-        specialField.style.display = 'none';
-    }
-}
-
-window.saveBox = async function() {
-    if (!window.currentEditingBox) return;
-    
-    const boxData = {
-        dollName: document.getElementById('dollName').value,
-        dollImage: document.getElementById('dollImage').value,
-        teamChallenge: document.getElementById('teamChallenge').value,
-        teamPoints: parseInt(document.getElementById('teamPoints').value),
-        individualChallenge: document.getElementById('individualChallenge').value,
-        individualPoints: parseInt(document.getElementById('individualPoints').value),
-        cardType: document.getElementById('cardType').value,
-        specialMessage: document.getElementById('specialMessage').value,
-        status: document.getElementById('boxStatus').value,
-        lastUpdated: new Date().toISOString()
-    };
-    
-    try {
-        await setDoc(doc(db, 'blindBoxes', window.currentEditingBox), boxData);
-        
-        // Update visual indicator
-        const editorBox = document.getElementById(`edit-${window.currentEditingBox}`);
-        if (boxData.cardType === 'bully') {
-            editorBox.classList.add('has-bully');
-        } else if (boxData.cardType === 'mega') {
-            editorBox.classList.add('has-mega');
-        }
-        
-        // Show save indicator
-        document.getElementById('saveIndicator').style.display = 'block';
-        setTimeout(() => {
-            document.getElementById('saveIndicator').style.display = 'none';
-        }, 2000);
-        
-        closeBoxEditor();
-    } catch (error) {
-        console.error('Error saving box:', error);
-        alert('failed to save');
-    }
-}
-
-window.closeBoxEditor = function() {
-    document.getElementById('boxEditor').style.display = 'none';
-    window.currentEditingBox = null;
-}
-
-window.setTurn = async function(team) {
-    await setDoc(doc(db, 'gameState', 'current'), {
-        currentTurn: team,
-        gameActive: true,
-        updatedAt: new Date().toISOString()
-    }, { merge: true });
-}
-
-window.triggerReveal = async function() {
-    await setDoc(doc(db, 'gameState', 'current'), {
-        status: 'revealing',
-        revealedAt: new Date().toISOString()
-    }, { merge: true });
-}
-
 window.resetBoard = async function() {
     if (!confirm('reset all boxes?')) return;
     
     const batch = [];
-    const boxesSnapshot = await getDocs(collection(db, 'blindBoxes'));
     
-    boxesSnapshot.forEach((doc) => {
-        batch.push(updateDoc(doc.ref, {
+    // Only reset available boxes
+    for (const boxId of AVAILABLE_BOXES) {
+        batch.push(updateDoc(doc(db, 'blindBoxes', boxId), {
             status: 'available',
             claimedBy: '',
             challengeSelected: ''
         }));
-    });
+    }
     
     await Promise.all(batch);
     location.reload();
 }
 
-function updateAdminDisplay() {
-    // Update opened count
-    const opened = Object.values(gameState.boxes).filter(b => b.status === 'opened').length;
-    document.getElementById('boxesOpened').textContent = `${opened}/25`;
+window.clearTeamScores = async function() {
+    if (!confirm('clear all team scores?')) return;
     
-    // Update team scores
-    document.getElementById('team1Score').textContent = gameState.teams.team1?.points || 0;
-    document.getElementById('team2Score').textContent = gameState.teams.team2?.points || 0;
-    document.getElementById('team3Score').textContent = gameState.teams.team3?.points || 0;
+    const teams = ['team1', 'team2'];
+    const batch = [];
+    
+    for (const team of teams) {
+        batch.push(setDoc(doc(db, 'teams', team), {
+            points: 0,
+            dolls: [],
+            lastUpdated: new Date().toISOString()
+        }));
+    }
+    
+    await Promise.all(batch);
+    alert('Team scores cleared');
+}
+
+window.exportGameState = function() {
+    const exportData = {
+        timestamp: new Date().toISOString(),
+        boxes: gameState.boxes,
+        teams: gameState.teams,
+        currentTurn: gameState.currentTurn,
+        gameActive: gameState.gameActive
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `game-state-${Date.now()}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+}
+
+window.loadBoxData = async function(boxId) {
+    try {
+        const boxDoc = await getDoc(doc(db, 'blindBoxes', boxId));
+        if (boxDoc.exists()) {
+            const data = boxDoc.data();
+            
+            // Populate form fields if they exist
+            if (document.getElementById('labubuName')) {
+                document.getElementById('labubuName').value = data.labubuName || data.name || '';
+            }
+            if (document.getElementById('imagePath')) {
+                document.getElementById('imagePath').value = data.imagePath || data.image || '';
+            }
+            if (document.getElementById('teamChallenge')) {
+                document.getElementById('teamChallenge').value = data.teamChallenge || '';
+            }
+            if (document.getElementById('teamPoints')) {
+                document.getElementById('teamPoints').value = data.teamPoints || 5000;
+            }
+            if (document.getElementById('individualChallenge')) {
+                document.getElementById('individualChallenge').value = data.individualChallenge || '';
+            }
+            if (document.getElementById('individualPoints')) {
+                document.getElementById('individualPoints').value = data.individualPoints || 1000;
+            }
+            if (document.getElementById('cardType')) {
+                document.getElementById('cardType').value = data.cardType || 'regular';
+            }
+            if (document.getElementById('specialMessage')) {
+                document.getElementById('specialMessage').value = data.specialMessage || '';
+            }
+            if (document.getElementById('boxStatus')) {
+                document.getElementById('boxStatus').value = data.status || 'available';
+            }
+            if (document.getElementById('claimedBy')) {
+                document.getElementById('claimedBy').value = data.claimedBy || '';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading box data:', error);
+    }
 }
 
 // ============================================
