@@ -36,11 +36,17 @@ try {
     db = getFirestore(app);
     console.log('Firebase initialized successfully');
     
-    // Export for admin panel
+    // Export ALL Firebase functions for admin panel
     window.db = db;
     window.setDoc = setDoc;
     window.doc = doc;
     window.getDoc = getDoc;
+    window.getDocs = getDocs;
+    window.collection = collection;
+    window.updateDoc = updateDoc;
+    window.deleteDoc = deleteDoc;
+    window.addDoc = addDoc;
+    window.onSnapshot = onSnapshot;
 } catch (error) {
     console.error('Failed to initialize Firebase:', error);
 }
@@ -132,6 +138,28 @@ window.createSessionToken = function() {
     return btoa(`${timestamp}-${random}-${window.ADMIN_PASSWORD_HASH.substring(0, 8)}`);
 }
 
+window.validateSession = function(token) {
+    try {
+        const decoded = atob(token);
+        const parts = decoded.split('-');
+        if (parts.length !== 3) return false;
+        
+        const timestamp = parseInt(parts[0]);
+        const now = Date.now();
+        const oneDay = 24 * 60 * 60 * 1000;
+        
+        // Check if session is less than 24 hours old
+        if (now - timestamp > oneDay) return false;
+        
+        // Check hash fragment
+        if (parts[2] !== window.ADMIN_PASSWORD_HASH.substring(0, 8)) return false;
+        
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
 // ============================================
 // INITIALIZE GAME
 // ============================================
@@ -203,21 +231,22 @@ function handleBoxClick(e) {
         return;
     }
     
-    // Check if box already opened
-    if (box.classList.contains('opened')) {
+    // Check if box already opened or pending
+    if (box.classList.contains('opened') || box.classList.contains('pending')) {
         return;
     }
     
     // Mark as selected
     document.querySelectorAll('.blind-box').forEach(b => b.classList.remove('selected'));
     box.classList.add('selected');
+    box.classList.add('pending');
     gameState.selectedBox = boxId;
     
     // Play select sound
     const selectSound = document.getElementById('selectSound');
     if (selectSound) selectSound.play();
     
-    // Update Firebase with selection
+    // Update Firebase with selection (mark as pending)
     updateBoxSelection(boxId);
     
     // Show waiting modal
@@ -226,6 +255,14 @@ function handleBoxClick(e) {
 
 async function updateBoxSelection(boxId) {
     try {
+        // Update box status to pending
+        await updateDoc(doc(db, 'blindBoxes', boxId), {
+            status: 'pending',
+            selectedBy: gameState.currentUser || 'anonymous',
+            selectedAt: new Date().toISOString()
+        });
+        
+        // Update game state
         await setDoc(doc(db, 'gameState', 'current'), {
             selectedBox: boxId,
             selectedAt: new Date().toISOString(),
@@ -243,6 +280,12 @@ async function updateBoxSelection(boxId) {
 async function revealBox(boxId, boxData) {
     // Hide waiting modal
     document.getElementById('waitingModal').style.display = 'none';
+    
+    // Update box status to opened
+    await updateDoc(doc(db, 'blindBoxes', boxId), {
+        status: 'opened',
+        openedAt: new Date().toISOString()
+    });
     
     // Play reveal sound
     const revealSound = document.getElementById('revealSound');
@@ -269,8 +312,8 @@ async function revealBox(boxId, boxData) {
     document.getElementById('individualPoints').textContent = `$${dollData.individualPoints || 1000}`;
     
     // Set up button handlers
-    document.getElementById('teamBtn').onclick = () => selectChallenge('team', dollData);
-    document.getElementById('individualBtn').onclick = () => selectChallenge('individual', dollData);
+    document.getElementById('teamBtn').onclick = () => selectChallenge('team', dollData, boxId);
+    document.getElementById('individualBtn').onclick = () => selectChallenge('individual', dollData, boxId);
     
     modal.style.display = 'block';
 }
@@ -289,10 +332,18 @@ function showSpecialCard(type, boxData) {
     modal.style.display = 'block';
 }
 
-async function selectChallenge(type, boxData) {
+async function selectChallenge(type, boxData, boxId) {
     const points = type === 'team' ? boxData.teamPoints : boxData.individualPoints;
     
-    // Update Firebase
+    // Update box status to claimed
+    await updateDoc(doc(db, 'blindBoxes', boxId), {
+        status: 'claimed',
+        challengeType: type,
+        points: points,
+        claimedAt: new Date().toISOString()
+    });
+    
+    // Update game state
     await setDoc(doc(db, 'gameState', 'current'), {
         challengeSelected: type,
         pointsAwarded: points,
@@ -303,7 +354,11 @@ async function selectChallenge(type, boxData) {
     // Note: Teams will need to be updated manually by admin since no login
     
     // Mark box as opened
-    document.querySelector(`[data-box-id="${gameState.selectedBox}"]`).classList.add('opened');
+    const boxEl = document.querySelector(`[data-box-id="${boxId}"]`);
+    if (boxEl) {
+        boxEl.classList.remove('pending');
+        boxEl.classList.add('opened');
+    }
     
     // Close modal
     document.getElementById('revealModal').style.display = 'none';
@@ -331,7 +386,7 @@ async function loadGameState() {
         if (gameStateDoc.exists()) {
             const data = gameStateDoc.data();
             gameState.currentTurn = data.currentTurn;
-            gameState.gameActive = data.gameActive || false;
+            gameState.gameActive = data.gameActive !== false; // Default to true
             updateTurnIndicator();
         }
         
@@ -339,24 +394,34 @@ async function loadGameState() {
         for (const boxId of AVAILABLE_BOXES) {
             const boxDoc = await getDoc(doc(db, 'blindBoxes', boxId));
             if (boxDoc.exists()) {
-                gameState.boxes[boxId] = boxDoc.data();
+                const data = boxDoc.data();
+                gameState.boxes[boxId] = data;
                 const boxEl = document.querySelector(`[data-box-id="${boxId}"]`);
-                if (boxEl && boxDoc.data().status === 'opened') {
-                    boxEl.classList.add('opened');
-                    if (boxDoc.data().claimedBy) {
-                        boxEl.classList.add(`claimed-${boxDoc.data().claimedBy}`);
+                
+                if (boxEl) {
+                    // Clear all status classes first
+                    boxEl.classList.remove('opened', 'pending', 'claimed-team1', 'claimed-team2');
+                    
+                    // Apply appropriate status
+                    if (data.status === 'opened' || data.status === 'claimed') {
+                        boxEl.classList.add('opened');
+                        if (data.claimedBy) {
+                            boxEl.classList.add(`claimed-${data.claimedBy}`);
+                        }
+                    } else if (data.status === 'pending') {
+                        boxEl.classList.add('pending');
                     }
                 }
             }
         }
         
-        // Load teams
-        const teamsSnapshot = await getDocs(collection(db, 'teams'));
-        teamsSnapshot.forEach((doc) => {
-            if (gameState.teams[doc.id]) {
-                gameState.teams[doc.id] = doc.data();
-            }
-        });
+        // Load team scores from gameState/scores instead of teams collection
+        const scoresDoc = await getDoc(doc(db, 'gameState', 'scores'));
+        if (scoresDoc.exists()) {
+            const scores = scoresDoc.data();
+            gameState.teams.team1.points = scores.team1 || 0;
+            gameState.teams.team2.points = scores.team2 || 0;
+        }
         
         updateTeamScores();
     } catch (error) {
@@ -384,7 +449,7 @@ function setupRealtimeListeners() {
                 revealBox(data.selectedBox, boxData);
             }
             
-            gameState.gameActive = data.gameActive || false;
+            gameState.gameActive = data.gameActive !== false; // Default to true
         }
     });
     
@@ -392,32 +457,37 @@ function setupRealtimeListeners() {
     AVAILABLE_BOXES.forEach(boxId => {
         onSnapshot(doc(db, 'blindBoxes', boxId), (doc) => {
             if (doc.exists()) {
-                gameState.boxes[boxId] = doc.data();
+                const data = doc.data();
+                gameState.boxes[boxId] = data;
                 
                 // Update visual state
                 const boxEl = document.querySelector(`[data-box-id="${boxId}"]`);
                 if (boxEl) {
-                    if (doc.data().status === 'opened') {
+                    // Clear previous states
+                    boxEl.classList.remove('opened', 'pending', 'claimed-team1', 'claimed-team2');
+                    
+                    // Apply new state
+                    if (data.status === 'opened' || data.status === 'claimed') {
                         boxEl.classList.add('opened');
-                        if (doc.data().claimedBy) {
-                            boxEl.classList.add(`claimed-${doc.data().claimedBy}`);
+                        if (data.claimedBy) {
+                            boxEl.classList.add(`claimed-${data.claimedBy}`);
                         }
+                    } else if (data.status === 'pending') {
+                        boxEl.classList.add('pending');
                     }
                 }
             }
         });
     });
     
-    // Listen to team changes
-    onSnapshot(collection(db, 'teams'), (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-            if (change.type === 'modified' || change.type === 'added') {
-                if (gameState.teams[change.doc.id]) {
-                    gameState.teams[change.doc.id] = change.doc.data();
-                }
-            }
-        });
-        updateTeamScores();
+    // Listen to score changes
+    onSnapshot(doc(db, 'gameState', 'scores'), (doc) => {
+        if (doc.exists()) {
+            const scores = doc.data();
+            gameState.teams.team1.points = scores.team1 || 0;
+            gameState.teams.team2.points = scores.team2 || 0;
+            updateTeamScores();
+        }
     });
 }
 
@@ -427,23 +497,23 @@ function setupRealtimeListeners() {
 
 function updateTurnIndicator() {
     const indicator = document.getElementById('currentTurn');
-    if (gameState.currentTurn) {
-        indicator.textContent = `${gameState.currentTurn.toUpperCase()} TURN`;
-        indicator.parentElement.className = `turn-indicator ${gameState.currentTurn}`;
-    } else {
-        indicator.textContent = 'waiting to start...';
-        indicator.parentElement.className = 'turn-indicator';
+    if (indicator) {
+        if (gameState.currentTurn) {
+            indicator.textContent = `${gameState.currentTurn.toUpperCase()} TURN`;
+            indicator.parentElement.className = `turn-indicator ${gameState.currentTurn}`;
+        } else {
+            indicator.textContent = 'waiting to start...';
+            indicator.parentElement.className = 'turn-indicator';
+        }
     }
 }
 
 function updateTeamScores() {
-    ['team1', 'team2'].forEach((team, index) => {
-        const teamData = gameState.teams[team];
-        const scoreEl = document.querySelectorAll('.team-points')[index];
-        if (scoreEl) {
-            scoreEl.textContent = teamData.points || 0;
-        }
-    });
+    const scoreElements = document.querySelectorAll('.team-points');
+    if (scoreElements.length >= 2) {
+        scoreElements[0].textContent = gameState.teams.team1.points || 0;
+        scoreElements[1].textContent = gameState.teams.team2.points || 0;
+    }
 }
 
 // ============================================
@@ -471,8 +541,12 @@ window.resetBoard = async function() {
     for (const boxId of AVAILABLE_BOXES) {
         batch.push(updateDoc(doc(db, 'blindBoxes', boxId), {
             status: 'available',
-            claimedBy: '',
-            challengeSelected: ''
+            claimedBy: null,
+            challengeSelected: null,
+            selectedBy: null,
+            selectedAt: null,
+            openedAt: null,
+            claimedAt: null
         }));
     }
     
@@ -483,18 +557,13 @@ window.resetBoard = async function() {
 window.clearTeamScores = async function() {
     if (!confirm('clear all team scores?')) return;
     
-    const teams = ['team1', 'team2'];
-    const batch = [];
+    // Update scores in gameState/scores
+    await setDoc(doc(db, 'gameState', 'scores'), {
+        team1: 0,
+        team2: 0,
+        lastUpdated: new Date().toISOString()
+    });
     
-    for (const team of teams) {
-        batch.push(setDoc(doc(db, 'teams', team), {
-            points: 0,
-            dolls: [],
-            lastUpdated: new Date().toISOString()
-        }));
-    }
-    
-    await Promise.all(batch);
     alert('Team scores cleared');
 }
 
@@ -571,12 +640,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isAdmin) {
         // Admin panel
         const session = localStorage.getItem('blind_boss_session');
-        if (!session) {
+        if (!session || !window.validateSession(session)) {
             document.getElementById('authModal').style.display = 'block';
         } else {
             document.getElementById('authModal').style.display = 'none';
             document.getElementById('adminPanel').style.display = 'grid';
-            window.initializeAdmin();
+            if (window.initializeAdmin) {
+                window.initializeAdmin();
+            }
         }
     } else {
         // Game board

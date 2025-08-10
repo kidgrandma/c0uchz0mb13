@@ -537,7 +537,83 @@ body {
         max-height: min(16vw, 70px);
     }
 }
-
+.editor-box.pending {
+        border-color: #ff9900;
+        background: #fff4e0;
+        animation: pulse 1.5s infinite;
+    }
+    
+    .editor-box .status-badge {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        padding: 2px 5px;
+        font-size: 10px;
+        color: white;
+        border-radius: 3px;
+        font-weight: bold;
+    }
+    
+    .status-badge.active {
+        background: #00aa00;
+    }
+    
+    .status-badge.pending {
+        background: #ff9900;
+    }
+    
+    .status-badge.opened {
+        background: #0054e3;
+    }
+    
+    .status-badge.claimed {
+        background: #9900ff;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+    
+    /* Real-time status panel */
+    .realtime-status {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-top: 15px;
+        border-radius: 5px;
+    }
+    
+    .status-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .status-item:last-child {
+        border-bottom: none;
+    }
+    
+    .status-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    
+    .status-indicator.pending {
+        background: #ff9900;
+        animation: blink 1s infinite;
+    }
+    
+    @keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 0.3; }
+        100% { opacity: 1; }
+    }
 /* Smaller screens - ensure visibility */
 @media (max-width: 480px) {
     .blind-box-container {
