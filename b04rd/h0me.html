@@ -105,7 +105,7 @@
             }
         }
 
-        /* Login Modal */
+        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -140,7 +140,7 @@
             font-weight: bold;
         }
 
-        .modal input {
+        input {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
@@ -148,7 +148,7 @@
             font-size: 16px;
         }
 
-        .modal button {
+        button {
             background: linear-gradient(180deg, #fff, #e0e0e0);
             border: 2px solid #999;
             padding: 10px 30px;
@@ -159,11 +159,11 @@
             margin-top: 10px;
         }
 
-        .modal button:hover {
+        button:hover {
             background: linear-gradient(180deg, #f0f0f0, #d0d0d0);
         }
 
-        .modal button:active {
+        button:active {
             transform: translate(1px, 1px);
             box-shadow: 1px 1px 0 rgba(0,0,0,0.2);
         }
@@ -220,6 +220,7 @@
             color: #ff6b6b; 
             text-shadow: 0 0 20px #ff0000, 3px 3px 6px rgba(0,0,0,0.8);
         }
+        
         .team-cold { 
             color: #4ecdc4; 
             text-shadow: 0 0 20px #00ffff, 3px 3px 6px rgba(0,0,0,0.8);
@@ -377,7 +378,7 @@
         <div class="modal" id="loginModal">
             <div class="modal-content">
                 <div class="modal-header">🔌 who are you?</div>
-                <input type="text" id="accessCode" placeholder="enter your access code">
+                <input type="text" id="accessCode" placeholder="enter your username">
                 <button onclick="login()">enter</button>
                 <p class="error-msg" id="loginError"></p>
             </div>
@@ -409,146 +410,75 @@
         <source src="" type="audio/mpeg">
     </audio>
 
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-        import { 
-            getFirestore, 
-            collection, 
-            getDocs, 
-            doc, 
-            getDoc,
-            updateDoc,
-            setDoc
-        } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
-
-        // Firebase config
-        const firebaseConfig = {
-            apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO21-40668WNpOdj2w",
-            authDomain: "c0uchz0mb13.firebaseapp.com",
-            projectId: "c0uchz0mb13",
-            storageBucket: "c0uchz0mb13.firebasestorage.app",
-            messagingSenderId: "1051521591004",
-            appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
-            measurementId: "G-6BNDYZQRPE"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
+    <script>
         let currentUser = null;
         let assignedTeam = null;
 
-        // Start experience (triggered by instructions modal)
+        // Predetermined team assignments
+        const teamAssignments = {
+            // COLD TEAM (15 members)
+            'awhecklu69': 'COLD',
+            'betwixt.frankie': 'COLD',
+            'duckgirl808': 'COLD',
+            'harpdigitalmedia': 'COLD',
+            'hauntyourownhouse': 'COLD',
+            'highinla': 'COLD',
+            'littleurbanachiever': 'COLD',
+            'madamadam69': 'COLD',
+            'manolowashere': 'COLD',
+            'michaelmelwani': 'COLD',
+            'minibearbeats': 'COLD',
+            'mokibaby': 'COLD',
+            'plascu': 'COLD',
+            'pretzelness': 'COLD',
+            'whoiskaybrown': 'COLD',
+            
+            // HOT TEAM (10 members)
+            'calistatertot': 'HOT',
+            'dasmemekollektor': 'HOT',
+            'literatrix': 'HOT',
+            'meanreds666': 'HOT',
+            'normalmiette': 'HOT',
+            'pintallica': 'HOT',
+            'ptiredactyl': 'HOT',
+            'rahrsoriano': 'HOT',
+            'tempe__': 'HOT',
+            'thecornii': 'HOT'
+        };
+
+        // Start experience
         window.startExperience = function() {
-            // Hide instructions
             document.getElementById('instructionsModal').style.display = 'none';
             
             // Start background music
             const bgMusic = document.getElementById('bgMusic');
             bgMusic.volume = 0.3;
-            bgMusic.play().catch(e => console.log('Audio play failed:', e));
+            bgMusic.play().catch(e => console.log('Audio failed:', e));
             
-            // Check if already logged in
+            // Check if already assigned
             const savedUser = sessionStorage.getItem('io2_team_assigned');
             if (savedUser) {
-                // Already assigned
                 const userData = JSON.parse(savedUser);
+                currentUser = userData.user;
+                assignedTeam = userData.team;
                 showAlreadyAssigned(userData.team);
             } else {
-                // Show login
                 document.getElementById('loginModal').style.display = 'block';
             }
         }
 
-        // Start on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            // Add click handlers to boxes
-            document.querySelectorAll('.mystery-box').forEach(box => {
-                box.addEventListener('click', selectBox);
-            });
-        });
-
-        window.login = async function() {
-            const accessCode = document.getElementById('accessCode').value;
+        window.login = function() {
+            const username = document.getElementById('accessCode').value.toLowerCase().replace('@', '');
             
-            try {
-                const usersSnapshot = await getDocs(collection(db, 'users'));
-                let userFound = false;
-                
-                usersSnapshot.forEach((doc) => {
-                    const userData = doc.data();
-                    if (userData.accessCode === accessCode) {
-                        currentUser = {
-                            ...userData,
-                            docId: doc.id
-                        };
-                        userFound = true;
-                    }
-                });
-
-                if (userFound) {
-                    // Check if already assigned
-                    if (currentUser.team) {
-                        assignedTeam = currentUser.team;
-                        sessionStorage.setItem('io2_team_assigned', JSON.stringify({
-                            user: currentUser.handle,
-                            team: assignedTeam
-                        }));
-                        showAlreadyAssigned(assignedTeam);
-                    } else {
-                        // Get predetermined team assignment
-                        assignedTeam = await getTeamAssignment(currentUser.handle);
-                        document.getElementById('loginModal').style.display = 'none';
-                    }
-                } else {
-                    document.getElementById('loginError').textContent = 'invalid code. try again.';
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                document.getElementById('loginError').textContent = 'something broke. refresh.';
+            // Check if username exists in assignments
+            if (teamAssignments[username]) {
+                currentUser = username;
+                assignedTeam = teamAssignments[username];
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('loginError').textContent = '';
+            } else {
+                document.getElementById('loginError').textContent = 'username not found. check spelling.';
             }
-        }
-
-        async function getTeamAssignment(userHandle) {
-            // Predetermined team assignments
-            const teamAssignments = {
-                // COLD TEAM (15 members)
-                '@awhecklu69': 'COLD',
-                '@betwixt.frankie': 'COLD',
-                '@duckgirl808': 'COLD',
-                '@harpdigitalmedia': 'COLD',
-                '@hauntyourownhouse': 'COLD',
-                '@highinla': 'COLD',
-                '@littleurbanachiever': 'COLD',
-                '@madamadam69': 'COLD',
-                '@manolowashere': 'COLD',
-                '@michaelmelwani': 'COLD',
-                '@minibearbeats': 'COLD',
-                '@mokibaby': 'COLD',
-                '@plascu': 'COLD',
-                '@pretzelness': 'COLD',
-                '@whoiskaybrown': 'COLD',
-                
-                // HOT TEAM (10 members)
-                '@calistatertot': 'HOT',
-                '@dasmemekollektor': 'HOT',
-                '@literatrix': 'HOT',
-                '@meanreds666': 'HOT',
-                '@normalmiette': 'HOT',
-                '@pintallica': 'HOT',
-                '@ptiredactyl': 'HOT',
-                '@rahrsoriano': 'HOT',
-                '@tempe__': 'HOT',
-                '@thecornii': 'HOT'
-            };
-            
-            // Check if handle exists in predetermined assignments
-            if (teamAssignments[userHandle]) {
-                return teamAssignments[userHandle];
-            }
-            
-            // Fallback: assign to team with fewer members (HOT needs more)
-            return 'HOT';
         }
 
         function selectBox(e) {
@@ -557,63 +487,47 @@
                 return;
             }
 
-            // Mark box as selected
             document.querySelectorAll('.mystery-box').forEach(b => b.classList.remove('selected'));
             e.currentTarget.classList.add('selected');
 
-            // Show loading
             document.getElementById('loading').style.display = 'block';
 
-            // Fake calculation time for drama
             setTimeout(() => {
                 revealTeam();
             }, 2500);
         }
 
-        async function revealTeam() {
+        function revealTeam() {
             document.getElementById('loading').style.display = 'none';
-            
-            // Stop background music
             document.getElementById('bgMusic').pause();
             
-            // Play team-specific reveal sound
+            // Play reveal sound
             const revealSound = document.getElementById('revealSound');
-            const teamName = assignedTeam.toLowerCase(); // 'hot' or 'cold'
+            const teamName = assignedTeam.toLowerCase();
             revealSound.src = `/assets/b04rd/${teamName}.mp3`;
             revealSound.volume = 0.6;
-            revealSound.play().catch(e => console.log('Reveal sound play failed:', e));
+            revealSound.play().catch(e => console.log('Reveal sound failed:', e));
             
-            // Also play team music loop
+            // Play team music
             const teamMusic = document.getElementById('teamMusic');
             teamMusic.src = `/assets/b04rd/team-${teamName}.mp3`;
             teamMusic.volume = 0.3;
             setTimeout(() => {
-                teamMusic.play().catch(e => console.log('Team music play failed:', e));
-            }, 1000); // Start loop music after reveal sound begins
+                teamMusic.play().catch(e => console.log('Team music failed:', e));
+            }, 1000);
             
-            // Update team reveal
+            // Show reveal
             const teamReveal = document.getElementById('teamReveal');
             teamReveal.textContent = `TEAM ${assignedTeam}`;
             teamReveal.className = `team-reveal team-${teamName}`;
             
-            // Show reveal modal
             document.getElementById('revealModal').style.display = 'block';
             
-            // Save to Firebase
-            try {
-                await updateDoc(doc(db, 'users', currentUser.docId), {
-                    team: assignedTeam,
-                    teamAssignedAt: new Date().toISOString()
-                });
-                
-                // Save to session
-                sessionStorage.setItem('io2_team_assigned', JSON.stringify({
-                    user: currentUser.handle,
-                    team: assignedTeam
-                }));
-            } catch (error) {
-                console.error('Error saving team:', error);
-            }
+            // Save to session
+            sessionStorage.setItem('io2_team_assigned', JSON.stringify({
+                user: currentUser,
+                team: assignedTeam
+            }));
         }
 
         function showAlreadyAssigned(team) {
@@ -622,18 +536,16 @@
             teamReveal.textContent = `TEAM ${team}`;
             teamReveal.className = `team-reveal team-${teamName}`;
             
-            // Play reveal sound
             const revealSound = document.getElementById('revealSound');
             revealSound.src = `/assets/b04rd/${teamName}.mp3`;
             revealSound.volume = 0.6;
-            revealSound.play().catch(e => console.log('Reveal sound play failed:', e));
+            revealSound.play().catch(e => console.log('Reveal sound failed:', e));
             
-            // Play team music
             const teamMusic = document.getElementById('teamMusic');
             teamMusic.src = `/assets/b04rd/team-${teamName}.mp3`;
             teamMusic.volume = 0.3;
             setTimeout(() => {
-                teamMusic.play().catch(e => console.log('Team music play failed:', e));
+                teamMusic.play().catch(e => console.log('Team music failed:', e));
             }, 1000);
             
             document.querySelector('.reveal-message').textContent = 'you already picked. this is your team forever.';
@@ -641,9 +553,15 @@
         }
 
         window.proceed = function() {
-            // Redirect to main game
             window.location.href = '/b04rd/blind.html';
         }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.mystery-box').forEach(box => {
+                box.addEventListener('click', selectBox);
+            });
+        });
     </script>
 </body>
 </html>
