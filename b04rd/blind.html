@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INTERNET OLYMPICS 2 💿 blind box board</title>
+    <link rel="stylesheet" href="blind.css">
+</head>
+<body>
+    <div class="game-container" style="background-image: url('/assets/b04rd/blind-bg.jpg');">
+        
+        <!-- Current Turn Indicator -->
+        <div class="turn-indicator">
+            <span id="currentTurn">waiting to start...</span>
+        </div>
+
+        <!-- Team Scores -->
+        <div class="score-bar">
+            <div class="team-score team-1">
+                <span class="team-name">TEAM 1</span>
+                <span class="team-points">0</span>
+            </div>
+            <div class="team-score team-2">
+                <span class="team-name">TEAM 2</span>
+                <span class="team-points">0</span>
+            </div>
+            <div class="team-score team-3">
+                <span class="team-name">TEAM 3</span>
+                <span class="team-points">0</span>
+            </div>
+        </div>
+
+        <!-- Blind Box Grid - Just floating boxes -->
+        <div class="blind-box-container" id="boxContainer">
+            <!-- Christmas Collection -->
+            <div class="blind-box" data-box-id="christmas-1" data-collection="christmas">
+                <img src="/assets/b04rd/labubu-box-christmas.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="christmas-2" data-collection="christmas">
+                <img src="/assets/b04rd/labubu-box-christmas.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="christmas-3" data-collection="christmas">
+                <img src="/assets/b04rd/labubu-box-christmas.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="christmas-4" data-collection="christmas">
+                <img src="/assets/b04rd/labubu-box-christmas.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="christmas-5" data-collection="christmas">
+                <img src="/assets/b04rd/labubu-box-christmas.png" alt="box">
+            </div>
+
+            <!-- Coke Collection -->
+            <div class="blind-box" data-box-id="coke-1" data-collection="coke">
+                <img src="/assets/b04rd/labubu-box-coke.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="coke-2" data-collection="coke">
+                <img src="/assets/b04rd/labubu-box-coke.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="coke-3" data-collection="coke">
+                <img src="/assets/b04rd/labubu-box-coke.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="coke-4" data-collection="coke">
+                <img src="/assets/b04rd/labubu-box-coke.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="coke-5" data-collection="coke">
+                <img src="/assets/b04rd/labubu-box-coke.png" alt="box">
+            </div>
+
+            <!-- Energy Collection -->
+            <div class="blind-box" data-box-id="energy-1" data-collection="energy">
+                <img src="/assets/b04rd/labubu-box-energy.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="energy-2" data-collection="energy">
+                <img src="/assets/b04rd/labubu-box-energy.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="energy-3" data-collection="energy">
+                <img src="/assets/b04rd/labubu-box-energy.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="energy-4" data-collection="energy">
+                <img src="/assets/b04rd/labubu-box-energy.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="energy-5" data-collection="energy">
+                <img src="/assets/b04rd/labubu-box-energy.png" alt="box">
+            </div>
+
+            <!-- Mart Collection -->
+            <div class="blind-box" data-box-id="mart-1" data-collection="mart">
+                <img src="/assets/b04rd/labubu-box-mart.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="mart-2" data-collection="mart">
+                <img src="/assets/b04rd/labubu-box-mart.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="mart-3" data-collection="mart">
+                <img src="/assets/b04rd/labubu-box-mart.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="mart-4" data-collection="mart">
+                <img src="/assets/b04rd/labubu-box-mart.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="mart-5" data-collection="mart">
+                <img src="/assets/b04rd/labubu-box-mart.png" alt="box">
+            </div>
+
+            <!-- Sports Collection -->
+            <div class="blind-box" data-box-id="sports-1" data-collection="sports">
+                <img src="/assets/b04rd/labubu-box-sports.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="sports-2" data-collection="sports">
+                <img src="/assets/b04rd/labubu-box-sports.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="sports-3" data-collection="sports">
+                <img src="/assets/b04rd/labubu-box-sports.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="sports-4" data-collection="sports">
+                <img src="/assets/b04rd/labubu-box-sports.png" alt="box">
+            </div>
+            <div class="blind-box" data-box-id="sports-5" data-collection="sports">
+                <img src="/assets/b04rd/labubu-box-sports.png" alt="box">
+            </div>
+        </div>
+
+        <!-- Selection Waiting Modal -->
+        <div class="modal" id="waitingModal">
+            <div class="modal-content xp-window">
+                <div class="xp-window-header">
+                    <span class="xp-window-title">⏳ hold up...</span>
+                </div>
+                <div class="xp-window-body">
+                    <p>waiting for moderator to reveal...</p>
+                    <div class="loading-spinner">📦</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reveal Modal -->
+        <div class="modal" id="revealModal">
+            <div class="modal-content xp-window reveal-window">
+                <div class="xp-window-header">
+                    <span class="xp-window-title">📦 box opening...</span>
+                    <button class="xp-close" onclick="closeReveal()">×</button>
+                </div>
+                <div class="xp-window-body">
+                    <div class="reveal-animation">
+                        <img id="revealedDoll" src="" alt="labubu">
+                        <h2 id="dollName"></h2>
+                    </div>
+                    <div class="challenge-selection">
+                        <p>choose your destiny:</p>
+                        <button class="xp-button team-challenge" id="teamBtn">
+                            TEAM CHALLENGE<br>
+                            <span class="points" id="teamPoints">$0</span>
+                        </button>
+                        <button class="xp-button individual-challenge" id="individualBtn">
+                            3v3 BATTLE<br>
+                            <span class="points" id="individualPoints">$0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Special Card Modal -->
+        <div class="modal" id="specialModal">
+            <div class="modal-content xp-window special-window">
+                <div class="xp-window-header">
+                    <span class="xp-window-title">⚠️ SPECIAL CARD ⚠️</span>
+                </div>
+                <div class="xp-window-body">
+                    <img id="specialImage" src="" alt="special">
+                    <h1 id="specialTitle"></h1>
+                    <p id="specialText"></p>
+                    <button class="xp-button" onclick="confirmSpecial()">whatever.</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Modal -->
+        <div class="modal" id="loginModal">
+            <div class="modal-content xp-window">
+                <div class="xp-window-header">
+                    <span class="xp-window-title">🔌 access required</span>
+                </div>
+                <div class="xp-window-body">
+                    <p>enter your access code:</p>
+                    <input type="text" id="accessCode" placeholder="code here">
+                    <button class="xp-button" onclick="login()">enter</button>
+                    <p class="error-msg" id="loginError"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio -->
+    <audio id="revealSound" src="/assets/b04rd/reveal.mp3"></audio>
+    <audio id="specialSound" src="/assets/b04rd/special.mp3"></audio>
+    <audio id="selectSound" src="/assets/b04rd/select.mp3"></audio>
+
+    <script type="module" src="blind.js"></script>
+</body>
+</html>

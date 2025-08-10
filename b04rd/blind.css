@@ -1,0 +1,563 @@
+/* INTERNET OLYMPICS 2 - Blind Box Board Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Tahoma', 'Arial', sans-serif;
+    overflow: hidden;
+    background: #000;
+    margin: 0;
+    padding: 0;
+}
+
+.game-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+}
+
+/* Turn Indicator */
+.turn-indicator {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.95);
+    border: 3px solid #0054e3;
+    padding: 15px 30px;
+    font-size: 1.5em;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    animation: pulse 2s infinite;
+}
+
+.turn-indicator.team-1 {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+}
+
+.turn-indicator.team-2 {
+    border-color: #4ecdc4;
+    color: #4ecdc4;
+}
+
+.turn-indicator.team-3 {
+    border-color: #95e77e;
+    color: #95e77e;
+}
+
+/* Score Bar */
+.score-bar {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 30px;
+    z-index: 100;
+}
+
+.team-score {
+    background: rgba(255, 255, 255, 0.95);
+    border: 3px solid #0054e3;
+    padding: 10px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.team-score.team-1 { border-color: #ff6b6b; }
+.team-score.team-2 { border-color: #4ecdc4; }
+.team-score.team-3 { border-color: #95e77e; }
+
+.team-name {
+    font-size: 0.9em;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.team-points {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+/* Blind Box Container */
+.blind-box-container {
+    position: absolute;
+    top: 70px;
+    left: 10px;
+    right: 10px;
+    bottom: 80px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: min(1.5vw, 15px);
+    padding: 10px;
+    align-items: center;
+    justify-items: center;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Blind Boxes */
+.blind-box {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    transform-style: preserve-3d;
+    width: min(18vw, 150px);
+    height: min(18vw, 150px);
+    aspect-ratio: 1;
+}
+
+.blind-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3));
+}
+
+.blind-box:hover:not(.selected):not(.opened) {
+    transform: translateY(-10px) scale(1.05);
+    filter: brightness(1.1);
+}
+
+.blind-box.selected {
+    animation: glow 1s infinite;
+    transform: scale(1.1);
+}
+
+.blind-box.opened {
+    opacity: 0.3;
+    pointer-events: none;
+    filter: grayscale(100%);
+}
+
+.blind-box.claimed-team1 {
+    filter: grayscale(100%) sepia(100%) hue-rotate(320deg);
+}
+
+.blind-box.claimed-team2 {
+    filter: grayscale(100%) sepia(100%) hue-rotate(160deg);
+}
+
+.blind-box.claimed-team3 {
+    filter: grayscale(100%) sepia(100%) hue-rotate(60deg);
+}
+
+@keyframes glow {
+    0%, 100% {
+        filter: drop-shadow(0 0 20px #ffff00);
+        transform: scale(1.1);
+    }
+    50% {
+        filter: drop-shadow(0 0 40px #ffff00);
+        transform: scale(1.15);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: translateX(-50%) scale(1);
+    }
+    50% {
+        transform: translateX(-50%) scale(1.05);
+    }
+}
+
+/* Windows XP Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.xp-window {
+    background: #ece9d8;
+    border: 3px solid #0054e3;
+    border-radius: 8px 8px 0 0;
+    min-width: 450px;
+    max-width: 90vw;
+    box-shadow: 5px 5px 20px rgba(0, 0, 0, 0.5);
+}
+
+.xp-window-header {
+    background: linear-gradient(180deg, #0054e3, #0043b8);
+    color: white;
+    padding: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 5px 5px 0 0;
+}
+
+.xp-window-title {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.xp-close {
+    background: #e04343;
+    color: white;
+    border: 2px solid white;
+    border-radius: 3px;
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.xp-window-body {
+    padding: 30px;
+    background: white;
+    text-align: center;
+}
+
+/* Waiting Modal */
+.loading-spinner {
+    font-size: 4em;
+    animation: spin 2s linear infinite;
+    margin: 20px 0;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Reveal Modal */
+.reveal-animation img {
+    width: 250px;
+    height: 250px;
+    object-fit: contain;
+    margin: 20px auto;
+    animation: bounce 0.5s;
+}
+
+#dollName {
+    font-size: 2em;
+    color: #0054e3;
+    margin-bottom: 20px;
+}
+
+.challenge-selection {
+    margin-top: 30px;
+}
+
+.challenge-selection p {
+    margin-bottom: 20px;
+    font-style: italic;
+    color: #666;
+}
+
+.xp-button {
+    background: linear-gradient(180deg, #fff, #e0e0e0);
+    border: 2px solid #999;
+    padding: 15px 25px;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 3px;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+    margin: 0 10px;
+    transition: all 0.1s;
+}
+
+.xp-button:hover {
+    background: linear-gradient(180deg, #f0f0f0, #d0d0d0);
+    transform: translateY(-2px);
+}
+
+.xp-button:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.team-challenge {
+    background: linear-gradient(180deg, #90ee90, #7dd87d);
+    border-color: #5cb85c;
+}
+
+.individual-challenge {
+    background: linear-gradient(180deg, #ffd700, #e6c200);
+    border-color: #d4af37;
+}
+
+.points {
+    display: block;
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+/* Special Modal */
+.special-window .xp-window-header {
+    background: linear-gradient(180deg, #ff6b6b, #ff4444);
+    animation: flash 0.5s 3;
+}
+
+.special-window img {
+    width: 300px;
+    height: 300px;
+    object-fit: contain;
+    margin: 20px auto;
+}
+
+#specialTitle {
+    font-size: 2.5em;
+    color: #ff4444;
+    margin: 20px 0;
+    text-transform: uppercase;
+    animation: shake 0.5s;
+}
+
+@keyframes flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+/* Login Modal */
+#accessCode, #adminPassword {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 2px solid #0054e3;
+    font-size: 16px;
+}
+
+.error-msg {
+    color: #ff4444;
+    font-size: 0.9em;
+    margin-top: 10px;
+}
+
+/* Admin Styles */
+.admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+    padding: 20px;
+    background: white;
+}
+
+.control-panel {
+    background: #ececec;
+    border: 2px solid #0054e3;
+    padding: 15px;
+}
+
+.control-section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #ccc;
+}
+
+.control-section h4 {
+    color: #0054e3;
+    margin-bottom: 10px;
+}
+
+.box-grid-editor {
+    background: white;
+    padding: 20px;
+}
+
+.editor-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.editor-box {
+    aspect-ratio: 1;
+    background: white;
+    border: 2px solid #0054e3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.8em;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.editor-box:hover {
+    background: #e0f0ff;
+    transform: scale(1.05);
+}
+
+.editor-box.opened {
+    background: #f0f0f0;
+    opacity: 0.7;
+}
+
+.editor-box.has-bully {
+    border-color: #ff9900;
+    background: #fff4e0;
+}
+
+.editor-box.has-mega {
+    border-color: #ff0000;
+    background: #ffe0e0;
+}
+
+.box-editor {
+    background: white;
+    border: 2px solid #0054e3;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.editor-field {
+    margin-bottom: 15px;
+}
+
+.editor-field label {
+    display: block;
+    margin-bottom: 5px;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.editor-field input,
+.editor-field select,
+.editor-field textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.save-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background: #90ee90;
+    border: 2px solid #5cb85c;
+    display: none;
+    animation: slideIn 0.3s;
+}
+
+/* Mobile Responsive - Optimized for screenshot */
+@media (max-width: 768px) {
+    .blind-box-container {
+        grid-template-columns: repeat(5, 1fr);
+        grid-template-rows: repeat(5, 1fr);
+        gap: min(2vw, 8px);
+        padding: 5px;
+        top: 50px;
+        bottom: 60px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .blind-box {
+        width: min(17vw, 80px);
+        height: min(17vw, 80px);
+    }
+    
+    .blind-box img {
+        filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.2));
+    }
+    
+    .score-bar {
+        gap: 8px;
+        bottom: 5px;
+    }
+    
+    .team-score {
+        padding: 5px 8px;
+        border-width: 2px;
+    }
+    
+    .team-name {
+        font-size: 0.65em;
+    }
+    
+    .team-points {
+        font-size: 0.9em;
+    }
+    
+    .turn-indicator {
+        font-size: 0.9em;
+        padding: 5px 12px;
+        top: 5px;
+        border-width: 2px;
+    }
+    
+    .xp-window {
+        min-width: 90vw;
+        max-width: 95vw;
+    }
+}
+
+/* Portrait orientation - fit all boxes */
+@media (max-width: 768px) and (orientation: portrait) {
+    .blind-box-container {
+        gap: min(1.5vw, 6px);
+    }
+    
+    .blind-box {
+        max-width: min(16vw, 70px);
+        max-height: min(16vw, 70px);
+    }
+}
+
+/* Smaller screens - ensure visibility */
+@media (max-width: 480px) {
+    .blind-box-container {
+        gap: min(1.5vw, 5px);
+    }
+    
+    .blind-box {
+        max-width: min(15vw, 60px);
+        max-height: min(15vw, 60px);
+    }
+    
+    .team-score {
+        padding: 4px 6px;
+    }
+    
+    .team-name {
+        font-size: 0.6em;
+    }
+    
+    .team-points {
+        font-size: 0.8em;
+    }
+}

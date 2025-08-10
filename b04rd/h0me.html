@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INTERNET OLYMPICS 2 🎲 team selection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background: #000;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100vw;
+            height: 100vh;
+            background-image: url('/assets/b04rd/team-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .title {
+            position: absolute;
+            top: 30px;
+            text-align: center;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.5);
+            padding: 15px 30px;
+            border-radius: 10px;
+        }
+
+        .title h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1em;
+            opacity: 0.9;
+            font-style: italic;
+        }
+
+        /* Box Grid */
+        .box-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 20px;
+            max-width: 600px;
+        }
+
+        .mystery-box {
+            width: min(25vw, 150px);
+            height: min(25vw, 150px);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .mystery-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
+        }
+
+        .mystery-box:hover {
+            transform: translateY(-10px) rotate(5deg) scale(1.1);
+            filter: brightness(1.2);
+        }
+
+        .mystery-box.selected {
+            animation: shake 0.5s, glow 1s infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-10deg); }
+            75% { transform: rotate(10deg); }
+        }
+
+        @keyframes glow {
+            0%, 100% { 
+                filter: drop-shadow(0 0 20px #ffff00) drop-shadow(0 0 40px #ffff00);
+            }
+            50% { 
+                filter: drop-shadow(0 0 40px #ffff00) drop-shadow(0 0 60px #ffff00);
+            }
+        }
+
+        /* Login Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ece9d8;
+            padding: 30px;
+            border: 3px solid #0054e3;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+            min-width: 300px;
+            box-shadow: 5px 5px 20px rgba(0,0,0,0.5);
+        }
+
+        .modal-header {
+            background: linear-gradient(180deg, #0054e3, #0043b8);
+            color: white;
+            padding: 10px;
+            margin: -30px -30px 20px -30px;
+            border-radius: 5px 5px 0 0;
+            font-weight: bold;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #0054e3;
+            font-size: 16px;
+        }
+
+        .modal button {
+            background: linear-gradient(180deg, #fff, #e0e0e0);
+            border: 2px solid #999;
+            padding: 10px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 3px;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            margin-top: 10px;
+        }
+
+        .modal button:hover {
+            background: linear-gradient(180deg, #f0f0f0, #d0d0d0);
+        }
+
+        .modal button:active {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+        }
+
+        .error-msg {
+            color: #ff4444;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        /* Team Reveal Modal */
+        .reveal-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+        }
+
+        .reveal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            animation: zoomIn 0.5s;
+        }
+
+        @keyframes zoomIn {
+            from {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .team-reveal {
+            font-size: 5em;
+            font-weight: bold;
+            color: white;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+            margin-bottom: 20px;
+            animation: pulse 1s infinite;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .team-hot { 
+            color: #ff6b6b; 
+            text-shadow: 0 0 20px #ff0000, 3px 3px 6px rgba(0,0,0,0.8);
+        }
+        .team-cold { 
+            color: #4ecdc4; 
+            text-shadow: 0 0 20px #00ffff, 3px 3px 6px rgba(0,0,0,0.8);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .reveal-message {
+            color: white;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .continue-btn {
+            background: linear-gradient(180deg, #fff, #e0e0e0);
+            border: 2px solid #999;
+            color: #333;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 3px;
+            box-shadow: 2px 2px 0 rgba(255,255,255,0.2);
+            transition: all 0.3s;
+        }
+
+        .continue-btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(180deg, #f0f0f0, #d0d0d0);
+        }
+
+        .instruction {
+            position: absolute;
+            bottom: 30px;
+            color: white;
+            font-size: 1.1em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 5px;
+            animation: fadeIn 2s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Loading animation */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 2em;
+            z-index: 1500;
+            background: rgba(0,0,0,0.8);
+            padding: 30px;
+            border-radius: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .loading-dots {
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @media (max-width: 768px) {
+            .box-grid {
+                gap: 15px;
+            }
+            
+            .mystery-box {
+                width: min(25vw, 100px);
+                height: min(25vw, 100px);
+            }
+            
+            .team-reveal {
+                font-size: 3em;
+            }
+            
+            .title h1 {
+                font-size: 1.5em;
+            }
+            
+            .title {
+                padding: 10px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">
+            <h1>INTERNET OLYMPICS 2 🎲</h1>
+            <p class="subtitle">team selection ceremony</p>
+        </div>
+
+        <div class="box-grid" id="boxGrid">
+            <div class="mystery-box" data-box="1">
+                <img src="/assets/b04rd/labubu-box-yoga.png" alt="mystery box">
+            </div>
+            <div class="mystery-box" data-box="2">
+                <img src="/assets/b04rd/labubu-box-yoga.png" alt="mystery box">
+            </div>
+            <div class="mystery-box" data-box="3">
+                <img src="/assets/b04rd/labubu-box-yoga.png" alt="mystery box">
+            </div>
+            <div class="mystery-box" data-box="4">
+                <img src="/assets/b04rd/labubu-box-yoga.png" alt="mystery box">
+            </div>
+            <div class="mystery-box" data-box="5">
+                <img src="/assets/b04rd/labubu-box-yoga.png" alt="mystery box">
+            </div>
+            <div class="mystery-box" data-box="6">
+                <img src="/assets/b04rd/labubu-box-yoga.png" alt="mystery box">
+            </div>
+            <div class="mystery-box" data-box="7">
+                <img src="/assets/b04rd/labubu-box-yoga.png" alt="mystery box">
+            </div>
+            <div class="mystery-box" data-box="8">
+                <img src="/assets/b04rd/labubu-box-yoga.png" alt="mystery box">
+            </div>
+            <div class="mystery-box" data-box="9">
+                <img src="/assets/b04rd/labubu-box-yoga.png" alt="mystery box">
+            </div>
+        </div>
+
+        <p class="instruction">pick a box. any box. trust the process.</p>
+
+        <!-- Instructions Modal -->
+        <div class="modal" id="instructionsModal" style="display: block;">
+            <div class="modal-content">
+                <div class="modal-header">📦 INTERNET OLYMPICS 2</div>
+                <div style="padding: 20px;">
+                    <p style="margin-bottom: 15px;">welcome to team selection.</p>
+                    <p style="margin-bottom: 15px; font-size: 0.9em; color: #666;">you're about to find out where you belong. there's no going back after this.</p>
+                    <p style="margin-bottom: 20px; font-size: 0.9em; color: #666;">ready to meet your fate?</p>
+                    <button onclick="startExperience()" style="width: 100%;">let's go</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Modal -->
+        <div class="modal" id="loginModal">
+            <div class="modal-content">
+                <div class="modal-header">🔌 who are you?</div>
+                <input type="text" id="accessCode" placeholder="enter your access code">
+                <button onclick="login()">enter</button>
+                <p class="error-msg" id="loginError"></p>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <span class="loading-dots">calculating destiny...</span>
+        </div>
+
+        <!-- Team Reveal Modal -->
+        <div class="reveal-modal" id="revealModal">
+            <div class="reveal-content">
+                <div class="team-reveal" id="teamReveal">TEAM HOT</div>
+                <p class="reveal-message">welcome to your squad. no take backs.</p>
+                <button class="continue-btn" onclick="proceed()">got it</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio -->
+    <audio id="bgMusic" loop>
+        <source src="/assets/b04rd/team.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="teamMusic" loop>
+        <source src="" type="audio/mpeg">
+    </audio>
+    <audio id="revealSound">
+        <source src="" type="audio/mpeg">
+    </audio>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { 
+            getFirestore, 
+            collection, 
+            getDocs, 
+            doc, 
+            getDoc,
+            updateDoc,
+            setDoc
+        } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO21-40668WNpOdj2w",
+            authDomain: "c0uchz0mb13.firebaseapp.com",
+            projectId: "c0uchz0mb13",
+            storageBucket: "c0uchz0mb13.firebasestorage.app",
+            messagingSenderId: "1051521591004",
+            appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
+            measurementId: "G-6BNDYZQRPE"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let assignedTeam = null;
+
+        // Start experience (triggered by instructions modal)
+        window.startExperience = function() {
+            // Hide instructions
+            document.getElementById('instructionsModal').style.display = 'none';
+            
+            // Start background music
+            const bgMusic = document.getElementById('bgMusic');
+            bgMusic.volume = 0.3;
+            bgMusic.play().catch(e => console.log('Audio play failed:', e));
+            
+            // Check if already logged in
+            const savedUser = sessionStorage.getItem('io2_team_assigned');
+            if (savedUser) {
+                // Already assigned
+                const userData = JSON.parse(savedUser);
+                showAlreadyAssigned(userData.team);
+            } else {
+                // Show login
+                document.getElementById('loginModal').style.display = 'block';
+            }
+        }
+
+        // Start on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            // Add click handlers to boxes
+            document.querySelectorAll('.mystery-box').forEach(box => {
+                box.addEventListener('click', selectBox);
+            });
+        });
+
+        window.login = async function() {
+            const accessCode = document.getElementById('accessCode').value;
+            
+            try {
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                let userFound = false;
+                
+                usersSnapshot.forEach((doc) => {
+                    const userData = doc.data();
+                    if (userData.accessCode === accessCode) {
+                        currentUser = {
+                            ...userData,
+                            docId: doc.id
+                        };
+                        userFound = true;
+                    }
+                });
+
+                if (userFound) {
+                    // Check if already assigned
+                    if (currentUser.team) {
+                        assignedTeam = currentUser.team;
+                        sessionStorage.setItem('io2_team_assigned', JSON.stringify({
+                            user: currentUser.handle,
+                            team: assignedTeam
+                        }));
+                        showAlreadyAssigned(assignedTeam);
+                    } else {
+                        // Get predetermined team assignment
+                        assignedTeam = await getTeamAssignment(currentUser.handle);
+                        document.getElementById('loginModal').style.display = 'none';
+                    }
+                } else {
+                    document.getElementById('loginError').textContent = 'invalid code. try again.';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                document.getElementById('loginError').textContent = 'something broke. refresh.';
+            }
+        }
+
+        async function getTeamAssignment(userHandle) {
+            // Predetermined team assignments
+            const teamAssignments = {
+                // COLD TEAM (15 members)
+                '@awhecklu69': 'COLD',
+                '@betwixt.frankie': 'COLD',
+                '@duckgirl808': 'COLD',
+                '@harpdigitalmedia': 'COLD',
+                '@hauntyourownhouse': 'COLD',
+                '@highinla': 'COLD',
+                '@littleurbanachiever': 'COLD',
+                '@madamadam69': 'COLD',
+                '@manolowashere': 'COLD',
+                '@michaelmelwani': 'COLD',
+                '@minibearbeats': 'COLD',
+                '@mokibaby': 'COLD',
+                '@plascu': 'COLD',
+                '@pretzelness': 'COLD',
+                '@whoiskaybrown': 'COLD',
+                
+                // HOT TEAM (10 members)
+                '@calistatertot': 'HOT',
+                '@dasmemekollektor': 'HOT',
+                '@literatrix': 'HOT',
+                '@meanreds666': 'HOT',
+                '@normalmiette': 'HOT',
+                '@pintallica': 'HOT',
+                '@ptiredactyl': 'HOT',
+                '@rahrsoriano': 'HOT',
+                '@tempe__': 'HOT',
+                '@thecornii': 'HOT'
+            };
+            
+            // Check if handle exists in predetermined assignments
+            if (teamAssignments[userHandle]) {
+                return teamAssignments[userHandle];
+            }
+            
+            // Fallback: assign to team with fewer members (HOT needs more)
+            return 'HOT';
+        }
+
+        function selectBox(e) {
+            if (!currentUser) {
+                document.getElementById('loginModal').style.display = 'block';
+                return;
+            }
+
+            // Mark box as selected
+            document.querySelectorAll('.mystery-box').forEach(b => b.classList.remove('selected'));
+            e.currentTarget.classList.add('selected');
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+
+            // Fake calculation time for drama
+            setTimeout(() => {
+                revealTeam();
+            }, 2500);
+        }
+
+        async function revealTeam() {
+            document.getElementById('loading').style.display = 'none';
+            
+            // Stop background music
+            document.getElementById('bgMusic').pause();
+            
+            // Play team-specific reveal sound
+            const revealSound = document.getElementById('revealSound');
+            const teamName = assignedTeam.toLowerCase(); // 'hot' or 'cold'
+            revealSound.src = `/assets/b04rd/${teamName}.mp3`;
+            revealSound.volume = 0.6;
+            revealSound.play().catch(e => console.log('Reveal sound play failed:', e));
+            
+            // Also play team music loop
+            const teamMusic = document.getElementById('teamMusic');
+            teamMusic.src = `/assets/b04rd/team-${teamName}.mp3`;
+            teamMusic.volume = 0.3;
+            setTimeout(() => {
+                teamMusic.play().catch(e => console.log('Team music play failed:', e));
+            }, 1000); // Start loop music after reveal sound begins
+            
+            // Update team reveal
+            const teamReveal = document.getElementById('teamReveal');
+            teamReveal.textContent = `TEAM ${assignedTeam}`;
+            teamReveal.className = `team-reveal team-${teamName}`;
+            
+            // Show reveal modal
+            document.getElementById('revealModal').style.display = 'block';
+            
+            // Save to Firebase
+            try {
+                await updateDoc(doc(db, 'users', currentUser.docId), {
+                    team: assignedTeam,
+                    teamAssignedAt: new Date().toISOString()
+                });
+                
+                // Save to session
+                sessionStorage.setItem('io2_team_assigned', JSON.stringify({
+                    user: currentUser.handle,
+                    team: assignedTeam
+                }));
+            } catch (error) {
+                console.error('Error saving team:', error);
+            }
+        }
+
+        function showAlreadyAssigned(team) {
+            const teamName = team.toLowerCase();
+            const teamReveal = document.getElementById('teamReveal');
+            teamReveal.textContent = `TEAM ${team}`;
+            teamReveal.className = `team-reveal team-${teamName}`;
+            
+            // Play reveal sound
+            const revealSound = document.getElementById('revealSound');
+            revealSound.src = `/assets/b04rd/${teamName}.mp3`;
+            revealSound.volume = 0.6;
+            revealSound.play().catch(e => console.log('Reveal sound play failed:', e));
+            
+            // Play team music
+            const teamMusic = document.getElementById('teamMusic');
+            teamMusic.src = `/assets/b04rd/team-${teamName}.mp3`;
+            teamMusic.volume = 0.3;
+            setTimeout(() => {
+                teamMusic.play().catch(e => console.log('Team music play failed:', e));
+            }, 1000);
+            
+            document.querySelector('.reveal-message').textContent = 'you already picked. this is your team forever.';
+            document.getElementById('revealModal').style.display = 'block';
+        }
+
+        window.proceed = function() {
+            // Redirect to main game
+            window.location.href = '/b04rd/blind.html';
+        }
+    </script>
+</body>
+</html>
