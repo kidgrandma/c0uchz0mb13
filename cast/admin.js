@@ -1,6 +1,5 @@
-// admin.js - INTERNET OLYMPICS 2 Admin Panel (Fixed Version)
+// admin-modular.js - SIMPLIFIED & FIXED VERSION
 
-// Firebase imports (Firestore only - no Auth needed)
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
 import { 
     getFirestore, 
@@ -12,13 +11,14 @@ import {
     deleteDoc,
     setDoc,
     addDoc,
-    onSnapshot
+    onSnapshot,
+    query,
+    where
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
 // ============================================
-// CONFIGURATION
+// FIREBASE SETUP
 // ============================================
-
 const firebaseConfig = {
     apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO21-40668WNpOdj2w",
     authDomain: "c0uchz0mb13.firebaseapp.com",
@@ -29,2040 +29,880 @@ const firebaseConfig = {
     measurementId: "G-6BNDYZQRPE"
 };
 
-// Initialize Firebase (Firestore only) with error checking
-let db;
-try {
-    const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    console.log('Firebase initialized successfully');
-} catch (error) {
-    console.error('Failed to initialize Firebase:', error);
-    alert('Failed to initialize Firebase. Check console for details.');
-}
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 // ============================================
-// SIMPLE SECURE AUTHENTICATION
+// GLOBAL STATE
 // ============================================
-
-// Hash function for password (basic security) - Made global for testing
-window.hashPassword = async function(password) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hash = await crypto.subtle.digest('SHA-256', data);
-    return Array.from(new Uint8Array(hash))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-}
-
-// Your hashed password (change this after setting up)
-// Default password is "olympicsAdmin2024!" - CHANGE THIS IMMEDIATELY
-// To generate a new hash, uncomment the line below temporarily, check console, then update the hash
-// console.log('Hash for olympicsAdmin2024!:', await hashPassword('olympicsAdmin2024!'));
-const ADMIN_PASSWORD_HASH = 'f44d66d49ae0e7b1c90914f8a4276d0db4e419f43864750ddaf65ca177c88bf4';
-
-// Session management (stays logged in until browser closes)
-const SESSION_KEY = 'io2_admin_session';
-const SESSION_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours
-
-// Create secure session token
-function createSessionToken() {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2);
-    return btoa(`${timestamp}-${random}-${ADMIN_PASSWORD_HASH.substring(0, 8)}`);
-}
-
-// Validate session
-function validateSession() {
-    const session = localStorage.getItem(SESSION_KEY);
-    if (!session) return false;
-    
-    try {
-        const decoded = atob(session);
-        const [timestamp] = decoded.split('-');
-        const sessionAge = Date.now() - parseInt(timestamp);
-        
-        // Check if session is expired
-        if (sessionAge > SESSION_TIMEOUT) {
-            localStorage.removeItem(SESSION_KEY);
-            return false;
-        }
-        
-        return true;
-    } catch (e) {
-        localStorage.removeItem(SESSION_KEY);
-        return false;
-    }
-}
-
-// ============================================
-// STATE MANAGEMENT
-// ============================================
-
 const state = {
     isAuthenticated: false,
-    openWindows: new Set(),
-    minimizedWindows: new Set(),
-    allCharacters: [],
-    allUsers: [],
-    allTools: [],
-    editingUser: null,
-    editingTool: null,
-    activeTab: 'info',
-    listeners: []
-};
-
-const TRANSACTION_TYPES = {
-    PAYMENT: 'payment',
-    PURCHASE: 'purchase',
-    ADJUSTMENT: 'adjustment',
-    REFUND: 'refund',
-    GIFT: 'gift'
-};
-
-const POINT_MULTIPLIERS = {
-    standard: 1,
-    double: 2,
-    super: 5,
-    bonus: 3
-};
-
-// ============================================
-// UTILITIES
-// ============================================
-
-const utils = {
-    calculateCredit(transactions = []) {
-        return transactions.reduce((balance, t) => {
-            if (['payment', 'refund', 'gift'].includes(t.type)) {
-                return balance + (t.amount || 0);
-            } else if (t.type === 'purchase') {
-                return balance - (t.amount || 0);
-            } else if (t.type === 'adjustment') {
-                return balance + (t.amount || 0);
-            }
-            return balance;
-        }, 0);
-    },
-
-    formatHandle(handle) {
-        if (!handle) return 'no-handle';
-        return handle.startsWith('@') ? handle : `@${handle}`;
-    },
-
-    getUserDisplay(user) {
-        return `@${user.handle || user.id}`;
-    },
-
-    showToast(message, type = 'info') {
-        const toast = document.getElementById('toast');
-        if (toast) {
-            toast.textContent = message;
-            toast.className = `toast show ${type}`;
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-    },
-
-    getElement(id) {
-        return document.getElementById(id);
-    },
-
-    hideModal(modalId) {
-        const modal = utils.getElement(modalId);
-        if (modal) modal.style.display = 'none';
-    },
-
-    showModal(modalId) {
-        const modal = utils.getElement(modalId);
-        if (modal) modal.style.display = 'block';
-    },
-
-    clearForm(formIds) {
-        formIds.forEach(id => {
-            const el = utils.getElement(id);
-            if (el) {
-                if (el.tagName === 'SELECT') {
-                    el.selectedIndex = 0;
-                } else {
-                    el.value = '';
-                }
-            }
-        });
-    }
+    users: [],
+    teams: [],
+    tools: [],
+    characters: [],
+    pendingSelections: [],
+    currentEditUser: null,
+    currentEditTool: null,
+    activeWindows: new Set(),
+    minimizedWindows: new Set()
 };
 
 // ============================================
 // AUTHENTICATION
 // ============================================
-
-// Check authentication on load
-function checkAuth() {
-    if (validateSession()) {
+window.adminLogin = function() {
+    const password = document.getElementById('adminPassword').value;
+    
+    // Simple password check - you should use proper auth in production
+    if (password === 'olympics2') {
         state.isAuthenticated = true;
-        showAdminPanel();
-    } else {
-        showLoginScreen();
-    }
-}
-
-function showLoginScreen() {
-    const loginWindow = utils.getElement('loginWindow');
-    const adminPanel = utils.getElement('adminPanel');
-    
-    if (loginWindow) loginWindow.style.display = 'block';
-    if (adminPanel) adminPanel.style.display = 'none';
-}
-
-function showAdminPanel() {
-    const loginWindow = utils.getElement('loginWindow');
-    const adminPanel = utils.getElement('adminPanel');
-    
-    if (loginWindow) loginWindow.style.display = 'none';
-    if (adminPanel) adminPanel.style.display = 'block';
-    
-    utils.showToast('Welcome back, admin! 🎮', 'success');
-    
-    // Add a small delay to ensure DOM is ready
-    setTimeout(() => {
+        sessionStorage.setItem('adminAuth', 'true');
+        document.getElementById('loginWindow').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
         initializeAdmin();
-    }, 100);
-}
-
-// Simple password login - FIXED VERSION with direct DOM access
-window.adminLogin = async function() {
-    // Use direct DOM access instead of utils
-    const passwordInput = document.getElementById('adminPassword');
-    
-    if (!passwordInput) {
-        console.error('Password input field not found');
-        const errorEl = document.getElementById('loginError');
-        if (errorEl) {
-            errorEl.textContent = 'Login form not loaded properly';
-            errorEl.style.display = 'block';
-        }
-        return;
-    }
-    
-    const password = passwordInput.value;
-    
-    if (!password) {
-        const errorEl = document.getElementById('loginError');
-        if (errorEl) {
-            errorEl.textContent = 'enter the password';
-            errorEl.style.display = 'block';
-            setTimeout(() => {
-                errorEl.style.display = 'none';
-            }, 3000);
-        }
-        return;
-    }
-    
-    try {
-        // Hash the entered password using global function
-        const hashedPassword = await window.hashPassword(password);
-        
-        // Debug logging (remove in production)
-        console.log('Login attempt...');
-        console.log('Entered password:', password);
-        console.log('Entered password length:', password.length);
-        console.log('Generated hash:', hashedPassword);
-        console.log('Expected hash:', ADMIN_PASSWORD_HASH);
-        console.log('Hashes match:', hashedPassword === ADMIN_PASSWORD_HASH);
-        
-        // Add small delay to prevent brute force
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        if (hashedPassword === ADMIN_PASSWORD_HASH) {
-            // Create session
-            const sessionToken = createSessionToken();
-            localStorage.setItem(SESSION_KEY, sessionToken);
-            state.isAuthenticated = true;
-            
-            // Show admin panel directly
-            const loginWindow = document.getElementById('loginWindow');
-            const adminPanel = document.getElementById('adminPanel');
-            
-            if (loginWindow) loginWindow.style.display = 'none';
-            if (adminPanel) adminPanel.style.display = 'block';
-            
-            // Show success message
-            const toast = document.getElementById('toast');
-            if (toast) {
-                toast.textContent = 'Welcome back, admin! 🎮';
-                toast.className = 'toast show success';
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                }, 3000);
-            }
-            
-            // Initialize admin after small delay
-            setTimeout(() => {
-                initializeAdmin();
-            }, 100);
-            
-        } else {
-            const errorEl = document.getElementById('loginError');
-            if (errorEl) {
-                errorEl.textContent = 'nope. try again.';
-                errorEl.style.display = 'block';
-                setTimeout(() => {
-                    errorEl.style.display = 'none';
-                }, 3000);
-            }
-            
-            // Show hint for debugging (remove in production)
-            console.log('Password hint: should be "olympicsAdmin2024!"');
-            
-            // Clear password field
-            passwordInput.value = '';
-        }
-    } catch (error) {
-        console.error('Login error:', error);
-        const errorEl = document.getElementById('loginError');
-        if (errorEl) {
-            errorEl.textContent = 'Login failed. Please try again.';
-            errorEl.style.display = 'block';
-            setTimeout(() => {
-                errorEl.style.display = 'none';
-            }, 3000);
-        }
+    } else {
+        document.getElementById('loginError').style.display = 'block';
     }
 };
 
-function showAuthError(message) {
-    const errorEl = utils.getElement('loginError');
-    if (errorEl) {
-        errorEl.textContent = message;
-        errorEl.style.display = 'block';
-        setTimeout(() => {
-            errorEl.style.display = 'none';
-        }, 3000);
-    }
-}
-
-// Logout
 window.adminLogout = function() {
-    if (confirm('Sign out of admin panel?')) {
-        localStorage.removeItem(SESSION_KEY);
-        state.isAuthenticated = false;
-        
-        // Clean up listeners
-        state.listeners.forEach(unsubscribe => {
-            if (typeof unsubscribe === 'function') unsubscribe();
-        });
-        state.listeners = [];
-        
-        location.reload();
-    }
+    sessionStorage.removeItem('adminAuth');
+    location.reload();
 };
 
 // ============================================
-// SECURITY MEASURES
+// INITIALIZATION
 // ============================================
-
-// Prevent console access to sensitive functions
-(function() {
-    // Store original console
-    const originalConsole = window.console;
-    
-    // Override console in production
-    if (window.location.hostname !== 'localhost') {
-        window.console = {
-            log: () => {},
-            error: () => {},
-            warn: () => {},
-            info: () => {},
-            debug: () => {}
-        };
-    }
-    
-    // Detect dev tools (basic check)
-    let devtools = { open: false, orientation: null };
-    const threshold = 160;
-    
-    setInterval(() => {
-        if (window.outerWidth - window.innerWidth > threshold || 
-            window.outerHeight - window.innerHeight > threshold) {
-            if (!devtools.open && !state.isAuthenticated) {
-                // Dev tools opened while not authenticated
-                document.body.innerHTML = '<h1 style="text-align:center; margin-top:50px;">🚫 Access Denied</h1>';
-            }
-            devtools.open = true;
-        } else {
-            devtools.open = false;
-        }
-    }, 500);
-})();
-
-// ============================================
-// INITIALIZATION - FIXED VERSION
-// ============================================
-
-// Wait for DOM to be fully loaded
-function initializePage() {
+async function initializeAdmin() {
     console.log('Initializing admin panel...');
     
-    // Double-check that DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializePage);
-        return;
-    }
-    
-    // Check if login elements exist before proceeding
-    const loginWindow = document.getElementById('loginWindow');
-    const adminPassword = document.getElementById('adminPassword');
-    
-    if (!loginWindow || !adminPassword) {
-        console.error('Required login elements not found. Waiting...');
-        // Try again in a moment
-        setTimeout(initializePage, 100);
-        return;
-    }
-    
-    checkAuth();
-    initializeClock();
-    initializeWindowDragging();
-    
-    // Enter key handler for password field - with null check
-    if (adminPassword) {
-        adminPassword.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                adminLogin();
-            }
-        });
-    }
-    
-    // TEMPORARY: Password reset helper (REMOVE IN PRODUCTION)
-    // Type "resetpassword" in console to generate a new password hash
-    window.resetpassword = async function() {
-        const newPassword = prompt('Enter new admin password:');
-        if (newPassword) {
-            const newHash = await hashPassword(newPassword);
-            console.log('New password hash (update ADMIN_PASSWORD_HASH with this):');
-            console.log(newHash);
-            console.log('Copy the hash above and replace ADMIN_PASSWORD_HASH in the code');
-        }
-    };
-    
-    // TEMPORARY: Quick login for testing (REMOVE IN PRODUCTION)
-    // Uncomment the line below to auto-fill password for testing
-    // if (adminPassword) adminPassword.value = 'olympicsAdmin2024!';
-}
-
-// Multiple initialization attempts to ensure DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializePage);
-} else {
-    // DOM already loaded
-    initializePage();
-}
-
-// Also try on window load as backup
-window.addEventListener('load', () => {
-    if (!state.isAuthenticated && !document.getElementById('loginWindow')) {
-        console.log('Reinitializing after window load...');
-        initializePage();
-    }
-});
-
-function initializeClock() {
-    const updateClock = () => {
-        const clock = utils.getElement('clock');
-        if (clock) {
-            clock.textContent = new Date().toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-        }
-    };
+    // Update clock
     updateClock();
-    setInterval(updateClock, 60000);
+    setInterval(updateClock, 1000);
+    
+    // Load all data
+    await loadAllData();
+    
+    // Setup real-time listeners
+    setupRealtimeListeners();
+    
+    // Open dashboard by default
+    openWindow('dashboard');
 }
 
-function initializeWindowDragging() {
-    let draggedWindow = null;
-    let offset = { x: 0, y: 0 };
-    
-    document.addEventListener('mousedown', (e) => {
-        if (e.target.classList.contains('window-header') || e.target.parentElement?.classList.contains('window-header')) {
-            const window = e.target.closest('.window');
-            if (window && window.classList.contains('draggable')) {
-                draggedWindow = window;
-                const rect = draggedWindow.getBoundingClientRect();
-                offset.x = e.clientX - rect.left;
-                offset.y = e.clientY - rect.top;
-                windowManager.bringToFront(draggedWindow);
-            }
-        }
+function updateClock() {
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
     });
-    
-    document.addEventListener('mousemove', (e) => {
-        if (draggedWindow) {
-            draggedWindow.style.left = `${e.clientX - offset.x}px`;
-            draggedWindow.style.top = `${e.clientY - offset.y}px`;
-        }
-    });
-    
-    document.addEventListener('mouseup', () => {
-        draggedWindow = null;
-    });
+    document.getElementById('clock').textContent = time;
 }
 
-async function initializeAdmin() {
-    if (!state.isAuthenticated) {
-        console.log('Not authenticated');
-        return;
-    }
-    
-    console.log('Starting admin initialization...');
-    
+// ============================================
+// DATA LOADING
+// ============================================
+async function loadAllData() {
     try {
-        // Load data with individual error handling
-        const results = await Promise.allSettled([
-            dataManager.loadCharacters(),
-            dataManager.loadTools(),
-            dataManager.loadUsers()
+        await Promise.all([
+            loadUsers(),
+            loadTeams(),
+            loadTools(),
+            loadCharacters(),
+            loadPendingSelections()
         ]);
         
-        // Check which operations failed
-        const errors = [];
-        if (results[0].status === 'rejected') errors.push('characters');
-        if (results[1].status === 'rejected') errors.push('tools');
-        if (results[2].status === 'rejected') errors.push('users');
+        updateDashboard();
         
-        if (errors.length > 0) {
-            console.error('Failed to load:', errors.join(', '));
-            utils.showToast(`Error loading: ${errors.join(', ')}. Check console.`, 'error');
-        } else {
-            console.log('All data loaded successfully');
-        }
-        
-        setupRealtimeListeners();
-        windowManager.open('dashboard');
     } catch (error) {
-        console.error('Critical error initializing admin:', error);
-        console.error('Error details:', error.message, error.code);
-        utils.showToast('Error loading data. Check console for details.', 'error');
+        console.error('Error loading data:', error);
+        showToast('Error loading data', 'error');
     }
 }
 
+async function loadUsers() {
+    const snapshot = await getDocs(collection(db, 'users'));
+    state.users = [];
+    snapshot.forEach(doc => {
+        state.users.push({ id: doc.id, ...doc.data() });
+    });
+    console.log('Loaded users:', state.users.length);
+}
+
+async function loadTeams() {
+    // For now, hardcoded teams
+    state.teams = [
+        { id: 'HOT', name: 'HOT', color: '#ff6600' },
+        { id: 'COLD', name: 'COLD', color: '#0099ff' }
+    ];
+}
+
+async function loadTools() {
+    const snapshot = await getDocs(collection(db, 'tools'));
+    state.tools = [];
+    snapshot.forEach(doc => {
+        state.tools.push({ id: doc.id, ...doc.data() });
+    });
+    console.log('Loaded tools:', state.tools.length);
+}
+
+async function loadCharacters() {
+    const snapshot = await getDocs(collection(db, 'characters'));
+    state.characters = [];
+    snapshot.forEach(doc => {
+        state.characters.push({ id: doc.id, ...doc.data() });
+    });
+    console.log('Loaded characters:', state.characters.length);
+}
+
+async function loadPendingSelections() {
+    const snapshot = await getDocs(collection(db, 'pendingSelections'));
+    state.pendingSelections = [];
+    snapshot.forEach(doc => {
+        state.pendingSelections.push({ id: doc.id, ...doc.data() });
+    });
+    console.log('Loaded pending:', state.pendingSelections.length);
+}
+
+// ============================================
+// REALTIME LISTENERS
+// ============================================
 function setupRealtimeListeners() {
-    // Listen for pending selections changes
-    const pendingListener = onSnapshot(collection(db, 'pendingSelections'), (snapshot) => {
-        const pendingBadge = utils.getElement('pendingBadge');
-        const pendingCount = snapshot.size;
-        
-        // Update desktop icon badge
-        const desktopIcons = document.querySelectorAll('.desktop-icon');
-        desktopIcons.forEach(icon => {
-            if (icon.querySelector('.label')?.textContent === 'Pending') {
-                let badge = icon.querySelector('.notification-badge');
-                if (pendingCount > 0) {
-                    if (!badge) {
-                        badge = document.createElement('div');
-                        badge.className = 'notification-badge';
-                        icon.appendChild(badge);
-                    }
-                    badge.textContent = pendingCount;
-                } else if (badge) {
-                    badge.remove();
-                }
-            }
+    // Listen for pending selections
+    onSnapshot(collection(db, 'pendingSelections'), (snapshot) => {
+        state.pendingSelections = [];
+        snapshot.forEach(doc => {
+            state.pendingSelections.push({ id: doc.id, ...doc.data() });
         });
-        
-        // Refresh pending window if open
-        if (state.openWindows.has('pending')) {
-            displays.pending();
-        }
+        updatePendingCount();
+        updatePendingList();
     });
     
-    state.listeners.push(pendingListener);
+    // Listen for user changes
+    onSnapshot(collection(db, 'users'), (snapshot) => {
+        state.users = [];
+        snapshot.forEach(doc => {
+            state.users.push({ id: doc.id, ...doc.data() });
+        });
+        updateUsersTable();
+        updateDashboard();
+    });
 }
 
 // ============================================
-// WINDOW MANAGEMENT
+// DASHBOARD
 // ============================================
+function updateDashboard() {
+    // Calculate stats
+    const totalUsers = state.users.length;
+    const activeUsers = state.users.filter(u => u.status === 'active').length;
+    const totalRevenue = state.users.reduce((sum, u) => {
+        const credits = calculateCredits(u.transactions || []);
+        return sum + Math.max(0, credits);
+    }, 0);
+    const totalCredit = state.users.reduce((sum, u) => {
+        const credits = calculateCredits(u.transactions || []);
+        return sum + credits;
+    }, 0);
+    const totalPoints = state.users.reduce((sum, u) => 
+        sum + (u.individualPoints || 0) + (u.teamPoints || 0), 0);
+    
+    // Update display
+    document.getElementById('totalUsers').textContent = totalUsers;
+    document.getElementById('activeUsers').textContent = activeUsers;
+    document.getElementById('totalRevenue').textContent = '$' + totalRevenue;
+    document.getElementById('totalCredit').textContent = totalCredit;
+    document.getElementById('totalPending').textContent = state.pendingSelections.length;
+    document.getElementById('totalPoints').textContent = totalPoints;
+    
+    // Update activity
+    updateRecentActivity();
+}
 
-const windowManager = {
-    open(windowId) {
-        if (!state.isAuthenticated) return;
-        
-        const windowEl = utils.getElement(`window-${windowId}`);
-        if (!windowEl) return;
-        
-        if (state.minimizedWindows.has(windowId)) {
-            state.minimizedWindows.delete(windowId);
-            this.updateMinimizedBar();
-        }
-        
-        windowEl.style.display = 'block';
-        state.openWindows.add(windowId);
-        
-        if (!windowEl.style.left) {
-            const offset = state.openWindows.size * 30;
-            windowEl.style.left = `${100 + offset}px`;
-            windowEl.style.top = `${50 + offset}px`;
-        }
-        
-        this.bringToFront(windowEl);
-        displays.load(windowId);
-    },
-
-    close(windowId) {
-        const windowEl = utils.getElement(`window-${windowId}`);
-        if (windowEl) {
-            windowEl.style.display = 'none';
-            state.openWindows.delete(windowId);
-            state.minimizedWindows.delete(windowId);
-            this.updateMinimizedBar();
-        }
-    },
-
-    minimize(windowId) {
-        const windowEl = utils.getElement(`window-${windowId}`);
-        if (windowEl) {
-            windowEl.style.display = 'none';
-            state.minimizedWindows.add(windowId);
-            this.updateMinimizedBar();
-        }
-    },
-
-    maximize(windowId) {
-        const windowEl = utils.getElement(`window-${windowId}`);
-        if (windowEl) windowEl.classList.toggle('maximized');
-    },
-
-    updateMinimizedBar() {
-        const bar = utils.getElement('minimizedBar');
-        if (!bar) return;
-        bar.innerHTML = '';
-        
-        state.minimizedWindows.forEach(windowId => {
-            const btn = document.createElement('div');
-            btn.className = 'minimized-window';
-            btn.textContent = windowId;
-            btn.onclick = () => this.open(windowId);
-            bar.appendChild(btn);
-        });
-    },
-
-    bringToFront(windowEl) {
-        document.querySelectorAll('.window').forEach(w => w.style.zIndex = '100');
-        windowEl.style.zIndex = '200';
+function updateRecentActivity() {
+    const activityList = document.getElementById('activityList');
+    
+    // Get recent pending selections
+    const recent = state.pendingSelections.slice(0, 5);
+    
+    if (recent.length === 0) {
+        activityList.innerHTML = '<p style="color: #666;">No recent activity</p>';
+        return;
     }
-};
-
-// Window manager global functions (protected)
-window.openWindow = (id) => state.isAuthenticated && windowManager.open(id);
-window.closeWindow = (id) => state.isAuthenticated && windowManager.close(id);
-window.minimizeWindow = (id) => state.isAuthenticated && windowManager.minimize(id);
-window.maximizeWindow = (id) => state.isAuthenticated && windowManager.maximize(id);
+    
+    activityList.innerHTML = recent.map(p => `
+        <div style="padding: 8px; background: #f0f0f0; margin: 5px 0; border-radius: 4px;">
+            <strong>@${p.handle || p.accessCode}</strong> - 
+            ${p.characterName || 'Character selection'} - 
+            ${p.totalCost > 0 ? `$${p.totalCost} pending` : 'Ready to approve'}
+        </div>
+    `).join('');
+}
 
 // ============================================
-// DATA MANAGEMENT
+// USERS MANAGEMENT
 // ============================================
-
-const dataManager = {
-    async loadCharacters() {
-        console.log('Loading characters...');
-        try {
-            const snapshot = await getDocs(collection(db, 'characters'));
-            state.allCharacters = [];
-            snapshot.forEach(doc => {
-                state.allCharacters.push({ id: doc.id, ...doc.data() });
-            });
-            console.log(`Loaded ${state.allCharacters.length} characters`);
-        } catch (error) {
-            console.error('Error loading characters:', error);
-            console.error('Error code:', error.code);
-            console.error('Error message:', error.message);
-            
-            // Check for specific Firebase errors
-            if (error.code === 'permission-denied') {
-                utils.showToast('Permission denied. Check Firestore rules.', 'error');
-            } else if (error.code === 'unavailable') {
-                utils.showToast('Firestore unavailable. Check connection.', 'error');
-            } else {
-                utils.showToast('Error loading characters', 'error');
-            }
-            throw error;
-        }
-    },
-
-    async loadTools() {
-        console.log('Loading tools...');
-        try {
-            const snapshot = await getDocs(collection(db, 'tools'));
-            state.allTools = [];
-            snapshot.forEach(doc => {
-                state.allTools.push({ id: doc.id, ...doc.data() });
-            });
-            state.allTools.sort((a, b) => a.price - b.price);
-            console.log(`Loaded ${state.allTools.length} tools`);
-        } catch (error) {
-            console.error('Error loading tools:', error);
-            console.error('Error code:', error.code);
-            console.error('Error message:', error.message);
-            
-            if (error.code === 'permission-denied') {
-                utils.showToast('Permission denied. Check Firestore rules.', 'error');
-            } else if (error.code === 'unavailable') {
-                utils.showToast('Firestore unavailable. Check connection.', 'error');
-            } else {
-                utils.showToast('Error loading tools', 'error');
-            }
-            throw error;
-        }
-    },
-
-    async loadUsers() {
-        console.log('Loading users...');
-        try {
-            const snapshot = await getDocs(collection(db, 'users'));
-            state.allUsers = [];
-            snapshot.forEach(doc => {
-                state.allUsers.push({ id: doc.id, ...doc.data() });
-            });
-            state.allUsers.sort((a, b) => (a.handle || a.id).localeCompare(b.handle || b.id));
-            console.log(`Loaded ${state.allUsers.length} users`);
-        } catch (error) {
-            console.error('Error loading users:', error);
-            console.error('Error code:', error.code);
-            console.error('Error message:', error.message);
-            
-            if (error.code === 'permission-denied') {
-                utils.showToast('Permission denied. Check Firestore rules.', 'error');
-            } else if (error.code === 'unavailable') {
-                utils.showToast('Firestore unavailable. Check connection.', 'error');
-            } else {
-                utils.showToast('Error loading users', 'error');
-            }
-            throw error;
-        }
+function updateUsersTable() {
+    const tbody = document.getElementById('usersTableBody');
+    
+    if (state.users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10">No users yet</td></tr>';
+        return;
     }
+    
+    tbody.innerHTML = state.users.map(user => {
+        const credits = calculateCredits(user.transactions || []);
+        const toolCount = (user.tools || []).length;
+        
+        return `
+            <tr>
+                <td>@${user.handle || user.id}</td>
+                <td>${user.id}</td>
+                <td>${user.characterName || '-'}</td>
+                <td><span class="status-${user.status || 'active'}">${(user.status || 'active').toUpperCase()}</span></td>
+                <td><span class="team-${(user.team || 'none').toLowerCase()}">${user.team || '-'}</span></td>
+                <td>${credits}</td>
+                <td>${user.individualPoints || 0}</td>
+                <td>${user.teamPoints || 0}</td>
+                <td>${toolCount}</td>
+                <td>
+                    <button class="button small" onclick="editUser('${user.id}')">edit</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+window.searchUsers = function() {
+    const search = document.getElementById('searchUsers').value.toLowerCase();
+    const rows = document.querySelectorAll('#usersTableBody tr');
+    
+    rows.forEach(row => {
+        const handle = row.cells[0].textContent.toLowerCase();
+        row.style.display = handle.includes(search) ? '' : 'none';
+    });
 };
 
 // ============================================
-// DISPLAY FUNCTIONS
+// USER CRUD
 // ============================================
-
-const displays = {
-    load(windowId) {
-        const loaders = {
-            dashboard: () => this.dashboard(),
-            users: () => this.users(),
-            characters: () => this.characters(),
-            tools: () => this.tools(),
-            teams: () => this.teams(),
-            money: () => this.money(),
-            points: () => this.points(),
-            pending: () => this.pending()
-        };
-        
-        if (loaders[windowId]) loaders[windowId]();
-    },
-
-    async dashboard() {
-        try {
-            let stats = {
-                total: state.allUsers.length,
-                active: 0,
-                revenue: 0,
-                credit: 0,
-                pending: 0,
-                points: 0
-            };
-            
-            const recentActivity = [];
-            
-            state.allUsers.forEach(user => {
-                if (user.status === 'active' || !user.status) stats.active++;
-                
-                const credit = utils.calculateCredit(user.transactions);
-                
-                user.transactions?.forEach(t => {
-                    if (t.type === 'payment') stats.revenue += t.amount || 0;
-                });
-                
-                if (credit > 0) stats.credit += credit;
-                else if (credit < 0) stats.pending += Math.abs(credit);
-                
-                stats.points += (user.individualPoints || 0);
-                
-                if (user.createdAt) {
-                    recentActivity.push({
-                        handle: user.handle,
-                        code: user.id,
-                        timestamp: user.createdAt
-                    });
-                }
-            });
-            
-            // Update stats
-            Object.entries({
-                totalUsers: stats.total,
-                activeUsers: stats.active,
-                totalRevenue: stats.revenue,
-                totalCredit: stats.credit,
-                totalPending: stats.pending,
-                totalPoints: stats.points
-            }).forEach(([id, value]) => {
-                const el = utils.getElement(id);
-                if (el) el.textContent = value;
-            });
-            
-            // Recent activity
-            const activityList = utils.getElement('activityList');
-            if (activityList) {
-                recentActivity.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                
-                activityList.innerHTML = recentActivity.length === 0 ? 
-                    '<div class="empty-state"><span class="empty-icon">🦗</span><p>nothing happening yet...</p></div>' :
-                    recentActivity.slice(0, 5).map(user => `
-                        <div style="padding: 10px; border-bottom: 1px solid #E0E0E0;">
-                            <strong>${utils.formatHandle(user.handle)}</strong>
-                            <span style="color: #999; font-size: 10px;">(${user.code})</span>
-                            <span style="float: right; color: #666;">
-                                ${new Date(user.timestamp).toLocaleDateString()}
-                            </span>
-                        </div>
-                    `).join('');
-            }
-                
-        } catch (error) {
-            console.error('Error loading dashboard:', error);
-            utils.showToast('Error loading dashboard', 'error');
-        }
-    },
-
-    users() {
-        const tbody = utils.getElement('usersTableBody');
-        
-        if (!tbody) return;
-        
-        if (state.allUsers.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" class="loading-cell">no players yet. waiting... 🐰</td></tr>';
-            return;
-        }
-        
-        tbody.innerHTML = state.allUsers.map(user => {
-            const credit = utils.calculateCredit(user.transactions);
-            const toolsDisplay = templates.toolsList(user.tools);
-            const statusIcon = user.status === 'active' ? '✅' : user.status === 'blocked' ? '🚫' : user.status === 'dead' ? '💀' : '✅';
-            
-            return `
-                <tr>
-                    <td><strong>${utils.formatHandle(user.handle)}</strong></td>
-                    <td style="color: #666; font-size: 10px;">${user.id}</td>
-                    <td>${user.characterName || '-'}</td>
-                    <td>${statusIcon} ${user.status || 'active'}</td>
-                    <td>${user.team || '-'}</td>
-                    <td style="color: ${credit >= 0 ? '#4D9938' : '#D04545'}; font-weight: bold;">
-                        ${credit}
-                    </td>
-                    <td>${user.individualPoints || 0}</td>
-                    <td>${user.teamPoints || 0}</td>
-                    <td>${toolsDisplay}</td>
-                    <td>
-                        <button class="button small" onclick="showEditUser('${user.id}')">edit</button>
-                        <button class="button small warning" onclick="userActions.delete('${user.id}')">remove</button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-    },
-
-    characters() {
-        const grid = utils.getElement('charactersGrid');
-        if (!grid) return;
-        
-        let available = 0, taken = 0;
-        
-        grid.innerHTML = state.allCharacters.map(char => {
-            char.available ? available++ : taken++;
-            
-            return `
-                <div class="character-card ${!char.available ? 'taken' : ''}">
-                    <div class="character-name">${char.name}</div>
-                    <div class="character-show">${char.show}</div>
-                    <div class="character-status ${char.available ? 'available' : 'taken'}">
-                        ${char.available ? '✅ available' : `❌ taken by ${utils.formatHandle(char.ownerId)}`}
-                    </div>
-                </div>
-            `;
-        }).join('');
-        
-        const availableEl = utils.getElement('availableChars');
-        const takenEl = utils.getElement('takenChars');
-        if (availableEl) availableEl.textContent = available;
-        if (takenEl) takenEl.textContent = taken;
-    },
-
-    tools() {
-        const toolsList = utils.getElement('toolsList');
-        if (!toolsList) return;
-        
-        if (state.allTools.length === 0) {
-            toolsList.innerHTML = '<div class="empty-state"><span class="empty-icon">🪤</span><p>no tools yet. make some weird stuff.</p></div>';
-            return;
-        }
-        
-        toolsList.innerHTML = state.allTools.map(tool => templates.toolItem(tool)).join('');
-    },
-
-    async teams() {
-        const standings = utils.getElement('teamsStandings');
-        if (!standings) return;
-        
-        standings.innerHTML = '<p>loading teams...</p>';
-        
-        const teams = {
-            cable: { name: 'team cable 📺', members: [], points: 0 },
-            milk: { name: 'team milk 🥛', members: [], points: 0 },
-            unassigned: { name: 'unassigned', members: [], points: 0 }
-        };
-        
-        state.allUsers.forEach(user => {
-            const teamKey = user.team || 'unassigned';
-            if (teams[teamKey]) {
-                teams[teamKey].members.push(user);
-                if (teamKey !== 'unassigned') {
-                    teams[teamKey].points += (user.teamPoints || 0);
-                }
-            }
-        });
-        
-        const sortedTeams = Object.entries(teams)
-            .filter(([key]) => key !== 'unassigned')
-            .sort((a, b) => b[1].points - a[1].points);
-        sortedTeams.push(['unassigned', teams.unassigned]);
-        
-        standings.innerHTML = sortedTeams.map(([key, team], index) => 
-            templates.teamStanding(team, index === 0 && team.points > 0 && key !== 'unassigned')
-        ).join('');
-    },
-
-    async money() {
-        let collected = 0, pending = 0, gifted = 0;
-        const pendingPlayers = [];
-        
-        state.allUsers.forEach(user => {
-            const credit = utils.calculateCredit(user.transactions);
-            
-            user.transactions?.forEach(t => {
-                if (t.type === 'payment') collected += t.amount || 0;
-                else if (t.type === 'gift') gifted += t.amount || 0;
-            });
-            
-            if (credit < 0) {
-                pending += Math.abs(credit);
-                pendingPlayers.push({
-                    handle: user.handle,
-                    code: user.id,
-                    amount: Math.abs(credit)
-                });
-            }
-        });
-        
-        const collectedEl = utils.getElement('totalCollected');
-        const pendingEl = utils.getElement('totalPendingAmount');
-        const giftedEl = utils.getElement('totalGifted');
-        
-        if (collectedEl) collectedEl.textContent = collected;
-        if (pendingEl) pendingEl.textContent = pending;
-        if (giftedEl) giftedEl.textContent = gifted;
-        
-        const pendingDiv = utils.getElement('pendingPaymentsList');
-        if (pendingDiv) {
-            pendingDiv.innerHTML = pendingPlayers.length === 0 ?
-                '<div class="empty-state"><span class="empty-icon">🧧</span><p>everyone\'s good!</p></div>' :
-                pendingPlayers.map(p => `
-                    <div style="padding: 12px; background: linear-gradient(135deg, #FFF8DC 0%, #FFE4B5 100%); border: 2px solid #DAA520; margin-bottom: 10px; border-radius: 6px;">
-                        <strong>${utils.formatHandle(p.handle || p.code)}</strong>
-                        <span style="float: right; color: #D04545; font-weight: bold;">needs ${p.amount} credits</span>
-                    </div>
-                `).join('');
-        }
-    },
-
-    async points() {
-        // Leaderboard
-        const leaderboard = state.allUsers
-            .filter(u => u.individualPoints > 0)
-            .sort((a, b) => b.individualPoints - a.individualPoints)
-            .slice(0, 10);
-        
-        const leaderboardDiv = utils.getElement('pointsLeaderboard');
-        if (leaderboardDiv) {
-            leaderboardDiv.innerHTML = leaderboard.length === 0 ?
-                '<div class="empty-state"><span class="empty-icon">🏆</span><p>no points awarded yet</p></div>' :
-                '<h3>Top Players</h3>' + leaderboard.map((user, i) => 
-                    templates.leaderboardItem(user, i)
-                ).join('');
-        }
-        
-        // Points activity
-        const allPointsHistory = [];
-        state.allUsers.forEach(user => {
-            user.pointsHistory?.forEach(p => {
-                allPointsHistory.push({ ...p, handle: user.handle || user.id });
-            });
-        });
-        
-        allPointsHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        
-        const activityLog = utils.getElement('pointsActivityLog');
-        if (activityLog) {
-            activityLog.innerHTML = allPointsHistory.length === 0 ?
-                '<div class="empty-state"><span class="empty-icon">🎯</span><p>no points activity yet</p></div>' :
-                allPointsHistory.slice(0, 10).map(p => `
-                    <div class="points-log-item ${p.type}">
-                        <div>
-                            <strong>${utils.formatHandle(p.handle)}</strong> got ${p.amount} ${p.type} points
-                            ${p.reason ? `for "${p.reason}"` : ''}
-                        </div>
-                        <small style="color: #666;">
-                            ${new Date(p.timestamp).toLocaleDateString()}
-                        </small>
-                    </div>
-                `).join('');
-        }
-    },
-
-    async pending() {
-        const pendingList = utils.getElement('pendingList');
-        if (!pendingList) return;
-        
-        pendingList.innerHTML = '<p>loading pending requests...</p>';
-        
-        try {
-            const snapshot = await getDocs(collection(db, 'pendingSelections'));
-            const pendingCount = utils.getElement('pendingCount');
-            
-            if (snapshot.empty) {
-                if (pendingCount) pendingCount.textContent = '0';
-                pendingList.innerHTML = '<div class="empty-state"><span class="empty-icon">✨</span><p>no pending requests</p></div>';
-                return;
-            }
-            
-            if (pendingCount) pendingCount.textContent = snapshot.size;
-            
-            const requests = [];
-            snapshot.forEach(doc => {
-                requests.push({ id: doc.id, ...doc.data() });
-            });
-            
-            requests.sort((a, b) => 
-                new Date(b.submittedAt || b.timestamp) - new Date(a.submittedAt || a.timestamp)
-            );
-            
-            pendingList.innerHTML = requests.map(req => templates.pendingRequest(req)).join('');
-            
-        } catch (error) {
-            console.error('Error loading pending:', error);
-            pendingList.innerHTML = '<p style="color: #D04545;">error loading pending requests</p>';
-        }
-    }
-};
-
-// ============================================
-// TEMPLATES
-// ============================================
-
-const templates = {
-    toolsList(tools = []) {
-        if (!tools || tools.length === 0) return '<span style="color: #999;">none</span>';
-        
-        const toolCounts = {};
-        tools.forEach(tool => {
-            const key = `${tool.name}:${tool.used ? 'used' : 'active'}`;
-            toolCounts[key] = (toolCounts[key] || 0) + 1;
-        });
-        
-        return Object.entries(toolCounts).map(([key, count]) => {
-            const [name, status] = key.split(':');
-            return `<span class="tool-tag ${status === 'used' ? 'used' : ''}">${name}${count > 1 ? ` x${count}` : ''}</span>`;
-        }).join('');
-    },
-
-    toolItem(tool) {
-        const isHidden = tool.visible === false;
-        return `
-            <div class="tool-item ${isHidden ? 'hidden' : ''}">
-                ${tool.icon ? `<img src="../assets/cast/${tool.icon}" class="tool-icon" onerror="this.style.display='none'">` : ''}
-                <div class="tool-info">
-                    <div class="tool-name">${tool.name} ${isHidden ? '(hidden)' : ''}</div>
-                    <div class="tool-price">${tool.price} credits</div>
-                    ${tool.description ? `<div class="tool-description">${tool.description}</div>` : ''}
-                </div>
-                <div>
-                    <button class="button small" onclick="toolActions.edit('${tool.id}')">edit</button>
-                    <button class="button small" onclick="toolActions.toggleVisibility('${tool.id}')">${isHidden ? 'show' : 'hide'}</button>
-                    <button class="button small warning" onclick="toolActions.delete('${tool.id}')">delete</button>
-                </div>
-            </div>
-        `;
-    },
-
-    teamStanding(team, isLeading) {
-        return `
-            <div style="padding: 20px; background: ${isLeading ? 'linear-gradient(135deg, #FFD700, #FFF8DC)' : 'white'}; border: 2px solid ${isLeading ? '#DAA520' : '#E0E0E0'}; border-radius: 8px; margin-bottom: 15px;">
-                <h3>${isLeading ? '👑 ' : ''}${team.name} ${team.points ? `(${team.points} points)` : ''}</h3>
-                ${team.members.length === 0 ? 
-                    '<p style="color: #666;">no members yet</p>' :
-                    team.members.map(member => `
-                        <div style="padding: 8px; border-bottom: 1px solid #E0E0E0;">
-                            <strong>${utils.formatHandle(member.handle || member.id)}</strong>
-                            ${member.characterName ? ` - ${member.characterName}` : ''}
-                            <span style="float: right;">
-                                ind: ${member.individualPoints || 0} | team: ${member.teamPoints || 0}
-                            </span>
-                        </div>
-                    `).join('')
-                }
-            </div>
-        `;
-    },
-
-    leaderboardItem(user, index) {
-        return `
-            <div class="leaderboard-item ${index === 0 ? 'first' : ''}">
-                <span class="leaderboard-rank">#${index + 1}</span>
-                <span class="leaderboard-player">${utils.formatHandle(user.handle || user.id)}</span>
-                <span class="leaderboard-score">${user.individualPoints} pts</span>
-            </div>
-        `;
-    },
-
-    pendingRequest(req) {
-        let toolsCost = 0;
-        let toolsList = 'none';
-        
-        if (req.tools?.length > 0) {
-            toolsCost = req.tools.reduce((sum, tool) => sum + (tool.price * (tool.quantity || 1)), 0);
-            toolsList = req.tools.map(t => 
-                `${t.name}${t.quantity > 1 ? ` x${t.quantity}` : ''} (${t.price * (t.quantity || 1)} credits)`
-            ).join(', ');
-        }
-        
-        const totalCost = 25 + toolsCost;
-        const creditsNeeded = totalCost - (req.currentCredit || 0);
-        
-        return `
-            <div class="pending-request">
-                <div class="pending-request-header">
-                    <strong>${utils.formatHandle(req.handle)}</strong>
-                    <span style="color: #666; font-size: 11px;">
-                        ${new Date(req.submittedAt || req.timestamp).toLocaleString()}
-                    </span>
-                </div>
-                <div class="pending-request-info">
-                    <div class="info-row">
-                        <span class="label">access code:</span>
-                        <span class="value" style="font-size: 10px; color: #666;">${req.accessCode}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="label">character:</span>
-                        <span class="value">${req.characterName || 'none selected'}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="label">tools requested:</span>
-                        <span class="value">${toolsList}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="label">needs to send:</span>
-                        <span class="value" style="color: ${creditsNeeded > 0 ? '#D04545' : '#4D9938'};">
-                            ${creditsNeeded > 0 ? creditsNeeded + ' credits' : '✅ fully funded!'}
-                        </span>
-                    </div>
-                </div>
-                <div class="pending-request-actions">
-                    <button class="button primary" onclick="pendingActions.approve('${req.id}')">approve 🐳</button>
-                    <button class="button" onclick="pendingActions.markPaid('${req.id}', ${creditsNeeded})">mark paid</button>
-                    <button class="button warning" onclick="pendingActions.reject('${req.id}')">reject</button>
-                </div>
-            </div>
-        `;
-    }
-};
-
-// ============================================
-// USER MANAGEMENT FUNCTIONS - WITH NULL CHECKS
-// ============================================
-
 window.showCreateUser = function() {
-    state.editingUser = null;
+    document.getElementById('createUserDialog').style.display = 'block';
     
-    // Clear all fields
-    utils.clearForm(['newAccessCode', 'newHandle', 'newEmail', 'newCharacter', 'newTeam', 'newPayment', 'newUserNote']);
+    // Populate dropdowns
+    const charSelect = document.getElementById('newCharacter');
+    charSelect.innerHTML = '<option value="">-- pick later --</option>' +
+        state.characters
+            .filter(c => c.available)
+            .map(c => `<option value="${c.id}">${c.name}</option>`)
+            .join('');
     
-    // Populate character dropdown
-    const characterSelect = utils.getElement('newCharacter');
-    if (characterSelect) {
-        characterSelect.innerHTML = '<option value="">-- pick later --</option>' +
-            state.allCharacters
-                .filter(c => c.available)
-                .map(c => `<option value="${c.id}">${c.name} (${c.show})</option>`)
-                .join('');
-    }
-    
-    // Show dialog
-    const dialog = utils.getElement('createUserDialog');
-    if (dialog) dialog.style.display = 'block';
+    const teamSelect = document.getElementById('newTeam');
+    teamSelect.innerHTML = '<option value="">unassigned</option>' +
+        state.teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
 };
 
 window.hideCreateUser = function() {
-    const dialog = utils.getElement('createUserDialog');
-    if (dialog) dialog.style.display = 'none';
+    document.getElementById('createUserDialog').style.display = 'none';
 };
 
 window.createUser = async function() {
+    const accessCode = document.getElementById('newAccessCode').value.toUpperCase();
+    const handle = document.getElementById('newHandle').value;
+    const email = document.getElementById('newEmail').value;
+    const characterId = document.getElementById('newCharacter').value;
+    const team = document.getElementById('newTeam').value;
+    const payment = parseInt(document.getElementById('newPayment').value) || 0;
+    const note = document.getElementById('newUserNote').value;
+    
+    if (!accessCode || !handle) {
+        showToast('Access code and handle are required!', 'error');
+        return;
+    }
+    
     try {
-        const accessCodeEl = utils.getElement('newAccessCode');
-        const handleEl = utils.getElement('newHandle');
-        
-        if (!accessCodeEl || !handleEl) {
-            utils.showToast('Form elements not found', 'error');
+        // Check if code exists
+        const existing = await getDoc(doc(db, 'users', accessCode));
+        if (existing.exists()) {
+            showToast('Access code already exists!', 'error');
             return;
         }
         
-        const accessCode = accessCodeEl.value;
-        const handle = handleEl.value;
-        
-        if (!accessCode || !handle) {
-            utils.showToast('Access code and handle are required', 'error');
-            return;
+        // Get character info
+        let characterData = {};
+        if (characterId) {
+            const char = state.characters.find(c => c.id === characterId);
+            if (char) {
+                characterData = {
+                    characterId: characterId,
+                    characterName: char.name,
+                    characterShow: char.show || ''
+                };
+            }
         }
         
-        // Check if user already exists
-        const existingUser = state.allUsers.find(u => u.id === accessCode);
-        if (existingUser) {
-            utils.showToast('Access code already exists', 'error');
-            return;
-        }
-        
-        const characterIdEl = utils.getElement('newCharacter');
-        const characterId = characterIdEl ? characterIdEl.value : '';
-        const character = characterId ? state.allCharacters.find(c => c.id === characterId) : null;
-        
-        const newUser = {
+        // Create user data
+        const userData = {
+            accessCode,
             handle: handle.replace('@', ''),
-            email: utils.getElement('newEmail')?.value || '',
-            characterId: characterId || null,
-            characterName: character ? character.name : null,
-            team: utils.getElement('newTeam')?.value || null,
-            tools: [],
-            transactions: [],
+            email: email || '',
+            team: team || '',
+            status: 'active',
             individualPoints: 0,
             teamPoints: 0,
-            status: 'active',
+            tools: [],
+            transactions: payment > 0 ? [{
+                type: 'payment',
+                amount: payment,
+                note: 'Initial payment',
+                timestamp: new Date().toISOString()
+            }] : [],
+            moderatorNote: note || '',
             createdAt: new Date().toISOString(),
-            notes: []
+            ...characterData
         };
         
-        // Add initial payment if specified
-        const paymentEl = utils.getElement('newPayment');
-        const initialPayment = paymentEl ? parseFloat(paymentEl.value) || 0 : 0;
-        if (initialPayment > 0) {
-            newUser.transactions.push({
-                type: 'payment',
-                amount: initialPayment,
-                description: 'Initial payment',
+        // If they paid enough for game pass, give it to them
+        if (payment >= 25) {
+            userData.tools.push({
+                name: 'GAME PASS',
+                price: 25,
+                used: false
+            });
+            userData.transactions.push({
+                type: 'purchase',
+                amount: 25,
+                note: 'Game Pass (auto)',
                 timestamp: new Date().toISOString()
             });
         }
         
-        // Add welcome note if specified
-        const noteEl = utils.getElement('newUserNote');
-        const welcomeNote = noteEl ? noteEl.value : '';
-        if (welcomeNote) {
-            newUser.notes.push({
-                message: welcomeNote,
-                from: 'admin',
-                timestamp: new Date().toISOString()
-            });
-        }
-        
-        // Create user in database
-        await setDoc(doc(db, 'users', accessCode), newUser);
+        // Save to Firebase
+        await setDoc(doc(db, 'users', accessCode), userData);
         
         // Update character availability if selected
         if (characterId) {
             await updateDoc(doc(db, 'characters', characterId), {
                 available: false,
-                ownerId: handle
+                ownerId: accessCode
             });
         }
         
-        utils.showToast('Player created successfully! 🎉', 'success');
+        showToast(`Player @${handle} created successfully!`, 'success');
         hideCreateUser();
-        
-        // Reload data
-        await Promise.all([
-            dataManager.loadUsers(),
-            dataManager.loadCharacters()
-        ]);
-        displays.users();
+        await loadAllData();
         
     } catch (error) {
         console.error('Error creating user:', error);
-        utils.showToast('Error creating user', 'error');
+        showToast('Error creating user', 'error');
     }
 };
 
-window.showEditUser = function(userId) {
-    const user = state.allUsers.find(u => u.id === userId);
-    if (!user) {
-        utils.showToast('User not found', 'error');
-        return;
-    }
+window.editUser = async function(userId) {
+    const user = state.users.find(u => u.id === userId);
+    if (!user) return;
     
-    state.editingUser = user;
+    state.currentEditUser = user;
     
-    // Show user handle in header
-    const handleSpan = utils.getElement('editUserHandle');
-    if (handleSpan) handleSpan.textContent = utils.formatHandle(user.handle);
-    
-    // Store user ID
-    const userIdEl = utils.getElement('editUserId');
-    if (userIdEl) userIdEl.value = userId;
-    
-    // Populate info tab
-    const handleEl = utils.getElement('editHandle');
-    const statusEl = utils.getElement('editStatus');
-    const teamEl = utils.getElement('editTeam');
-    
-    if (handleEl) handleEl.value = user.handle || '';
-    if (statusEl) statusEl.value = user.status || 'active';
-    if (teamEl) teamEl.value = user.team || '';
+    // Populate edit form
+    document.getElementById('editUserId').value = user.id;
+    document.getElementById('editUserHandle').textContent = user.handle || user.id;
+    document.getElementById('editHandle').value = user.handle || '';
+    document.getElementById('editStatus').value = user.status || 'active';
     
     // Populate character dropdown
-    const characterSelect = utils.getElement('editCharacter');
-    if (characterSelect) {
-        characterSelect.innerHTML = '<option value="">-- none --</option>' +
-            state.allCharacters.map(c => 
-                `<option value="${c.id}" ${user.characterId === c.id ? 'selected' : ''}>${c.name}</option>`
-            ).join('');
-    }
+    const charSelect = document.getElementById('editCharacter');
+    charSelect.innerHTML = '<option value="">-- none --</option>' +
+        state.characters.map(c => 
+            `<option value="${c.id}" ${c.id === user.characterId ? 'selected' : ''}>${c.name}</option>`
+        ).join('');
     
-    // Display credit info
-    const credit = utils.calculateCredit(user.transactions);
-    const creditDisplay = utils.getElement('userCreditDisplay');
-    if (creditDisplay) {
-        creditDisplay.textContent = `current credits: ${credit}`;
-        creditDisplay.className = credit >= 0 ? 'credit-display credit-positive' : 'credit-display credit-negative';
-    }
+    // Show credit info
+    const credits = calculateCredits(user.transactions || []);
+    updateUserCreditDisplay(credits);
     
-    // Display transaction history
-    const historyDiv = utils.getElement('userTransactionHistory');
-    if (historyDiv && user.transactions) {
-        historyDiv.innerHTML = user.transactions.length === 0 ? 
-            '<p style="color: #666;">no transactions yet</p>' :
-            user.transactions.map(t => `
-                <div class="transaction-item ${t.type}">
-                    <div>
-                        <strong>${t.type}</strong>: ${t.amount} credits
-                        ${t.description ? `<br><small>${t.description}</small>` : ''}
-                    </div>
-                    <small>${new Date(t.timestamp).toLocaleDateString()}</small>
-                </div>
-            `).join('');
-    }
+    // Show tools
+    updateUserToolsList(user.tools || []);
     
-    // Display points
-    const indPointsEl = utils.getElement('userIndPoints');
-    const teamPointsEl = utils.getElement('userTeamPoints');
-    if (indPointsEl) indPointsEl.textContent = user.individualPoints || 0;
-    if (teamPointsEl) teamPointsEl.textContent = user.teamPoints || 0;
+    // Show points
+    document.getElementById('userIndPoints').textContent = user.individualPoints || 0;
+    document.getElementById('userTeamPoints').textContent = user.teamPoints || 0;
     
-    // Display tools
-    const toolsList = utils.getElement('userToolsList');
-    if (toolsList) {
-        toolsList.innerHTML = user.tools && user.tools.length > 0 ?
-            '<h4>Current Tools:</h4>' + user.tools.map(tool => 
-                `<div class="tool-tag ${tool.used ? 'used' : ''}">${tool.name} ${tool.used ? '(used)' : ''}</div>`
-            ).join('') :
-            '<p style="color: #666;">no tools yet</p>';
-    }
+    // Show team
+    const teamSelect = document.getElementById('editUserTeam');
+    teamSelect.innerHTML = '<option value="">unassigned</option>' +
+        state.teams.map(t => 
+            `<option value="${t.id}" ${t.id === user.team ? 'selected' : ''}>${t.name}</option>`
+        ).join('');
     
-    // Display available tools to give
-    const availableTools = utils.getElement('availableToolsList');
-    if (availableTools) {
-        availableTools.innerHTML = state.allTools
-            .filter(t => t.visible !== false)
-            .map(tool => `
-                <button class="button small" onclick="giveTool('${user.id}', '${tool.id}')">
-                    ${tool.name} (${tool.price} credits)
-                </button>
-            `).join('');
-    }
-    
-    // Show dialog and activate first tab
+    // Show dialog
+    document.getElementById('editUserDialog').style.display = 'block';
     switchEditTab('info');
-    const dialog = utils.getElement('editUserDialog');
-    if (dialog) dialog.style.display = 'block';
 };
 
 window.hideEditUser = function() {
-    const dialog = utils.getElement('editUserDialog');
-    if (dialog) dialog.style.display = 'none';
-    state.editingUser = null;
+    document.getElementById('editUserDialog').style.display = 'none';
+    state.currentEditUser = null;
 };
 
 window.saveUserEdit = async function() {
-    if (!state.editingUser) {
-        utils.showToast('No user being edited', 'error');
-        return;
-    }
+    if (!state.currentEditUser) return;
     
     try {
-        const handleEl = utils.getElement('editHandle');
-        const statusEl = utils.getElement('editStatus');
-        const teamEl = utils.getElement('editTeam');
-        const characterEl = utils.getElement('editCharacter');
-        
-        if (!handleEl || !statusEl) {
-            utils.showToast('Required form elements not found', 'error');
-            return;
-        }
-        
         const updates = {
-            handle: handleEl.value,
-            status: statusEl.value,
-            team: teamEl ? teamEl.value : null
+            handle: document.getElementById('editHandle').value,
+            status: document.getElementById('editStatus').value,
+            characterId: document.getElementById('editCharacter').value,
+            team: document.getElementById('editUserTeam').value,
+            moderatorNote: document.getElementById('editUserMessage').value
         };
         
-        const characterId = characterEl ? characterEl.value : '';
-        if (characterId !== state.editingUser.characterId) {
-            // Release old character if exists
-            if (state.editingUser.characterId) {
-                await updateDoc(doc(db, 'characters', state.editingUser.characterId), {
-                    available: true,
-                    ownerId: null
-                });
-            }
-            
-            // Assign new character
-            if (characterId) {
-                const character = state.allCharacters.find(c => c.id === characterId);
-                updates.characterId = characterId;
-                updates.characterName = character ? character.name : null;
-                
-                await updateDoc(doc(db, 'characters', characterId), {
-                    available: false,
-                    ownerId: updates.handle
-                });
-            } else {
-                updates.characterId = null;
-                updates.characterName = null;
+        // Get character info if changed
+        if (updates.characterId) {
+            const char = state.characters.find(c => c.id === updates.characterId);
+            if (char) {
+                updates.characterName = char.name;
+                updates.characterShow = char.show || '';
             }
         }
         
-        // Check for message to send
-        const messageEl = utils.getElement('editUserMessage');
-        const message = messageEl ? messageEl.value : '';
-        if (message) {
-            const notes = state.editingUser.notes || [];
-            notes.push({
-                message,
-                from: 'admin',
-                timestamp: new Date().toISOString()
-            });
-            updates.notes = notes;
-            
-            // Clear message field after adding
-            messageEl.value = '';
-        }
+        await updateDoc(doc(db, 'users', state.currentEditUser.id), updates);
         
-        await updateDoc(doc(db, 'users', state.editingUser.id), updates);
-        
-        utils.showToast('User updated! 💾', 'success');
+        showToast('User updated successfully!', 'success');
         hideEditUser();
-        
-        // Reload data
-        await Promise.all([
-            dataManager.loadUsers(),
-            dataManager.loadCharacters()
-        ]);
-        displays.users();
+        await loadAllData();
         
     } catch (error) {
         console.error('Error updating user:', error);
-        utils.showToast('Error updating user', 'error');
+        showToast('Error updating user', 'error');
     }
 };
 
-window.switchEditTab = function(tabName) {
-    // Hide all tab contents
-    document.querySelectorAll('#editUserDialog .tab-content').forEach(content => {
-        content.style.display = 'none';
-    });
-    
-    // Remove active from all tabs
-    document.querySelectorAll('#editUserDialog .tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    // Show selected tab content
-    const tabContent = utils.getElement(`edit-${tabName}-tab`);
-    if (tabContent) tabContent.style.display = 'block';
-    
-    // Mark tab as active
-    const activeTab = Array.from(document.querySelectorAll('#editUserDialog .tab'))
-        .find(tab => tab.textContent.toLowerCase() === tabName);
-    if (activeTab) activeTab.classList.add('active');
-    
-    state.activeTab = tabName;
-};
+// ============================================
+// CREDITS & TRANSACTIONS
+// ============================================
+function calculateCredits(transactions) {
+    return transactions.reduce((balance, t) => {
+        if (['payment', 'refund', 'gift'].includes(t.type)) {
+            return balance + (t.amount || 0);
+        } else if (t.type === 'purchase') {
+            return balance - (t.amount || 0);
+        } else if (t.type === 'adjustment') {
+            return balance + (t.amount || 0);
+        }
+        return balance;
+    }, 0);
+}
 
-// Quick action functions for credits
+function updateUserCreditDisplay(credits) {
+    const display = document.getElementById('userCreditDisplay');
+    display.textContent = `current credits: ${credits}`;
+    display.className = credits > 0 ? 'credit-display credit-positive' :
+                       credits < 0 ? 'credit-display credit-negative' :
+                       'credit-display credit-zero';
+}
+
 window.quickAddCredits = async function(amount, isGift) {
-    if (!state.editingUser) {
-        utils.showToast('No user selected', 'error');
-        return;
-    }
+    if (!state.currentEditUser) return;
     
     try {
-        const transactions = state.editingUser.transactions || [];
-        transactions.push({
+        const transaction = {
             type: isGift ? 'gift' : 'payment',
             amount: amount,
-            description: isGift ? 'Admin gift' : 'Payment received',
+            note: isGift ? 'Gifted by admin' : 'Payment received',
             timestamp: new Date().toISOString()
-        });
+        };
         
-        await updateDoc(doc(db, 'users', state.editingUser.id), { transactions });
+        const user = state.currentEditUser;
+        const transactions = [...(user.transactions || []), transaction];
         
-        utils.showToast(`Added ${amount} credits!`, 'success');
+        await updateDoc(doc(db, 'users', user.id), { transactions });
         
-        // Reload user data
-        await dataManager.loadUsers();
-        showEditUser(state.editingUser.id);
+        // Refresh user data
+        const updated = await getDoc(doc(db, 'users', user.id));
+        state.currentEditUser = { id: user.id, ...updated.data() };
+        
+        const newCredits = calculateCredits(transactions);
+        updateUserCreditDisplay(newCredits);
+        
+        showToast(`Added ${amount} credits${isGift ? ' (gift)' : ''}`, 'success');
         
     } catch (error) {
         console.error('Error adding credits:', error);
-        utils.showToast('Error adding credits', 'error');
+        showToast('Error adding credits', 'error');
     }
 };
 
-window.clearPending = async function() {
-    if (!state.editingUser) {
-        utils.showToast('No user selected', 'error');
-        return;
-    }
+// ============================================
+// PENDING SELECTIONS
+// ============================================
+function updatePendingCount() {
+    document.getElementById('totalPending').textContent = state.pendingSelections.length;
+    document.getElementById('pendingCount').textContent = state.pendingSelections.length;
     
-    const credit = utils.calculateCredit(state.editingUser.transactions);
-    if (credit >= 0) {
-        utils.showToast('No pending credits to clear', 'info');
-        return;
-    }
-    
-    try {
-        const transactions = state.editingUser.transactions || [];
-        transactions.push({
-            type: 'adjustment',
-            amount: Math.abs(credit),
-            description: 'Pending cleared by admin',
-            timestamp: new Date().toISOString()
-        });
-        
-        await updateDoc(doc(db, 'users', state.editingUser.id), { transactions });
-        
-        utils.showToast('Pending credits cleared!', 'success');
-        
-        // Reload user data
-        await dataManager.loadUsers();
-        showEditUser(state.editingUser.id);
-        
-    } catch (error) {
-        console.error('Error clearing pending:', error);
-        utils.showToast('Error clearing pending', 'error');
-    }
-};
-
-window.addCustomCredits = async function() {
-    if (!state.editingUser) {
-        utils.showToast('No user selected', 'error');
-        return;
-    }
-    
-    const amountEl = utils.getElement('customCreditAmount');
-    const noteEl = utils.getElement('customCreditNote');
-    
-    if (!amountEl) {
-        utils.showToast('Credit amount field not found', 'error');
-        return;
-    }
-    
-    const amount = parseFloat(amountEl.value);
-    const note = noteEl ? noteEl.value : '';
-    
-    if (!amount || isNaN(amount)) {
-        utils.showToast('Please enter a valid amount', 'warning');
-        return;
-    }
-    
-    try {
-        const transactions = state.editingUser.transactions || [];
-        transactions.push({
-            type: amount > 0 ? 'payment' : 'purchase',
-            amount: Math.abs(amount),
-            description: note || 'Admin adjustment',
-            timestamp: new Date().toISOString()
-        });
-        
-        await updateDoc(doc(db, 'users', state.editingUser.id), { transactions });
-        
-        utils.showToast('Credits added!', 'success');
-        
-        // Clear form
-        amountEl.value = '';
-        if (noteEl) noteEl.value = '';
-        
-        // Reload user data
-        await dataManager.loadUsers();
-        showEditUser(state.editingUser.id);
-        
-    } catch (error) {
-        console.error('Error adding custom credits:', error);
-        utils.showToast('Error adding credits', 'error');
-    }
-};
-
-// Points functions
-window.addPoints = async function() {
-    if (!state.editingUser) {
-        utils.showToast('No user selected', 'error');
-        return;
-    }
-    
-    const amountEl = utils.getElement('pointsAmount');
-    const typeEl = utils.getElement('pointType');
-    const targetEl = utils.getElement('pointTarget');
-    const reasonEl = utils.getElement('pointReason');
-    
-    if (!amountEl || !typeEl || !targetEl) {
-        utils.showToast('Required point fields not found', 'error');
-        return;
-    }
-    
-    const amount = parseInt(amountEl.value) || 0;
-    const type = typeEl.value;
-    const target = targetEl.value;
-    const reason = reasonEl ? reasonEl.value : '';
-    
-    if (amount <= 0) {
-        utils.showToast('Please enter a valid amount', 'warning');
-        return;
-    }
-    
-    try {
-        const multiplier = POINT_MULTIPLIERS[type] || 1;
-        const actualPoints = amount * multiplier;
-        
-        const pointsHistory = state.editingUser.pointsHistory || [];
-        pointsHistory.push({
-            amount: actualPoints,
-            type,
-            target,
-            reason,
-            timestamp: new Date().toISOString(),
-            awardedBy: 'admin'
-        });
-        
-        const updates = { pointsHistory };
-        
-        if (target === 'individual' || target === 'both') {
-            updates.individualPoints = (state.editingUser.individualPoints || 0) + actualPoints;
+    // Update desktop icon badge
+    const pendingIcon = document.querySelector('.desktop-icon:nth-child(8)');
+    if (pendingIcon) {
+        let badge = pendingIcon.querySelector('.notification-badge');
+        if (state.pendingSelections.length > 0) {
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.className = 'notification-badge';
+                pendingIcon.appendChild(badge);
+            }
+            badge.textContent = state.pendingSelections.length;
+        } else if (badge) {
+            badge.remove();
         }
-        if (target === 'team' || target === 'both') {
-            updates.teamPoints = (state.editingUser.teamPoints || 0) + actualPoints;
-        }
-        
-        await updateDoc(doc(db, 'users', state.editingUser.id), updates);
-        
-        utils.showToast(`Awarded ${actualPoints} points!`, 'success');
-        
-        // Clear form
-        amountEl.value = '';
-        if (reasonEl) reasonEl.value = '';
-        
-        // Reload user data
-        await dataManager.loadUsers();
-        showEditUser(state.editingUser.id);
-        displays.points();
-        
-    } catch (error) {
-        console.error('Error adding points:', error);
-        utils.showToast('Error adding points', 'error');
     }
-};
+}
 
-// Tool giving function
-window.giveTool = async function(userId, toolId) {
-    const user = state.allUsers.find(u => u.id === userId);
-    const tool = state.allTools.find(t => t.id === toolId);
+function updatePendingList() {
+    const list = document.getElementById('pendingList');
     
-    if (!user || !tool) {
-        utils.showToast('User or tool not found', 'error');
+    if (state.pendingSelections.length === 0) {
+        list.innerHTML = '<p style="text-align: center; color: #666;">no pending requests! 🎉</p>';
         return;
     }
     
-    // Check if user has enough credits
-    const credit = utils.calculateCredit(user.transactions);
-    if (credit < tool.price) {
-        utils.showToast(`User needs ${tool.price - credit} more credits for this tool`, 'warning');
-        return;
-    }
+    list.innerHTML = state.pendingSelections.map(p => `
+        <div class="pending-request">
+            <div class="pending-request-header">
+                <strong>@${p.handle || p.accessCode}</strong>
+                <span>${new Date(p.submittedAt || p.timestamp).toLocaleString()}</span>
+            </div>
+            <div class="pending-request-info">
+                ${p.characterName ? `
+                    <div class="info-row">
+                        <span class="label">Character:</span>
+                        <span class="value">${p.characterName}</span>
+                    </div>
+                ` : ''}
+                ${p.tools && p.tools.length > 0 ? `
+                    <div class="info-row">
+                        <span class="label">Tools:</span>
+                        <span class="value">${p.tools.map(t => t.name).join(', ')}</span>
+                    </div>
+                ` : ''}
+                <div class="info-row">
+                    <span class="label">Total Cost:</span>
+                    <span class="value" style="color: ${p.totalCost > 0 ? '#ff0000' : '#00cc00'}">
+                        ${p.totalCost > 0 ? '$' + p.totalCost + ' needed' : 'Paid!'}
+                    </span>
+                </div>
+            </div>
+            <div class="pending-request-actions">
+                <button class="button primary small" onclick="approvePending('${p.id}')">approve ✓</button>
+                <button class="button warning small" onclick="rejectPending('${p.id}')">reject ×</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.approvePending = async function(pendingId) {
+    const pending = state.pendingSelections.find(p => p.id === pendingId);
+    if (!pending) return;
     
     try {
-        const tools = user.tools || [];
-        tools.push({
-            id: toolId,
-            name: tool.name,
-            price: tool.price,
-            used: false,
-            acquiredAt: new Date().toISOString()
-        });
-        
-        const transactions = user.transactions || [];
-        transactions.push({
-            type: 'purchase',
-            amount: tool.price,
-            description: `Tool: ${tool.name}`,
-            timestamp: new Date().toISOString()
-        });
-        
-        await updateDoc(doc(db, 'users', userId), { tools, transactions });
-        
-        utils.showToast(`Gave ${tool.name} to user!`, 'success');
-        
-        // Reload user data
-        await dataManager.loadUsers();
-        showEditUser(userId);
-        
-    } catch (error) {
-        console.error('Error giving tool:', error);
-        utils.showToast('Error giving tool', 'error');
-    }
-};
-
-// Search function
-window.searchUsers = function() {
-    const searchEl = utils.getElement('searchUsers');
-    if (!searchEl) return;
-    
-    const query = searchEl.value.toLowerCase();
-    const tbody = utils.getElement('usersTableBody');
-    
-    if (!tbody) return;
-    
-    if (!query) {
-        displays.users();
-        return;
-    }
-    
-    const filtered = state.allUsers.filter(user => 
-        user.handle?.toLowerCase().includes(query) ||
-        user.id?.toLowerCase().includes(query) ||
-        user.characterName?.toLowerCase().includes(query)
-    );
-    
-    if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="loading-cell">no matches found</td></tr>';
-        return;
-    }
-    
-    tbody.innerHTML = filtered.map(user => {
-        const credit = utils.calculateCredit(user.transactions);
-        const toolsDisplay = templates.toolsList(user.tools);
-        const statusIcon = user.status === 'active' ? '✅' : user.status === 'blocked' ? '🚫' : '💀';
-        
-        return `
-            <tr>
-                <td><strong>${utils.formatHandle(user.handle)}</strong></td>
-                <td style="color: #666; font-size: 10px;">${user.id}</td>
-                <td>${user.characterName || '-'}</td>
-                <td>${statusIcon} ${user.status || 'active'}</td>
-                <td>${user.team || '-'}</td>
-                <td style="color: ${credit >= 0 ? '#4D9938' : '#D04545'}; font-weight: bold;">
-                    ${credit}
-                </td>
-                <td>${user.individualPoints || 0}</td>
-                <td>${user.teamPoints || 0}</td>
-                <td>${toolsDisplay}</td>
-                <td>
-                    <button class="button small" onclick="showEditUser('${user.id}')">edit</button>
-                    <button class="button small warning" onclick="userActions.delete('${user.id}')">remove</button>
-                </td>
-            </tr>
-        `;
-    }).join('');
-};
-
-// Quick message functions
-window.quickMsg = function(message) {
-    const messageField = utils.getElement('editUserMessage');
-    if (messageField) messageField.value = message;
-};
-
-// Tool management functions
-window.showCreateTool = function() {
-    state.editingTool = null;
-    utils.clearForm(['toolName', 'toolPrice', 'toolIcon', 'toolDescription']);
-    
-    const visibleEl = utils.getElement('toolVisible');
-    if (visibleEl) visibleEl.value = 'true';
-    
-    const titleEl = utils.getElement('toolDialogTitle');
-    if (titleEl) titleEl.textContent = '🪤 Create Tool';
-    
-    const idEl = utils.getElement('editingToolId');
-    if (idEl) idEl.value = '';
-    
-    const dialog = utils.getElement('toolDialog');
-    if (dialog) dialog.style.display = 'block';
-};
-
-window.hideToolDialog = function() {
-    const dialog = utils.getElement('toolDialog');
-    if (dialog) dialog.style.display = 'none';
-    state.editingTool = null;
-};
-
-window.saveTool = async function() {
-    try {
-        const nameEl = utils.getElement('toolName');
-        const priceEl = utils.getElement('toolPrice');
-        const iconEl = utils.getElement('toolIcon');
-        const descEl = utils.getElement('toolDescription');
-        const visibleEl = utils.getElement('toolVisible');
-        const idEl = utils.getElement('editingToolId');
-        
-        if (!nameEl || !priceEl) {
-            utils.showToast('Required tool fields not found', 'error');
+        // Get user
+        const userDoc = await getDoc(doc(db, 'users', pending.accessCode));
+        if (!userDoc.exists()) {
+            showToast('User not found!', 'error');
             return;
         }
         
-        const toolData = {
-            name: nameEl.value,
-            price: parseInt(priceEl.value) || 0,
-            icon: iconEl ? iconEl.value : '',
-            description: descEl ? descEl.value : '',
-            visible: visibleEl ? visibleEl.value === 'true' : true
-        };
+        const userData = userDoc.data();
+        const updates = {};
         
-        if (!toolData.name || !toolData.price) {
-            utils.showToast('Name and price are required', 'warning');
-            return;
+        // Add character if selected
+        if (pending.characterId) {
+            updates.characterId = pending.characterId;
+            updates.characterName = pending.characterName;
+            
+            // Mark character as taken
+            await updateDoc(doc(db, 'characters', pending.characterId), {
+                available: false,
+                ownerId: pending.accessCode
+            });
         }
         
-        const editingId = idEl ? idEl.value : '';
-        
-        if (editingId) {
-            // Update existing tool
-            await updateDoc(doc(db, 'tools', editingId), toolData);
-            utils.showToast('Tool updated!', 'success');
-        } else {
-            // Create new tool
-            toolData.createdAt = new Date().toISOString();
-            await addDoc(collection(db, 'tools'), toolData);
-            utils.showToast('Tool created!', 'success');
+        // Add tools
+        if (pending.tools && pending.tools.length > 0) {
+            const currentTools = userData.tools || [];
+            updates.tools = [...currentTools, ...pending.tools];
+            
+            // Add purchase transaction
+            const transactions = userData.transactions || [];
+            transactions.push({
+                type: 'purchase',
+                amount: pending.toolsCost || 0,
+                note: `Purchased: ${pending.tools.map(t => t.name).join(', ')}`,
+                timestamp: new Date().toISOString()
+            });
+            updates.transactions = transactions;
         }
         
-        hideToolDialog();
+        // Update user
+        await updateDoc(doc(db, 'users', pending.accessCode), updates);
         
-        // Reload tools
-        await dataManager.loadTools();
-        displays.tools();
+        // Delete pending selection
+        await deleteDoc(doc(db, 'pendingSelections', pendingId));
+        
+        showToast(`Approved @${pending.handle}!`, 'success');
+        await loadAllData();
         
     } catch (error) {
-        console.error('Error saving tool:', error);
-        utils.showToast('Error saving tool', 'error');
+        console.error('Error approving:', error);
+        showToast('Error approving request', 'error');
     }
 };
 
-// Make action handlers globally available
-window.userActions = {
-    edit(userId) {
-        showEditUser(userId);
-    },
-
-    async delete(userId) {
-        if (!confirm('Delete this user? This cannot be undone!')) return;
-        
-        try {
-            await deleteDoc(doc(db, 'users', userId));
-            utils.showToast('User deleted', 'success');
-            
-            await dataManager.loadUsers();
-            displays.users();
-        } catch (error) {
-            console.error('Error deleting user:', error);
-            utils.showToast('Error deleting user', 'error');
-        }
+window.rejectPending = async function(pendingId) {
+    if (!confirm('Reject this request?')) return;
+    
+    try {
+        await deleteDoc(doc(db, 'pendingSelections', pendingId));
+        showToast('Request rejected', 'warning');
+        await loadAllData();
+    } catch (error) {
+        console.error('Error rejecting:', error);
+        showToast('Error rejecting request', 'error');
     }
 };
 
-window.toolActions = {
-    edit(toolId) {
-        const tool = state.allTools.find(t => t.id === toolId);
-        if (!tool) return;
-        
-        state.editingTool = tool;
-        
-        const nameEl = utils.getElement('toolName');
-        const priceEl = utils.getElement('toolPrice');
-        const iconEl = utils.getElement('toolIcon');
-        const descEl = utils.getElement('toolDescription');
-        const visibleEl = utils.getElement('toolVisible');
-        const titleEl = utils.getElement('toolDialogTitle');
-        const idEl = utils.getElement('editingToolId');
-        
-        if (nameEl) nameEl.value = tool.name;
-        if (priceEl) priceEl.value = tool.price;
-        if (iconEl) iconEl.value = tool.icon || '';
-        if (descEl) descEl.value = tool.description || '';
-        if (visibleEl) visibleEl.value = tool.visible !== false ? 'true' : 'false';
-        if (titleEl) titleEl.textContent = '🔧 Edit Tool';
-        if (idEl) idEl.value = toolId;
-        
-        const dialog = utils.getElement('toolDialog');
-        if (dialog) dialog.style.display = 'block';
-    },
+// ============================================
+// WINDOW MANAGEMENT
+// ============================================
+window.openWindow = function(windowId) {
+    const win = document.getElementById(`window-${windowId}`);
+    if (!win) return;
+    
+    // Show window
+    win.style.display = 'block';
+    state.activeWindows.add(windowId);
+    
+    // Remove from minimized
+    state.minimizedWindows.delete(windowId);
+    updateMinimizedBar();
+    
+    // Bring to front
+    bringToFront(win);
+    
+    // Load content if needed
+    if (windowId === 'users') updateUsersTable();
+    if (windowId === 'pending') updatePendingList();
+    if (windowId === 'characters') updateCharactersGrid();
+    if (windowId === 'tools') updateToolsList();
+};
 
-    async toggleVisibility(toolId) {
-        const tool = state.allTools.find(t => t.id === toolId);
-        if (!tool) return;
-        
-        try {
-            await updateDoc(doc(db, 'tools', toolId), {
-                visible: tool.visible === false
-            });
-            
-            utils.showToast('Tool visibility updated', 'success');
-            await dataManager.loadTools();
-            displays.tools();
-            
-        } catch (error) {
-            console.error('Error updating tool:', error);
-            utils.showToast('Error updating tool', 'error');
-        }
-    },
+window.closeWindow = function(windowId) {
+    const win = document.getElementById(`window-${windowId}`);
+    if (win) win.style.display = 'none';
+    state.activeWindows.delete(windowId);
+    state.minimizedWindows.delete(windowId);
+    updateMinimizedBar();
+};
 
-    async delete(toolId) {
-        if (!confirm('Delete this tool?')) return;
+window.minimizeWindow = function(windowId) {
+    const win = document.getElementById(`window-${windowId}`);
+    if (win) win.style.display = 'none';
+    state.minimizedWindows.add(windowId);
+    updateMinimizedBar();
+};
+
+window.maximizeWindow = function(windowId) {
+    const win = document.getElementById(`window-${windowId}`);
+    if (win) win.classList.toggle('maximized');
+};
+
+function updateMinimizedBar() {
+    const bar = document.getElementById('minimizedBar');
+    bar.innerHTML = Array.from(state.minimizedWindows).map(id => `
+        <div class="minimized-window" onclick="openWindow('${id}')">
+            ${id.charAt(0).toUpperCase() + id.slice(1)}
+        </div>
+    `).join('');
+}
+
+function bringToFront(element) {
+    const windows = document.querySelectorAll('.window');
+    windows.forEach(w => w.style.zIndex = '100');
+    element.style.zIndex = '200';
+}
+
+// ============================================
+// UI HELPERS
+// ============================================
+window.switchEditTab = function(tab) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    
+    // Show selected tab
+    document.getElementById(`edit-${tab}-tab`).style.display = 'block';
+    event.target.classList.add('active');
+};
+
+window.showToast = function(message, type = 'info') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `toast show ${type}`;
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+};
+
+function updateCharactersGrid() {
+    const grid = document.getElementById('charactersGrid');
+    const available = state.characters.filter(c => c.available).length;
+    const taken = state.characters.filter(c => !c.available).length;
+    
+    document.getElementById('availableChars').textContent = available;
+    document.getElementById('takenChars').textContent = taken;
+    
+    grid.innerHTML = state.characters.map(c => `
+        <div class="character-card ${!c.available ? 'taken' : ''}">
+            <div class="character-name">${c.name}</div>
+            <div class="character-show">${c.show || 'Unknown'}</div>
+            <div class="character-status ${c.available ? 'available' : 'taken'}">
+                ${c.available ? 'AVAILABLE' : `TAKEN by @${c.ownerId || 'unknown'}`}
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateToolsList() {
+    const list = document.getElementById('toolsList');
+    
+    list.innerHTML = state.tools.map(tool => `
+        <div class="tool-item ${tool.visible === false ? 'hidden' : ''}">
+            <div class="tool-info">
+                <div class="tool-name">${tool.name}</div>
+                <div class="tool-description">${tool.description || 'No description'}</div>
+            </div>
+            <div class="tool-price">${tool.price} credits</div>
+            <button class="button small" onclick="editTool('${tool.id}')">edit</button>
+        </div>
+    `).join('');
+}
+
+function updateUserToolsList(tools) {
+    const list = document.getElementById('userToolsList');
+    
+    if (!tools || tools.length === 0) {
+        list.innerHTML = '<p style="color: #666;">No tools yet</p>';
+        return;
+    }
+    
+    list.innerHTML = tools.map(tool => `
+        <div class="tool-tag ${tool.used ? 'used' : ''}">
+            ${tool.name} ${tool.used ? '(USED)' : ''}
+        </div>
+    `).join('');
+}
+
+// ============================================
+// TAB HANDLERS
+// ============================================
+window.quickMsg = function(msg) {
+    document.getElementById('editUserMessage').value = msg;
+};
+
+window.quickAdjustPoints = async function(type, amount) {
+    if (!state.currentEditUser) return;
+    
+    try {
+        const user = state.currentEditUser;
+        const field = type === 'individual' ? 'individualPoints' : 'teamPoints';
+        const current = user[field] || 0;
+        const newValue = Math.max(0, current + amount);
         
-        try {
-            await deleteDoc(doc(db, 'tools', toolId));
-            utils.showToast('Tool deleted', 'success');
-            
-            await dataManager.loadTools();
-            displays.tools();
-        } catch (error) {
-            console.error('Error deleting tool:', error);
-            utils.showToast('Error deleting tool', 'error');
-        }
+        await updateDoc(doc(db, 'users', user.id), {
+            [field]: newValue
+        });
+        
+        document.getElementById(type === 'individual' ? 'userIndPoints' : 'userTeamPoints')
+            .textContent = newValue;
+        
+        showToast(`${type} points ${amount > 0 ? 'added' : 'removed'}!`, 'success');
+        
+    } catch (error) {
+        console.error('Error adjusting points:', error);
+        showToast('Error adjusting points', 'error');
     }
 };
 
-window.pendingActions = {
-    async approve(requestId) {
-        try {
-            const snapshot = await getDoc(doc(db, 'pendingSelections', requestId));
-            if (!snapshot.exists()) {
-                utils.showToast('Request not found', 'error');
-                return;
+// ============================================
+// INITIALIZATION
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if already authenticated
+    if (sessionStorage.getItem('adminAuth') === 'true') {
+        state.isAuthenticated = true;
+        document.getElementById('loginWindow').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+        initializeAdmin();
+    }
+    
+    // Setup window dragging
+    setupWindowDragging();
+});
+
+// ============================================
+// WINDOW DRAGGING
+// ============================================
+function setupWindowDragging() {
+    const windows = document.querySelectorAll('.window.draggable');
+    
+    windows.forEach(win => {
+        const header = win.querySelector('.window-header');
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+        
+        header.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+        
+        function dragStart(e) {
+            if (e.target.closest('.window-controls')) return;
+            
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+            
+            if (e.target === header || e.target.parentNode === header) {
+                isDragging = true;
+                bringToFront(win);
             }
-            
-            const request = snapshot.data();
-            
-            // Create new user
-            const newUser = {
-                handle: request.handle,
-                accessCode: request.accessCode,
-                characterId: request.characterId,
-                characterName: request.characterName,
-                tools: request.tools || [],
-                transactions: [{
-                    type: 'purchase',
-                    amount: 25 + (request.tools?.reduce((sum, t) => sum + t.price * (t.quantity || 1), 0) || 0),
-                    description: 'Initial registration and tools',
-                    timestamp: new Date().toISOString()
-                }],
-                individualPoints: 0,
-                teamPoints: 0,
-                status: 'active',
-                createdAt: new Date().toISOString()
-            };
-            
-            // Add user to database
-            await setDoc(doc(db, 'users', request.accessCode), newUser);
-            
-            // Update character availability
-            if (request.characterId) {
-                await updateDoc(doc(db, 'characters', request.characterId), {
-                    available: false,
-                    ownerId: request.handle
-                });
-            }
-            
-            // Delete pending request
-            await deleteDoc(doc(db, 'pendingSelections', requestId));
-            
-            utils.showToast('Request approved! 🎉', 'success');
-            
-            // Reload data
-            await Promise.all([
-                dataManager.loadUsers(),
-                dataManager.loadCharacters()
-            ]);
-            displays.pending();
-            
-        } catch (error) {
-            console.error('Error approving request:', error);
-            utils.showToast('Error approving request', 'error');
         }
-    },
-
-    async markPaid(requestId, amount) {
-        try {
-            const snapshot = await getDoc(doc(db, 'pendingSelections', requestId));
-            if (!snapshot.exists()) {
-                utils.showToast('Request not found', 'error');
-                return;
-            }
-            
-            const request = snapshot.data();
-            const currentCredit = request.currentCredit || 0;
-            
-            await updateDoc(doc(db, 'pendingSelections', requestId), {
-                currentCredit: currentCredit + amount,
-                lastPayment: new Date().toISOString()
-            });
-            
-            utils.showToast('Payment marked!', 'success');
-            displays.pending();
-            
-        } catch (error) {
-            console.error('Error marking payment:', error);
-            utils.showToast('Error marking payment', 'error');
-        }
-    },
-
-    async reject(requestId) {
-        if (!confirm('Reject this request?')) return;
         
-        try {
-            await deleteDoc(doc(db, 'pendingSelections', requestId));
-            utils.showToast('Request rejected', 'warning');
-            displays.pending();
-            
-        } catch (error) {
-            console.error('Error rejecting request:', error);
-            utils.showToast('Error rejecting request', 'error');
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+                
+                xOffset = currentX;
+                yOffset = currentY;
+                
+                win.style.transform = `translate(${currentX}px, ${currentY}px)`;
+            }
         }
-    }
-};
+        
+        function dragEnd() {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+        }
+    });
+}
+
+// Export for debugging
+window.adminState = state;

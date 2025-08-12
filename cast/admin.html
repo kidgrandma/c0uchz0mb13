@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>INTERNET OLYMPICS 2 • admin board</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>INTERNET OLYMPICS 2 • Enhanced Admin Board</title>
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
@@ -15,7 +15,7 @@
         </div>
         <div class="window-body">
             <div class="login-icon">🎮</div>
-            <div class="login-message">hey. it's the admin panel. you know what to do.</div>
+            <div class="login-message">hey. it's the enhanced admin panel. you know what to do.</div>
             <input type="password" 
                    id="adminPassword" 
                    class="text-input" 
@@ -73,6 +73,10 @@
                     <div class="icon">⚠️</div>
                     <div class="label">Pending</div>
                 </div>
+                <div class="desktop-icon" onclick="openWindow('database')">
+                    <div class="icon">💾</div>
+                    <div class="label">Database</div>
+                </div>
             </div>
 
             <!-- Windows Container -->
@@ -87,6 +91,7 @@
                             <button class="window-close" onclick="closeWindow('dashboard')">×</button>
                         </div>
                     </div>
+                    <div class="drag-handle"></div>
                     <div class="window-body">
                         <div class="stats-grid" id="statsGrid">
                             <div class="stat-card">
@@ -131,6 +136,7 @@
                             <button class="window-close" onclick="closeWindow('users')">×</button>
                         </div>
                     </div>
+                    <div class="drag-handle"></div>
                     <div class="window-body">
                         <div class="toolbar">
                             <button class="button" onclick="showCreateUser()">+ new player 🍄</button>
@@ -194,8 +200,6 @@
                                 <label>team</label>
                                 <select class="select-input" id="newTeam">
                                     <option value="">unassigned</option>
-                                    <option value="cable">team cable 📺</option>
-                                    <option value="milk">team milk 🥛</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -227,6 +231,7 @@
                             <button class="tab" onclick="switchEditTab('credits')">credits</button>
                             <button class="tab" onclick="switchEditTab('tools')">tools</button>
                             <button class="tab" onclick="switchEditTab('points')">points</button>
+                            <button class="tab" onclick="switchEditTab('team')">team</button>
                             <button class="tab" onclick="switchEditTab('message')">message</button>
                         </div>
                         
@@ -243,14 +248,6 @@
                                         <option value="active">active</option>
                                         <option value="blocked">blocked 🚭</option>
                                         <option value="dead">dead 💣</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>team</label>
-                                    <select class="select-input" id="editTeam">
-                                        <option value="">unassigned</option>
-                                        <option value="cable">team cable 📺</option>
-                                        <option value="milk">team milk 🥛</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -305,9 +302,15 @@
                                 </div>
                             </div>
                             <div class="points-history" id="userPointsHistory"></div>
+                            <div class="quick-actions" style="margin-top: 15px;">
+                                <button class="button small" onclick="quickAdjustPoints('individual', 10)">+10 ind</button>
+                                <button class="button small" onclick="quickAdjustPoints('individual', -10)">-10 ind</button>
+                                <button class="button small" onclick="quickAdjustPoints('team', 10)">+10 team</button>
+                                <button class="button small" onclick="quickAdjustPoints('team', -10)">-10 team</button>
+                            </div>
                             <div class="form-grid" style="margin-top: 15px;">
                                 <div class="form-group">
-                                    <label>points to add</label>
+                                    <label>points to add/remove</label>
                                     <input type="number" class="text-input" id="pointsAmount" placeholder="10">
                                 </div>
                                 <div class="form-group">
@@ -333,6 +336,25 @@
                                 </div>
                             </div>
                             <button class="button primary" onclick="addPoints()">add points 🎱</button>
+                        </div>
+                        
+                        <div class="tab-content" id="edit-team-tab" style="display: none;">
+                            <div class="form-group">
+                                <label>current team</label>
+                                <select class="select-input" id="editUserTeam">
+                                    <option value="">unassigned</option>
+                                </select>
+                            </div>
+                            <button class="button primary" onclick="changeUserTeam()">change team 🦓</button>
+                            <div class="team-impact-info" style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 6px;">
+                                <h4>Team Impact:</h4>
+                                <p>Changing teams will:</p>
+                                <ul>
+                                    <li>Move player to new team</li>
+                                    <li>Keep individual points</li>
+                                    <li>Team points stay with player</li>
+                                </ul>
+                            </div>
                         </div>
                         
                         <div class="tab-content" id="edit-message-tab" style="display: none;">
@@ -363,6 +385,7 @@
                             <button class="window-close" onclick="closeWindow('characters')">×</button>
                         </div>
                     </div>
+                    <div class="drag-handle"></div>
                     <div class="window-body">
                         <div class="character-stats">
                             <span class="stat">available: <strong id="availableChars">0</strong></span>
@@ -382,6 +405,7 @@
                             <button class="window-close" onclick="closeWindow('tools')">×</button>
                         </div>
                     </div>
+                    <div class="drag-handle"></div>
                     <div class="window-body">
                         <div class="toolbar">
                             <button class="button" onclick="showCreateTool()">+ new tool 🪤</button>
@@ -441,6 +465,7 @@
                             <button class="window-close" onclick="closeWindow('points')">×</button>
                         </div>
                     </div>
+                    <div class="drag-handle"></div>
                     <div class="window-body">
                         <div class="points-types">
                             <h3>point types configured:</h3>
@@ -481,7 +506,13 @@
                             <button class="window-close" onclick="closeWindow('teams')">×</button>
                         </div>
                     </div>
+                    <div class="drag-handle"></div>
                     <div class="window-body">
+                        <div class="team-management">
+                            <h3>Team Configuration</h3>
+                            <div class="team-list" id="teamsList"></div>
+                            <button class="button primary" onclick="addNewTeam()">+ Add New Team</button>
+                        </div>
                         <div class="teams-standings" id="teamsStandings"></div>
                     </div>
                 </div>
@@ -496,6 +527,7 @@
                             <button class="window-close" onclick="closeWindow('money')">×</button>
                         </div>
                     </div>
+                    <div class="drag-handle"></div>
                     <div class="window-body">
                         <div class="money-stats">
                             <div class="stat-card">
@@ -528,12 +560,96 @@
                             <button class="window-close" onclick="closeWindow('pending')">×</button>
                         </div>
                     </div>
+                    <div class="drag-handle"></div>
                     <div class="window-body">
                         <div class="pending-stats">
                             <span id="pendingCount">0</span> requests waiting for approval
                         </div>
                         <div class="pending-list" id="pendingList">
                             <p style="text-align: center; color: #666;">no pending requests</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Export Window -->
+                <div class="window draggable" id="window-database" style="display: none;">
+                    <div class="window-header">
+                        <span>💾 Database Management</span>
+                        <div class="window-controls">
+                            <button class="minimize" onclick="minimizeWindow('database')">_</button>
+                            <button class="maximize" onclick="maximizeWindow('database')">□</button>
+                            <button class="window-close" onclick="closeWindow('database')">×</button>
+                        </div>
+                    </div>
+                    <div class="drag-handle"></div>
+                    <div class="window-body">
+                        <h3>Database Export Tools</h3>
+                        <div class="database-actions">
+                            <button class="button primary" onclick="exportFullDatabase()">📦 Export Full Database</button>
+                            <button class="button" onclick="exportUsers()">👥 Export Users Only</button>
+                            <button class="button" onclick="exportTeams()">🦓 Export Teams Only</button>
+                            <button class="button" onclick="exportTools()">🔪 Export Tools Only</button>
+                            <button class="button" onclick="exportCharacters()">💿 Export Characters Only</button>
+                            <button class="button warning" onclick="createBackup()">💾 Create Local Backup</button>
+                        </div>
+                        <div class="database-info" id="databaseInfo">
+                            <h4>Database Statistics</h4>
+                            <div id="dbStats"></div>
+                        </div>
+                        <div class="api-integration">
+                            <h4>API Integration</h4>
+                            <p>Use exported JSON files to integrate with:</p>
+                            <ul>
+                                <li>Public leaderboards</li>
+                                <li>Score displays</li>
+                                <li>Analytics tools</li>
+                                <li>Backup systems</li>
+                                <li>Other admin interfaces</li>
+                            </ul>
+                            <div class="api-endpoints">
+                                <h5>Firebase Collections:</h5>
+                                <code>/users</code>
+                                <code>/teams</code>
+                                <code>/tools</code>
+                                <code>/characters</code>
+                                <code>/pendingSelections</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Editor Dialog -->
+                <div class="window dialog" id="teamEditorDialog" style="display: none;">
+                    <div class="window-header">
+                        <span>🦓 Edit Team</span>
+                        <button class="window-close" onclick="hideTeamEditor()">×</button>
+                    </div>
+                    <div class="window-body">
+                        <input type="hidden" id="editingTeamId">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Team Name</label>
+                                <input type="text" class="text-input" id="teamName" placeholder="Team Name">
+                            </div>
+                            <div class="form-group">
+                                <label>Team Color</label>
+                                <input type="color" class="text-input" id="teamColor">
+                            </div>
+                        </div>
+                        <div class="team-members-list" id="teamMembersList"></div>
+                        <div class="team-points-adjustment">
+                            <h4>Adjust All Member Points</h4>
+                            <div class="quick-actions">
+                                <button class="button small" onclick="adjustAllTeamPoints(10)">+10 All</button>
+                                <button class="button small" onclick="adjustAllTeamPoints(-10)">-10 All</button>
+                                <button class="button small" onclick="adjustAllIndPoints(10)">+10 Ind All</button>
+                                <button class="button small" onclick="adjustAllIndPoints(-10)">-10 Ind All</button>
+                            </div>
+                        </div>
+                        <div class="dialog-buttons">
+                            <button class="button primary" onclick="saveTeamEdit()">Save Team</button>
+                            <button class="button danger" onclick="deleteTeam()">Delete Team</button>
+                            <button class="button" onclick="hideTeamEditor()">Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -544,10 +660,10 @@
         </div>
     </div>
 
-    <!-- Notification Toast -->
+    <!-- Toast Notification -->
     <div class="toast" id="toast"></div>
 
-    <!-- Firebase -->
+    <!-- Firebase & Main Script -->
     <script type="module" src="admin.js"></script>
 </body>
 </html>

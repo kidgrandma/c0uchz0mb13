@@ -1,656 +1,844 @@
-// INTERNET OLYMPICS 2 - Blind Box Board Logic
+// INTERNET OLYMPICS 2 — Blind Board Logic (Fixed Version)
 
-// Firebase imports
+// Firebase
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-import { 
-    getFirestore, 
-    collection, 
-    getDocs, 
-    doc, 
-    getDoc,
-    updateDoc, 
-    deleteDoc,
-    setDoc,
-    addDoc,
-    onSnapshot
+import {
+  getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, onSnapshot,
+  runTransaction, serverTimestamp, query, where
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
-// ============================================
-// FIREBASE CONFIGURATION
-// ============================================
-
+// ---------- Firebase config ----------
 const firebaseConfig = {
-    apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO21-40668WNpOdj2w",
-    authDomain: "c0uchz0mb13.firebaseapp.com",
-    projectId: "c0uchz0mb13",
-    storageBucket: "c0uchz0mb13.firebasestorage.app",
-    messagingSenderId: "1051521591004",
-    appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
-    measurementId: "G-6BNDYZQRPE"
+  apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO21-40668WNpOdj2w",
+  authDomain: "c0uchz0mb13.firebaseapp.com",
+  projectId: "c0uchz0mb13",
+  storageBucket: "c0uchz0mb13.firebasestorage.app",
+  messagingSenderId: "1051521591004",
+  appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
+  measurementId: "G-6BNDYZQRPE"
 };
 
-// Initialize Firebase
 let db;
 try {
-    const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    console.log('Firebase initialized successfully');
-    
-    // Export ALL Firebase functions for admin panel
-    window.db = db;
-    window.setDoc = setDoc;
-    window.doc = doc;
-    window.getDoc = getDoc;
-    window.getDocs = getDocs;
-    window.collection = collection;
-    window.updateDoc = updateDoc;
-    window.deleteDoc = deleteDoc;
-    window.addDoc = addDoc;
-    window.onSnapshot = onSnapshot;
-} catch (error) {
-    console.error('Failed to initialize Firebase:', error);
+  const app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  // expose for admin page
+  window.db = db;
+  window.doc = doc; window.collection = collection; window.getDoc = getDoc; window.getDocs = getDocs;
+  window.setDoc = setDoc; window.updateDoc = updateDoc; window.onSnapshot = onSnapshot;
+  window.runTransaction = runTransaction; window.serverTimestamp = serverTimestamp;
+  console.log('Firebase initialized');
+} catch (e) {
+  console.error('Firebase init failed', e);
 }
 
-// ============================================
-// GAME STATE
-// ============================================
+// ---------- Constants ----------
+const AVAILABLE_BOXES = [
+  'box-1','box-2','box-3','box-4','box-5',
+  'box-6','box-7','box-8','box-9','box-10',
+  'box-11','box-12','box-13','box-14','box-15',
+  'box-16','box-17','box-18','box-19','box-20',
+  'box-21','box-22','box-23','box-24','box-25'
+];
 
-// Only 5 boxes are available
-const AVAILABLE_BOXES = ['christmas-1', 'coke-1', 'energy-1', 'mart-1', 'sports-1'];
-
-// Labubu mapping for the 5 available boxes (excluding mega)
-const LABUBU_MAPPING = {
-    'christmas-1': { 
-        name: 'Drunk Labubu', 
-        image: 'labubu-sports-drunk.png',
-        teamChallenge: 'Take a team shot together',
-        teamPoints: 5000,
-        individualChallenge: 'Drink contest - last one standing wins',
-        individualPoints: 1000
-    },
-    'coke-1': { 
-        name: 'Heart Labubu', 
-        image: 'labubu-sports-heart.png',
-        teamChallenge: 'Group hug for 30 seconds',
-        teamPoints: 5000,
-        individualChallenge: 'Compliment battle - most creative wins',
-        individualPoints: 1000
-    },
-    'energy-1': { 
-        name: 'Life Labubu', 
-        image: 'labubu-sports-life.png',
-        teamChallenge: 'Share your life philosophy in 30 seconds',
-        teamPoints: 5000,
-        individualChallenge: 'Existential debate - convince us life has meaning',
-        individualPoints: 1000
-    },
-    'mart-1': { 
-        name: 'Turkey Labubu', 
-        image: 'labubu-sports-turkey.png',
-        teamChallenge: 'Do the turkey dance together',
-        teamPoints: 5000,
-        individualChallenge: 'Best turkey impression wins',
-        individualPoints: 1000
-    },
-    'sports-1': { 
-        name: 'Bully Labubu', 
-        image: 'labubu-bully.png',
-        teamChallenge: 'Roast the other teams (keep it friendly)',
-        teamPoints: 5000,
-        individualChallenge: 'Insult battle - funniest burn wins',
-        individualPoints: 1000,
-        cardType: 'bully',
-        specialMessage: 'chaos mode activated. prepare for trouble.'
-    }
+// Mix of all images randomly distributed
+const DEFAULTS = {
+  'box-1': { 
+    characterName:'Mystery Box 1', 
+    imagePath:'glenbubu-1.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'' 
+  },
+  'box-2': { 
+    characterName:'Mystery Box 2', 
+    imagePath:'daft-tech.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'daft-tech.mp3' 
+  },
+  'box-3': { 
+    characterName:'Mystery Box 3', 
+    imagePath:'glenbubu-2.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'' 
+  },
+  'box-4': { 
+    characterName:'Mystery Box 4', 
+    imagePath:'daft-harder.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'daft-harder.mp3' 
+  },
+  'box-5': { 
+    characterName:'Mystery Box 5', 
+    imagePath:'glenbubu-3.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'' 
+  },
+  'box-6': { 
+    characterName:'Mystery Box 6', 
+    imagePath:'daft-5555.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'daft-5555.mp3' 
+  },
+  'box-7': { 
+    characterName:'Mystery Box 7', 
+    imagePath:'glenbubu-1.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'' 
+  },
+  'box-8': { 
+    characterName:'Mystery Box 8', 
+    imagePath:'glenbubu-2.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'' 
+  },
+  'box-9': { 
+    characterName:'Mystery Box 9', 
+    imagePath:'daft-tech.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'daft-tech.mp3' 
+  },
+  'box-10': { 
+    characterName:'Mystery Box 10', 
+    imagePath:'glenbubu-3.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'' 
+  },
+  'box-11': { 
+    characterName:'Mystery Box 11', 
+    imagePath:'daft-harder.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'daft-harder.mp3' 
+  },
+  'box-12': { 
+    characterName:'Mystery Box 12', 
+    imagePath:'glenbubu-1.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'' 
+  },
+  'box-13': { 
+    characterName:'MEGA CENTER', 
+    imagePath:'daft-5555.png', 
+    teamPoints:10000, 
+    individualPoints:2000, 
+    teamChallenge:'MEGA CHALLENGE', 
+    individualChallenge:'MEGA 3v3 BATTLE', 
+    cardType:'mega',
+    specialMessage:'CENTER STAGE. DOUBLE POINTS. NO MERCY.',
+    revealSound:'daft-5555.mp3' 
+  },
+  'box-14': { 
+    characterName:'Mystery Box 14', 
+    imagePath:'glenbubu-2.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'' 
+  },
+  'box-15': { 
+    characterName:'Mystery Box 15', 
+    imagePath:'glenbubu-3.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'' 
+  },
+  'box-16': { 
+    characterName:'Mystery Box 16', 
+    imagePath:'daft-tech.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'daft-tech.mp3' 
+  },
+  'box-17': { 
+    characterName:'Mystery Box 17', 
+    imagePath:'glenbubu-1.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'' 
+  },
+  'box-18': { 
+    characterName:'Mystery Box 18', 
+    imagePath:'daft-harder.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'daft-harder.mp3' 
+  },
+  'box-19': { 
+    characterName:'Mystery Box 19', 
+    imagePath:'glenbubu-2.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'' 
+  },
+  'box-20': { 
+    characterName:'Mystery Box 20', 
+    imagePath:'glenbubu-3.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'' 
+  },
+  'box-21': { 
+    characterName:'Mystery Box 21', 
+    imagePath:'daft-5555.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'daft-5555.mp3' 
+  },
+  'box-22': { 
+    characterName:'Mystery Box 22', 
+    imagePath:'glenbubu-1.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'' 
+  },
+  'box-23': { 
+    characterName:'Mystery Box 23', 
+    imagePath:'daft-tech.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'daft-tech.mp3' 
+  },
+  'box-24': { 
+    characterName:'Mystery Box 24', 
+    imagePath:'glenbubu-2.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'' 
+  },
+  'box-25': { 
+    characterName:'Mystery Box 25', 
+    imagePath:'daft-harder.png', 
+    teamPoints:5000, 
+    individualPoints:1000, 
+    teamChallenge:'Team mission TBD', 
+    individualChallenge:'3v3 mission TBD', 
+    cardType:'regular',
+    revealSound:'daft-harder.mp3' 
+  }
 };
 
-let gameState = {
-    boxes: {},
-    teams: {
-        team1: { points: 0, dolls: [] },
-        team2: { points: 0, dolls: [] }
-    },
-    currentUser: null,
-    currentTeam: null,
-    currentTurn: null,
-    selectedBox: null,
-    gameActive: true  // Set to true by default now
+// ---------- Local state ----------
+const state = {
+  boxes: {},
+  currentUser: null,       // '@handle' or something; from access code record
+  currentTeam: null,       // 'team-1' | 'team-2'
+  currentTurn: null,       // from gameState/current
+  selectedBox: null
 };
 
-// ============================================
-// AUTHENTICATION
-// ============================================
+// ---------- Access-code login ----------
+const LOGIN_SOURCES = [
+  { type:'docById', collection:'accessCodes', idIsCode:true },
+  { type:'query',   collection:'players',    codeField:'accessCode' },
+  { type:'query',   collection:'users',      codeField:'accessCode' },
+  { type:'query',   collection:'userAccess', codeField:'accessCode' }
+];
 
-window.hashPassword = async function(password) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hash = await crypto.subtle.digest('SHA-256', data);
-    return Array.from(new Uint8Array(hash))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
+function normalizeTeam(v) {
+  if (!v) return null;
+  const s = String(v).toLowerCase().replace(/\s+/g,'').replace(/_/g,'-');
+  if (['team1','team-1','hot','red','1'].includes(s)) return 'team-1';
+  if (['team2','team-2','cold','blue','2'].includes(s)) return 'team-2';
+  return null;
 }
 
-window.ADMIN_PASSWORD_HASH = 'f44d66d49ae0e7b1c90914f8a4276d0db4e419f43864750ddaf65ca177c88bf4';
-
-window.createSessionToken = function() {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2);
-    return btoa(`${timestamp}-${random}-${window.ADMIN_PASSWORD_HASH.substring(0, 8)}`);
-}
-
-window.validateSession = function(token) {
+async function lookupAccessCode(code) {
+  // try id match first
+  try {
+    const ref = doc(db, 'accessCodes', code);
+    const snap = await getDoc(ref);
+    if (snap.exists()) return { id:snap.id, ...snap.data() };
+  } catch {}
+  // then query the listed collections
+  for (const src of LOGIN_SOURCES.filter(s => s.type === 'query')) {
     try {
-        const decoded = atob(token);
-        const parts = decoded.split('-');
-        if (parts.length !== 3) return false;
-        
-        const timestamp = parseInt(parts[0]);
-        const now = Date.now();
-        const oneDay = 24 * 60 * 60 * 1000;
-        
-        // Check if session is less than 24 hours old
-        if (now - timestamp > oneDay) return false;
-        
-        // Check hash fragment
-        if (parts[2] !== window.ADMIN_PASSWORD_HASH.substring(0, 8)) return false;
-        
-        return true;
-    } catch (error) {
-        return false;
-    }
+      const qRef = query(collection(db, src.collection), where(src.codeField, '==', code));
+      const res = await getDocs(qRef);
+      if (!res.empty) {
+        const d = res.docs[0];
+        return { id:d.id, ...d.data() };
+      }
+      // try lowercased mirror if present
+      const lc = code.toLowerCase();
+      const qRef2 = query(collection(db, src.collection), where(src.codeField + 'Lower', '==', lc));
+      const res2 = await getDocs(qRef2);
+      if (!res2.empty) {
+        const d2 = res2.docs[0];
+        return { id:d2.id, ...d2.data() };
+      }
+    } catch {}
+  }
+  return null;
 }
 
-// ============================================
-// INITIALIZE GAME
-// ============================================
+window.login = async function login() {
+  const input = document.getElementById('accessCode');
+  const err = document.getElementById('loginError');
+  if (!input || !err) return;
 
-async function initializeGame() {
-    // No login required - everyone can access
-    gameState.gameActive = true;
+  err.textContent = '';
+  const code = (input.value || '').trim();
+  if (!code) { err.textContent = 'enter a code.'; return; }
 
-    // Set up box click handlers - only for available boxes
-    document.querySelectorAll('.blind-box').forEach(box => {
-        const boxId = box.dataset.boxId;
-        
-        if (AVAILABLE_BOXES.includes(boxId)) {
-            box.addEventListener('click', handleBoxClick);
-        } else {
-            // Mark unavailable boxes
-            box.classList.add('unavailable');
-            box.style.opacity = '0.3';
-            box.style.cursor = 'not-allowed';
-        }
-    });
+  try {
+    const match = await lookupAccessCode(code);
+    if (!match) { err.textContent = 'invalid code.'; return; }
 
-    // Initialize available boxes in Firebase
-    await initializeAvailableBoxes();
+    const team = normalizeTeam(match.team ?? match.teamId ?? match.house);
+    if (!team) { err.textContent = 'code found but no team assigned.'; return; }
 
-    // Load game state from Firebase
-    await loadGameState();
+    const user = match.user ?? match.handle ?? match.username ?? match.id ?? code;
 
-    // Set up real-time listeners
-    setupRealtimeListeners();
+    state.currentUser = user;
+    state.currentTeam = team;
+    localStorage.setItem('blind_user', JSON.stringify({ user, team }));
+
+    await setDoc(doc(db, 'gameState', 'session-' + code), {
+      user, team, lastSeen: serverTimestamp()
+    }, { merge:true });
+
+    document.getElementById('loginModal').style.display = 'none';
+  } catch (e) {
+    console.error(e);
+    err.textContent = 'login failed.';
+  }
+};
+
+// show login if needed on load
+(function restoreLogin(){
+  try {
+    const raw = localStorage.getItem('blind_user');
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s && s.user && s.team) {
+        state.currentUser = s.user; state.currentTeam = s.team;
+      } else {
+        document.getElementById('loginModal').style.display = 'block';
+      }
+    } else {
+      document.getElementById('loginModal').style.display = 'block';
+    }
+  } catch {
+    document.getElementById('loginModal').style.display = 'block';
+  }
+})();
+
+// ---------- Bootstrap ----------
+document.addEventListener('DOMContentLoaded', async () => {
+  wireBoxClicks();
+  await ensureBoxes();
+  await initialLoad();
+  liveListeners();
+});
+
+function wireBoxClicks(){
+  document.querySelectorAll('.blind-box').forEach(el => {
+    const id = el.dataset.boxId;
+    if (AVAILABLE_BOXES.includes(id)) {
+      el.addEventListener('click', onBoxClick);
+    } else {
+      el.classList.add('unavailable');
+    }
+  });
 }
 
-// ============================================
-// INITIALIZE AVAILABLE BOXES
-// ============================================
-
-async function initializeAvailableBoxes() {
-    for (const boxId of AVAILABLE_BOXES) {
-        const boxData = LABUBU_MAPPING[boxId];
-        
-        try {
-            // Check if box already exists
-            const boxDoc = await getDoc(doc(db, 'blindBoxes', boxId));
-            
-            if (!boxDoc.exists()) {
-                // Create box with default data
-                await setDoc(doc(db, 'blindBoxes', boxId), {
-                    ...boxData,
-                    status: 'available',
-                    createdAt: new Date().toISOString()
-                });
-            }
-        } catch (error) {
-            console.error(`Error initializing box ${boxId}:`, error);
-        }
+// Create default docs if missing
+async function ensureBoxes(){
+  for (const id of AVAILABLE_BOXES) {
+    const ref = doc(db, 'blindBoxes', id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, {
+        status:'available',
+        ...DEFAULTS[id],
+        createdAt: serverTimestamp()
+      });
     }
+  }
 }
 
-// ============================================
-// BOX SELECTION
-// ============================================
-
-function handleBoxClick(e) {
-    const box = e.currentTarget;
-    const boxId = box.dataset.boxId;
-    
-    // Only allow clicks on available boxes
-    if (!AVAILABLE_BOXES.includes(boxId)) {
-        return;
+async function initialLoad(){
+  // game state
+  const gs = await getDoc(doc(db, 'gameState', 'current'));
+  if (gs.exists()) {
+    const d = gs.data();
+    state.currentTurn = d.currentTurn || null;
+    updateTurnIndicator();
+  }
+  // scores
+  const sc = await getDoc(doc(db, 'gameState', 'scores'));
+  if (sc.exists()) {
+    const s = sc.data();
+    setScoreEl('team1Points', s.team1 || 0);
+    setScoreEl('team2Points', s.team2 || 0);
+  }
+  // boxes
+  for (const id of AVAILABLE_BOXES) {
+    const b = await getDoc(doc(db, 'blindBoxes', id));
+    if (b.exists()) {
+      state.boxes[id] = b.data();
+      paintBox(id, b.data());
     }
-    
-    // Check if box already opened or pending
-    if (box.classList.contains('opened') || box.classList.contains('pending')) {
-        return;
-    }
-    
-    // Mark as selected
-    document.querySelectorAll('.blind-box').forEach(b => b.classList.remove('selected'));
-    box.classList.add('selected');
-    box.classList.add('pending');
-    gameState.selectedBox = boxId;
-    
-    // Play select sound
-    const selectSound = document.getElementById('selectSound');
-    if (selectSound) selectSound.play();
-    
-    // Update Firebase with selection (mark as pending)
-    updateBoxSelection(boxId);
-    
-    // Show waiting modal
-    document.getElementById('waitingModal').style.display = 'block';
+  }
 }
 
-async function updateBoxSelection(boxId) {
-    try {
-        // Update box status to pending
-        await updateDoc(doc(db, 'blindBoxes', boxId), {
-            status: 'pending',
-            selectedBy: gameState.currentUser || 'anonymous',
-            selectedAt: new Date().toISOString()
+function liveListeners(){
+  // game state + reveal trigger
+  onSnapshot(doc(db, 'gameState', 'current'), (snap) => {
+    if (!snap.exists()) return;
+    const d = snap.data();
+
+    // Check for rejection
+    if (d.rejectionMessage && d.status === 'waiting') {
+      const modal = document.getElementById('rejectionModal');
+      const msg = document.getElementById('rejectionMessage');
+      if (modal && msg) {
+        msg.textContent = d.rejectionMessage || 'Selection rejected. Try again.';
+        modal.style.display = 'block';
+      }
+      // Clear the rejection message after showing
+      setTimeout(() => {
+        updateDoc(doc(db, 'gameState', 'current'), { 
+          rejectionMessage: null 
         });
-        
-        // Update game state
-        await setDoc(doc(db, 'gameState', 'current'), {
-            selectedBox: boxId,
-            selectedAt: new Date().toISOString(),
-            status: 'waiting_for_reveal'
-        }, { merge: true });
-    } catch (error) {
-        console.error('Error updating selection:', error);
+      }, 1000);
     }
+
+    if (d.currentTurn !== state.currentTurn) {
+      state.currentTurn = d.currentTurn || null;
+      updateTurnIndicator();
+    }
+    
+    if (d.status === 'revealing' && d.selectedBox) {
+      const boxId = d.selectedBox;
+      const revealData = d.revealData || state.boxes[boxId] || {};
+      // Hide waiting modal first
+      const wait = document.getElementById('waitingModal');
+      if (wait) wait.style.display = 'none';
+      revealFlow(boxId, revealData);
+    }
+  });
+
+  // scores
+  onSnapshot(doc(db, 'gameState', 'scores'), (snap) => {
+    if (!snap.exists()) return;
+    const s = snap.data();
+    setScoreEl('team1Points', s.team1 || 0);
+    setScoreEl('team2Points', s.team2 || 0);
+  });
+
+  // boxes
+  AVAILABLE_BOXES.forEach(id => {
+    onSnapshot(doc(db, 'blindBoxes', id), (snap) => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      state.boxes[id] = data;
+      paintBox(id, data);
+    });
+  });
 }
 
-// ============================================
-// REVEAL HANDLING (Triggered by Moderator)
-// ============================================
+// ---------- UI helpers ----------
+function setScoreEl(id, val){
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
 
-async function revealBox(boxId, boxData) {
-    // Hide waiting modal
-    document.getElementById('waitingModal').style.display = 'none';
-    
-    // Update box status to opened
-    await updateDoc(doc(db, 'blindBoxes', boxId), {
-        status: 'opened',
-        openedAt: new Date().toISOString()
+function updateTurnIndicator(){
+  const el = document.getElementById('currentTurn');
+  const wrap = el?.parentElement;
+  if (!el || !wrap) return;
+  if (state.currentTurn) {
+    el.textContent = `${state.currentTurn === 'team-1' ? 'TEAM HOT' : 'TEAM COLD'} TURN`;
+    wrap.className = `turn-indicator ${state.currentTurn}`;
+  } else {
+    el.textContent = 'waiting to start...';
+    wrap.className = 'turn-indicator';
+  }
+}
+
+function paintBox(id, data){
+  const el = document.querySelector(`.blind-box[data-box-id="${id}"]`);
+  if (!el) return;
+  el.classList.remove('selected','opened','claimed-team-1','claimed-team-2','pending');
+  const s = data.status || 'available';
+  if (s === 'pending') el.classList.add('pending');
+  if (s === 'opened' || s === 'in_challenge' || s === 'in-challenge' || s === 'claimed') el.classList.add('opened');
+  if (data.claimedBy) el.classList.add(`claimed-${data.claimedBy}`);
+}
+
+// ---------- Box selection (transaction-safe) ----------
+async function onBoxClick(evt){
+  const el = evt.currentTarget;
+  const boxId = el.dataset.boxId;
+
+  // require login
+  if (!state.currentTeam) {
+    document.getElementById('loginModal').style.display = 'block';
+    return;
+  }
+  
+  // turn gate with user feedback
+  if (state.currentTurn && state.currentTurn !== state.currentTeam) {
+    const modal = document.getElementById('turnWarningModal');
+    const msg = document.getElementById('turnWarningMessage');
+    if (modal && msg) {
+      msg.textContent = `It's ${state.currentTurn === 'team-1' ? 'TEAM HOT' : 'TEAM COLD'}'s turn!`;
+      modal.style.display = 'block';
+    }
+    return;
+  }
+
+  try {
+    await runTransaction(db, async (tx) => {
+      const boxRef = doc(db, 'blindBoxes', boxId);
+      const gsRef  = doc(db, 'gameState', 'current');
+
+      const [boxSnap, gsSnap] = await Promise.all([tx.get(boxRef), tx.get(gsRef)]);
+      if (!boxSnap.exists()) throw new Error('missing box');
+      const box = boxSnap.data();
+      const gs = gsSnap.exists() ? gsSnap.data() : {};
+
+      if (box.status && box.status !== 'available') throw new Error('not available');
+      if (gs.currentTurn && gs.currentTurn !== state.currentTeam) throw new Error('not your turn');
+
+      tx.update(boxRef, {
+        status:'pending',
+        selectedBy: state.currentUser || 'anonymous',
+        selectedTeam: state.currentTeam || null,
+        selectedAt: serverTimestamp()
+      });
+      tx.set(gsRef, {
+        selectedBox: boxId,
+        status:'waiting_for_reveal',
+        lastUpdated: serverTimestamp()
+      }, { merge:true });
     });
+
+    // mark local + modal
+    document.querySelectorAll('.blind-box').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+
+    // Stop background music
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      bgMusic.pause();
+    }
+
+    // Play selection sound
+    const snd = document.getElementById('selectSound'); 
+    if (snd) snd.play();
     
-    // Play reveal sound
+    // Show waiting modal and play waiting sound
+    document.getElementById('waitingModal').style.display = 'block';
+    const waitingSound = document.getElementById('waitingSound');
+    if (waitingSound) {
+      waitingSound.loop = true;
+      waitingSound.volume = 0.5;
+      waitingSound.play().catch(e => console.log('Waiting sound blocked'));
+    }
+    
+    state.selectedBox = boxId;
+  } catch (e) {
+    // race or gate fail
+    console.warn('select failed:', e.message);
+    if (e.message === 'not available') {
+      alert('This box has already been selected!');
+    }
+  }
+}
+
+// ---------- Reveal + challenge flow ----------
+async function revealFlow(boxId, boxData){
+  // Stop waiting sound
+  const waitingSound = document.getElementById('waitingSound');
+  if (waitingSound) {
+    waitingSound.pause();
+    waitingSound.currentTime = 0;
+  }
+  
+  // Merge with defaults if needed
+  const fullData = {
+    ...DEFAULTS[boxId],
+    ...boxData
+  };
+
+  // ensure opened
+  try {
+    await updateDoc(doc(db, 'blindBoxes', boxId), { 
+      status:'opened', 
+      openedAt: serverTimestamp() 
+    });
+  } catch {}
+
+  // Check for special cards
+  if (fullData.cardType === 'bully') {
+    const specialSound = document.getElementById('specialSound'); 
+    if (specialSound) specialSound.play();
+    const img = document.getElementById('specialImage');
+    const title = document.getElementById('specialTitle');
+    const text = document.getElementById('specialText');
+    if (img) img.src = `/assets/b04rd/${fullData.imagePath || 'glenbubu-2.png'}`;
+    if (title) title.textContent = fullData.characterName || fullData.labubuName || 'SPECIAL CARD';
+    if (text) text.textContent = fullData.specialMessage || 'chaos mode activated. prepare for trouble.';
+    document.getElementById('specialModal').style.display = 'block';
+    
+    // Override the global function
+    window.confirmSpecial = () => {
+      document.getElementById('specialModal').style.display = 'none';
+      showRevealModal(boxId, fullData);
+    };
+    return;
+  }
+  
+  if (fullData.cardType === 'mega') {
+    const specialSound = document.getElementById('specialSound'); 
+    if (specialSound) specialSound.play();
+    const img = document.getElementById('megaImage');
+    const text = document.getElementById('megaText');
+    if (img) img.src = `/assets/b04rd/${fullData.imagePath || 'glenbubu-3.png'}`;
+    if (text) text.textContent = fullData.specialMessage || 'double or nothing. all points x2. no mercy.';
+    document.getElementById('megaModal').style.display = 'block';
+    
+    // Override the global function
+    window.confirmMega = () => {
+      document.getElementById('megaModal').style.display = 'none';
+      // Double the points for mega
+      fullData.teamPoints = (fullData.teamPoints || 5000) * 2;
+      fullData.individualPoints = (fullData.individualPoints || 1000) * 2;
+      showRevealModal(boxId, fullData);
+    };
+    return;
+  }
+
+  showRevealModal(boxId, fullData);
+}
+
+function showRevealModal(boxId, boxData){
+  state.selectedBox = boxId;
+
+  const d = {
+    characterName: boxData.characterName || boxData.labubuName || 'Mystery Box',
+    imagePath:  boxData.imagePath || 'glenbubu-2.png',
+    teamPoints: boxData.teamPoints ?? 5000,
+    individualPoints: boxData.individualPoints ?? 1000,
+    teamChallenge: boxData.teamChallenge || 'Team challenge',
+    individualChallenge: boxData.individualChallenge || '3v3 battle',
+    revealSound: boxData.revealSound || ''
+  };
+
+  // Play custom reveal sound or default
+  if (d.revealSound) {
+    // Try to play the custom sound
+    let customSound = null;
+    if (d.revealSound === 'daft-tech.mp3') customSound = document.getElementById('daftTechSound');
+    else if (d.revealSound === 'daft-harder.mp3') customSound = document.getElementById('daftHarderSound');
+    else if (d.revealSound === 'daft-5555.mp3') customSound = document.getElementById('daft5555Sound');
+    
+    if (customSound) {
+      customSound.play();
+    } else {
+      const revealSound = document.getElementById('revealSound');
+      if (revealSound) revealSound.play();
+    }
+  } else {
     const revealSound = document.getElementById('revealSound');
     if (revealSound) revealSound.play();
-    
-    // Check for special cards
-    if (boxData.cardType === 'bully') {
-        showSpecialCard('bully', boxData);
-        return;
-    }
-    
-    // Show normal reveal
-    const modal = document.getElementById('revealModal');
-    
-    // Use data from Firebase or fallback to defaults
-    const dollData = boxData || LABUBU_MAPPING[boxId] || { 
-        name: 'Mystery Labubu', 
-        image: 'placeholder.png' 
-    };
-    
-    document.getElementById('revealedDoll').src = `/assets/b04rd/${dollData.image}`;
-    document.getElementById('dollName').textContent = dollData.name || dollData.labubuName;
-    document.getElementById('teamPoints').textContent = `$${dollData.teamPoints || 5000}`;
-    document.getElementById('individualPoints').textContent = `$${dollData.individualPoints || 1000}`;
-    
-    // Set up button handlers
-    document.getElementById('teamBtn').onclick = () => selectChallenge('team', dollData, boxId);
-    document.getElementById('individualBtn').onclick = () => selectChallenge('individual', dollData, boxId);
-    
-    modal.style.display = 'block';
+  }
+  
+  const img = document.getElementById('revealedDoll'); 
+  if (img) img.src = `/assets/b04rd/${d.imagePath}`;
+  
+  const name = document.getElementById('dollName'); 
+  if (name) name.textContent = d.characterName;
+  
+  const tp = document.getElementById('teamPoints'); 
+  if (tp) tp.textContent = `${d.teamPoints} pts`;
+  
+  const ip = document.getElementById('individualPoints'); 
+  if (ip) ip.textContent = `${d.individualPoints} pts`;
+
+  // wire choice buttons
+  const teamBtn = document.getElementById('teamBtn');
+  const indBtn  = document.getElementById('individualBtn');
+  if (teamBtn) teamBtn.onclick = () => openChallengeDetails('team', d, boxId);
+  if (indBtn)  indBtn.onclick  = () => openChallengeDetails('individual', d, boxId);
+
+  document.getElementById('revealModal').style.display = 'block';
 }
 
-function showSpecialCard(type, boxData) {
-    const modal = document.getElementById('specialModal');
-    const specialSound = document.getElementById('specialSound');
-    if (specialSound) specialSound.play();
-    
-    if (type === 'bully') {
-        document.getElementById('specialImage').src = '/assets/b04rd/labubu-bully.png';
-        document.getElementById('specialTitle').textContent = 'LABUBU BULLY';
-        document.getElementById('specialText').textContent = boxData.specialMessage || 'chaos mode activated. prepare for trouble.';
-    }
-    
-    modal.style.display = 'block';
-}
+function openChallengeDetails(kind, d, boxId){
+  document.getElementById('revealModal').style.display = 'none';
+  const title = document.getElementById('challengeType');
+  const desc  = document.getElementById('challengeDescription');
+  const pts   = document.getElementById('challengePointsValue');
 
-async function selectChallenge(type, boxData, boxId) {
-    const points = type === 'team' ? boxData.teamPoints : boxData.individualPoints;
+  if (title) title.textContent = kind === 'team' ? 'Team Challenge' : '3v3 Battle';
+  if (desc)  desc.textContent  = kind === 'team' ? d.teamChallenge : d.individualChallenge;
+  const points = kind === 'team' ? d.teamPoints : d.individualPoints;
+  if (pts) pts.textContent = points;
+
+  // Play the reveal sound again when showing challenge details
+  if (d.revealSound) {
+    // Try to play the custom sound
+    let customSound = null;
+    if (d.revealSound === 'daft-tech.mp3') customSound = document.getElementById('daftTechSound');
+    else if (d.revealSound === 'daft-harder.mp3') customSound = document.getElementById('daftHarderSound');
+    else if (d.revealSound === 'daft-5555.mp3') customSound = document.getElementById('daft5555Sound');
     
-    // Update box status to claimed
+    if (customSound) {
+      customSound.currentTime = 0; // Reset to start
+      customSound.play();
+    }
+  }
+
+  // Override the global function
+  window.confirmChallenge = async () => {
+    document.getElementById('challengeDetailsModal').style.display = 'none';
     await updateDoc(doc(db, 'blindBoxes', boxId), {
-        status: 'claimed',
-        challengeType: type,
-        points: points,
-        claimedAt: new Date().toISOString()
+      status:'in-challenge',
+      challengeType: kind,
+      points,
+      challengedBy: state.currentTeam || null,
+      lastUpdated: serverTimestamp()
     });
-    
-    // Update game state
     await setDoc(doc(db, 'gameState', 'current'), {
-        challengeSelected: type,
-        pointsAwarded: points,
-        completedAt: new Date().toISOString(),
-        status: 'completed'
-    }, { merge: true });
+      status:'in-challenge',
+      selectedBox: boxId,
+      challengeSelected: kind,
+      lastUpdated: serverTimestamp()
+    }, { merge:true });
     
-    // Note: Teams will need to be updated manually by admin since no login
-    
-    // Mark box as opened
-    const boxEl = document.querySelector(`[data-box-id="${boxId}"]`);
-    if (boxEl) {
-        boxEl.classList.remove('pending');
-        boxEl.classList.add('opened');
+    // Resume background music after challenge is accepted
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic && bgMusic.paused) {
+      bgMusic.volume = 0.3;
+      bgMusic.play().catch(e => console.log('Music resume blocked'));
     }
-    
-    // Close modal
-    document.getElementById('revealModal').style.display = 'none';
+  };
+
+  document.getElementById('challengeDetailsModal').style.display = 'block';
 }
 
-async function updateTeamPoints(team, points) {
-    const teamRef = doc(db, 'teams', team);
-    const teamDoc = await getDoc(teamRef);
-    const currentPoints = teamDoc.exists() ? teamDoc.data().points || 0 : 0;
-    
-    await setDoc(teamRef, {
-        points: currentPoints + points,
-        lastUpdated: new Date().toISOString()
-    }, { merge: true });
-}
+// ---------- Modal close helpers ----------
+window.closeReveal = () => { 
+  const m = document.getElementById('revealModal'); 
+  if (m) m.style.display = 'none'; 
+};
+window.closeChallengeDetails = () => { 
+  const m = document.getElementById('challengeDetailsModal'); 
+  if (m) m.style.display = 'none'; 
+};
+window.closeRejection = () => { 
+  const m = document.getElementById('rejectionModal'); 
+  if (m) m.style.display = 'none'; 
+};
+window.closeTurnWarning = () => { 
+  const m = document.getElementById('turnWarningModal'); 
+  if (m) m.style.display = 'none'; 
+};
 
-// ============================================
-// FIREBASE LISTENERS
-// ============================================
-
-async function loadGameState() {
-    try {
-        // Load current game state
-        const gameStateDoc = await getDoc(doc(db, 'gameState', 'current'));
-        if (gameStateDoc.exists()) {
-            const data = gameStateDoc.data();
-            gameState.currentTurn = data.currentTurn;
-            gameState.gameActive = data.gameActive !== false; // Default to true
-            updateTurnIndicator();
-        }
-        
-        // Load boxes - only available ones
-        for (const boxId of AVAILABLE_BOXES) {
-            const boxDoc = await getDoc(doc(db, 'blindBoxes', boxId));
-            if (boxDoc.exists()) {
-                const data = boxDoc.data();
-                gameState.boxes[boxId] = data;
-                const boxEl = document.querySelector(`[data-box-id="${boxId}"]`);
-                
-                if (boxEl) {
-                    // Clear all status classes first
-                    boxEl.classList.remove('opened', 'pending', 'claimed-team1', 'claimed-team2');
-                    
-                    // Apply appropriate status
-                    if (data.status === 'opened' || data.status === 'claimed') {
-                        boxEl.classList.add('opened');
-                        if (data.claimedBy) {
-                            boxEl.classList.add(`claimed-${data.claimedBy}`);
-                        }
-                    } else if (data.status === 'pending') {
-                        boxEl.classList.add('pending');
-                    }
-                }
-            }
-        }
-        
-        // Load team scores from gameState/scores instead of teams collection
-        const scoresDoc = await getDoc(doc(db, 'gameState', 'scores'));
-        if (scoresDoc.exists()) {
-            const scores = scoresDoc.data();
-            gameState.teams.team1.points = scores.team1 || 0;
-            gameState.teams.team2.points = scores.team2 || 0;
-        }
-        
-        updateTeamScores();
-    } catch (error) {
-        console.error('Error loading game state:', error);
-    }
-}
-
-window.loadGameState = loadGameState; // Export for admin panel
-
-function setupRealtimeListeners() {
-    // Listen to game state changes
-    onSnapshot(doc(db, 'gameState', 'current'), (doc) => {
-        if (doc.exists()) {
-            const data = doc.data();
-            
-            // Update turn
-            if (data.currentTurn !== gameState.currentTurn) {
-                gameState.currentTurn = data.currentTurn;
-                updateTurnIndicator();
-            }
-            
-            // Handle reveal trigger from moderator
-            if (data.status === 'revealing' && data.selectedBox === gameState.selectedBox) {
-                const boxData = gameState.boxes[data.selectedBox] || {};
-                revealBox(data.selectedBox, boxData);
-            }
-            
-            gameState.gameActive = data.gameActive !== false; // Default to true
-        }
-    });
-    
-    // Listen to box changes - only for available boxes
-    AVAILABLE_BOXES.forEach(boxId => {
-        onSnapshot(doc(db, 'blindBoxes', boxId), (doc) => {
-            if (doc.exists()) {
-                const data = doc.data();
-                gameState.boxes[boxId] = data;
-                
-                // Update visual state
-                const boxEl = document.querySelector(`[data-box-id="${boxId}"]`);
-                if (boxEl) {
-                    // Clear previous states
-                    boxEl.classList.remove('opened', 'pending', 'claimed-team1', 'claimed-team2');
-                    
-                    // Apply new state
-                    if (data.status === 'opened' || data.status === 'claimed') {
-                        boxEl.classList.add('opened');
-                        if (data.claimedBy) {
-                            boxEl.classList.add(`claimed-${data.claimedBy}`);
-                        }
-                    } else if (data.status === 'pending') {
-                        boxEl.classList.add('pending');
-                    }
-                }
-            }
-        });
-    });
-    
-    // Listen to score changes
-    onSnapshot(doc(db, 'gameState', 'scores'), (doc) => {
-        if (doc.exists()) {
-            const scores = doc.data();
-            gameState.teams.team1.points = scores.team1 || 0;
-            gameState.teams.team2.points = scores.team2 || 0;
-            updateTeamScores();
-        }
-    });
-}
-
-// ============================================
-// UI UPDATES
-// ============================================
-
-function updateTurnIndicator() {
-    const indicator = document.getElementById('currentTurn');
-    if (indicator) {
-        if (gameState.currentTurn) {
-            indicator.textContent = `${gameState.currentTurn.toUpperCase()} TURN`;
-            indicator.parentElement.className = `turn-indicator ${gameState.currentTurn}`;
-        } else {
-            indicator.textContent = 'waiting to start...';
-            indicator.parentElement.className = 'turn-indicator';
-        }
-    }
-}
-
-function updateTeamScores() {
-    const scoreElements = document.querySelectorAll('.team-points');
-    if (scoreElements.length >= 2) {
-        scoreElements[0].textContent = gameState.teams.team1.points || 0;
-        scoreElements[1].textContent = gameState.teams.team2.points || 0;
-    }
-}
-
-// ============================================
-// MODAL CONTROLS
-// ============================================
-
-window.closeReveal = function() {
-    document.getElementById('revealModal').style.display = 'none';
-}
-
-window.confirmSpecial = function() {
-    document.getElementById('specialModal').style.display = 'none';
-}
-
-// ============================================
-// ADMIN FUNCTIONS
-// ============================================
-
-window.resetBoard = async function() {
-    if (!confirm('reset all boxes?')) return;
-    
-    const batch = [];
-    
-    // Only reset available boxes
-    for (const boxId of AVAILABLE_BOXES) {
-        batch.push(updateDoc(doc(db, 'blindBoxes', boxId), {
-            status: 'available',
-            claimedBy: null,
-            challengeSelected: null,
-            selectedBy: null,
-            selectedAt: null,
-            openedAt: null,
-            claimedAt: null
-        }));
-    }
-    
-    await Promise.all(batch);
-    location.reload();
-}
-
-window.clearTeamScores = async function() {
-    if (!confirm('clear all team scores?')) return;
-    
-    // Update scores in gameState/scores
-    await setDoc(doc(db, 'gameState', 'scores'), {
-        team1: 0,
-        team2: 0,
-        lastUpdated: new Date().toISOString()
-    });
-    
-    alert('Team scores cleared');
-}
-
-window.exportGameState = function() {
-    const exportData = {
-        timestamp: new Date().toISOString(),
-        boxes: gameState.boxes,
-        teams: gameState.teams,
-        currentTurn: gameState.currentTurn,
-        gameActive: gameState.gameActive
-    };
-    
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `game-state-${Date.now()}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-}
-
-window.loadBoxData = async function(boxId) {
-    try {
-        const boxDoc = await getDoc(doc(db, 'blindBoxes', boxId));
-        if (boxDoc.exists()) {
-            const data = boxDoc.data();
-            
-            // Populate form fields if they exist
-            if (document.getElementById('labubuName')) {
-                document.getElementById('labubuName').value = data.labubuName || data.name || '';
-            }
-            if (document.getElementById('imagePath')) {
-                document.getElementById('imagePath').value = data.imagePath || data.image || '';
-            }
-            if (document.getElementById('teamChallenge')) {
-                document.getElementById('teamChallenge').value = data.teamChallenge || '';
-            }
-            if (document.getElementById('teamPoints')) {
-                document.getElementById('teamPoints').value = data.teamPoints || 5000;
-            }
-            if (document.getElementById('individualChallenge')) {
-                document.getElementById('individualChallenge').value = data.individualChallenge || '';
-            }
-            if (document.getElementById('individualPoints')) {
-                document.getElementById('individualPoints').value = data.individualPoints || 1000;
-            }
-            if (document.getElementById('cardType')) {
-                document.getElementById('cardType').value = data.cardType || 'regular';
-            }
-            if (document.getElementById('specialMessage')) {
-                document.getElementById('specialMessage').value = data.specialMessage || '';
-            }
-            if (document.getElementById('boxStatus')) {
-                document.getElementById('boxStatus').value = data.status || 'available';
-            }
-            if (document.getElementById('claimedBy')) {
-                document.getElementById('claimedBy').value = data.claimedBy || '';
-            }
-        }
-    } catch (error) {
-        console.error('Error loading box data:', error);
-    }
-}
-
-// ============================================
-// INITIALIZE
-// ============================================
-
-document.addEventListener('DOMContentLoaded', () => {
-    const isAdmin = window.location.pathname.includes('blind-b0ss');
-    
-    if (isAdmin) {
-        // Admin panel
-        const session = localStorage.getItem('blind_boss_session');
-        if (!session || !window.validateSession(session)) {
-            document.getElementById('authModal').style.display = 'block';
-        } else {
-            document.getElementById('authModal').style.display = 'none';
-            document.getElementById('adminPanel').style.display = 'grid';
-            if (window.initializeAdmin) {
-                window.initializeAdmin();
-            }
-        }
-    } else {
-        // Game board
-        initializeGame();
-    }
-});
+// ---------- Admin auth helpers (used by blind-b0ss.html) ----------
+window.hashPassword = async function(password) {
+  const enc = new TextEncoder();
+  const data = enc.encode(password);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+};
+window.ADMIN_PASSWORD_HASH = 'f44d66d49ae0e7b1c90914f8a4276d0db4e419f43864750ddaf65ca177c88bf4';
+window.createSessionToken = function(){
+  const ts = Date.now(); 
+  const r = Math.random().toString(36).slice(2);
+  return btoa(`${ts}-${r}-${window.ADMIN_PASSWORD_HASH.slice(0,8)}`);
+};
+window.validateSession = function(token){
+  try {
+    const dec = atob(token); 
+    const parts = dec.split('-');
+    if (parts.length !== 3) return false;
+    const ts = parseInt(parts[0],10);
+    if (Date.now() - ts > 24*60*60*1000) return false;
+    return parts[2] === window.ADMIN_PASSWORD_HASH.slice(0,8);
+  } catch { 
+    return false; 
+  }
+};

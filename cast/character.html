@@ -3,155 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Internet Olympics 2 - Select Your Character</title>
+    <title>INTERNET OLYMPICS 2 💿 THE PLAYPEN</title>
     <link rel="stylesheet" href="character.css">
 </head>
 <body>
-    <video class="video-bg" id="videoBg" autoplay muted loop playsinline>
-        <source src="../assets/cast/cast-access.mp4" type="video/mp4">
-    </video>
+    <!-- Liminal Background (from companies.html) -->
+    <div class="liminal-bg"></div>
     
-    <audio id="bgMusic" autoplay loop>
+    <!-- Background Music -->
+    <audio id="bgMusic" loop>
         <source src="../assets/cast/encore.mp3" type="audio/mpeg">
     </audio>
     
     <div class="main-container">
-        <div class="header">
-            <h1>INTERNET OLYMPICS 2</h1>
-            <p class="subtitle">SELECT UR CHARACTER</p>
-        </div>
-
-        <div class="access-code-container window-95" id="accessCodeContainer">
-            <h2>ENTER ACCESS CODE</h2>
-            <input type="text" 
-                   class="access-code-input" 
-                   id="accessCodeInput" 
-                   placeholder="ENTER CODE"
-                   maxlength="20">
-            <button class="access-code-btn" id="validateCodeBtn">ENTER</button>
-            <div class="error-message" id="errorMessage">INVALID ACCESS CODE</div>
-        </div>
-
-        <div class="view-toggle" id="viewToggle">
-            <button class="toggle-btn active" data-view="carousel">CAROUSEL</button>
-            <button class="toggle-btn" data-view="grid">GRID</button>
-        </div>
-
-        <div class="carousel-wrapper" id="carouselWrapper">
-            <div class="carousel" id="carousel">
-                <div class="loading">Loading character discs...</div>
-            </div>
-            <button class="nav-arrow prev" id="prevBtn">‹</button>
-            <button class="nav-arrow next" id="nextBtn">›</button>
-        </div>
-
-        <div class="grid-wrapper" id="gridWrapper">
-            <div class="discs-grid" id="discsGrid">
-                <div class="loading">Loading character discs...</div>
-            </div>
-        </div>
-
-        <p class="instructions" id="instructions" style="display: none;">
-            ▓▒░ CLICK THE DISC TO SELECT UR CHARACTER ░▒▓
-        </p>
-
-        <div class="pending-status window-95" id="pendingStatus">
-            <h3>YOUR SELECTION IS PENDING APPROVAL</h3>
-            <div class="pending-disc" id="pendingDisc"></div>
-            <div id="pendingInfo"></div>
-            <div class="emoji-line">🍓💿🔪🔋🐳🍄</div>
-            <button class="change-selection-btn" id="changeSelectionBtn">CHANGE SELECTION</button>
-        </div>
-
-        <div class="player-profile window-95" id="playerProfile">
-            <div class="profile-title-container">
-                <h3><span id="profileTitle">YOUR PROFILE</span></h3>
+        <!-- Login Screen -->
+        <div class="access-screen" id="accessScreen">
+            <div class="playpen-header">
+                <h1>🧸 xm4s tim3 🧩</h1>
             </div>
             
-            <div id="moderatorNote" class="moderator-note">
-                <p> 🎱 <span id="noteText"></span></p>
+            <div class="access-code-container window-95">
+                <h2>📟 ACCESS REQUIRED 📟</h2>
+                <input type="text" 
+                       class="access-code-input" 
+                       id="accessCodeInput" 
+                       placeholder="TYPE CODE HERE"
+                       maxlength="20"
+                       autocomplete="off">
+                <button class="access-code-btn" id="validateCodeBtn">let me in →</button>
+                <div class="error-message" id="errorMessage"></div>
+                <p class="help-text">lost? dm the mod on ig</p>
             </div>
-
-            <div class="profile-disc" id="profileDisc"></div>
-            <div class="profile-info" id="profileInfo"></div>
-            
-            <div id="creditSection" class="credit-section">
-                <h3>YOUR CREDITS: <span id="creditAmount">0</span></h3>
-                <button id="reopenShopBtn">SPEND CREDITS ON TOOLS</button>
-            </div>
-            
-            <div id="paymentDue" class="payment-due">
-                <h3>FUNDS DUE: <span id="amountOwed">0</span></h3>
-                <p>Send dollaz to @worksucksdotnet</p>
-            </div>
-            
-            <div class="emoji-line">💽🔌🍓🎱</div>
-            <button class="home-button" id="homeBtn">RETURN HOME 💾</button>
         </div>
-    </div>
 
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal-content window-95">
-            <div class="modal-header">
-                <span>CHARACTER SELECTION</span>
-                <button class="close-modal" id="closeModalBtn">×</button>
+        <!-- Leaderboard View -->
+        <div class="leaderboard-view" id="leaderboardView" style="display: none;">
+            <!-- PLAYFUL HEADER (from companies) -->
+            <div class="playpen-header">
+                <h1>🧸 the gift room 🧩</h1>
             </div>
-            <div class="modal-inner">
-                <div class="modal-disc">
-                    <img id="modalDiscImg" src="" alt="">
+
+            <!-- COMPANY SCORES (Team Scores) -->
+            <div class="scores">
+                <div class="company-score">
+                    <img src="../assets/b04rd/hot-team.png" alt="HOT Team" class="team-avatar">
+                    <span class="company-name">🔥 HOT</span>
+                    <span class="company-valuation" id="hotPoints">$0</span>
                 </div>
-                <h2 class="character-name" id="characterName"></h2>
-                <p class="character-show" id="characterShow"></p>
-                
-                <div class="addons-question" id="addonsQuestion">
-                    <div class="weapons-preview">
-                        <img src="../assets/cast/weapons.png" alt="Cool Weapons" class="weapons-preview-img">
+                <div class="company-score">
+                    <img src="../assets/b04rd/cold-team.png" alt="COLD Team" class="team-avatar">
+                    <span class="company-name">❄️ COLD </span>
+                    <span class="company-valuation" id="coldPoints">$0</span>
+                </div>
+            </div>
+
+            <!-- GAME AREA -->
+            <div class="game-area">
+                <!-- PLAYPEN CONTAINER (CD Field) -->
+                <div class="playpen-container" id="playpenContainer">
+                    <div class="loading">Loading players...</div>
+                </div>
+
+                <!-- ZONES -->
+                <div class="zones-container">
+                    <!-- IRS ZONE (Stats Zone) -->
+                    <div class="zone irs-zone" id="irsZone">
+                        <div class="zone-title">CHECK STATS</div>
+                        <img src="../assets/b04rd/irs.png" alt="Stats" class="irs-logo">
+                        <div class="zone-contents"></div>
                     </div>
-                    <h3 class="question-title">DO YOU WANT TO BUY ANY ADD-ONS OR WEAPONS?</h3>
-                    <p class="price-note">stuff starts at <span class="small-price">$25</span></p>
-                    <div class="question-buttons">
-                        <button class="question-btn yes-btn" id="yesAddonsBtn">YES! SHOW ME THE GOODS</button>
-                        <button class="question-btn no-btn" id="noAddonsBtn">NO THANKS, JUST THE CHARACTER</button>
+
+                    <!-- WEAPONS ZONE -->
+                    <div class="zone weapons-zone" id="weaponsZone">
+                        <div class="zone-title">GET WEAPONS</div>
+                        <div class="zone-contents">
+                            <button class="zone-action-btn" id="weaponsShopBtn">💊 SHOP NOW 💊</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="weapons-section" id="weaponsSection" style="display: none;">
-                    <h3 class="weapons-title">▓▒░ COOL STUFF & WEAP0NZ ░▒▓</h3>
-                    <div class="weapons-grid" id="weaponsGrid"></div>
-                    
-                    <div class="cart-summary">
-                        <div class="total-price" id="totalPriceDiv">SELECT YOUR WEAPONZ!</div>
-                        <button class="checkout-btn" id="checkoutBtn">ADD TO TAB & CHECKOUT →</button>
-                        <button class="skip-btn" id="skipBtn">ACTUALLY, SKIP WEAPONS →</button>
-                        
-                        <div class="payment-modal pending" id="paymentModal">
-                            <div class="pending-badge">PENDING!</div>
-                            <h3>🍓🎱CHILL N WAIT 4 MOD APPROVAL🍓🎱</h3>
-                            <div class="emoji-line">💿🔋🔪🐰🍄</div>
-                            <p id="paymentMessage"></p>
-                            <div class="payment-handles">
-                                <strong>VENMO: @worksucksdotnet</strong>
-                                <strong>ZELLE: paizley@worksucks.net</strong>
-                            </div>
-                            <p class="payment-note">
-                                IMPORTANT: Include your Instagram handle in the payment description!
-                            </p>
-                            <div class="emoji-line">🐳🍄🎱💊🧸🔌</div>
-                            <p class="approval-status">
-                                ⚡ watching for mod approval... refresh or wait! ⚡
-                            </p>
-                            <p class="mod-message">
-                                SEE U SOOOOON XOXOXOXOX ♥♥♥<br>
-                                - mod
-                            </p>
+            </div>
+
+            <!-- Floating Action Button for Profile -->
+            <div class="floating-actions">
+                <button class="fab-btn profile-btn" id="myProfileBtn" title="ur profile">
+                    <span>👤</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Player Details Popup (when CD dropped in zone) -->
+        <div class="player-details" id="playerDetails">
+            <div class="details-header">
+                <img class="details-image" id="detailsImage" src="" alt="">
+                <div class="details-info">
+                    <h3 id="detailsName"></h3>
+                    <div class="details-handle" id="detailsHandle">@handle</div>
+                    <div class="details-wealth" id="detailsWealth">$0</div>
+                </div>
+            </div>
+            <div class="achievements-list">
+                <h4>📊 STATS</h4>
+                <div id="achievementsList">
+                    <div class="achievement-item">
+                        <span>Team:</span>
+                        <span id="detailsTeam">-</span>
+                    </div>
+                    <div class="achievement-item">
+                        <span>Status:</span>
+                        <span id="detailsStatus">ACTIVE</span>
+                    </div>
+                    <div class="achievement-item">
+                        <span>Individual Points:</span>
+                        <span id="detailsIndPoints">0</span>
+                    </div>
+                    <div class="achievement-item">
+                        <span>Team Points:</span>
+                        <span id="detailsTeamPoints">0</span>
+                    </div>
+                </div>
+            </div>
+            <button class="close-details" onclick="closeDetails()">Close</button>
+        </div>
+
+        <!-- Player Profile Modal (Full Details - keeping existing) -->
+        <div class="modal-overlay" id="profileModal">
+            <div class="modal-content window-95">
+                <div class="modal-header">
+                    <span id="modalTitle">UR PROFILE</span>
+                    <button class="close-modal" id="closeProfileBtn">×</button>
+                </div>
+                <div class="modal-inner">
+                    <!-- Mod Message -->
+                    <div id="modMessage" class="mod-message" style="display: none;">
+                        <div class="message-header">📬 MESSAGE FROM MOD:</div>
+                        <div class="message-content" id="modMessageText"></div>
+                    </div>
+
+                    <!-- Profile Content -->
+                    <div class="profile-content">
+                        <div class="profile-disc" id="profileDisc">
+                            <!-- Disc image here -->
                         </div>
                         
-                        <button class="start-over-btn" id="startOverBtn">START OVER</button>
+                        <h2 class="profile-handle" id="profileHandle">@handle</h2>
+                        
+                        <div class="profile-details">
+                            <div class="detail-section">
+                                <h3>CHARACTER INFO</h3>
+                                <div class="detail-row">
+                                    <span>name:</span>
+                                    <span id="characterName">-</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>show:</span>
+                                    <span id="characterShow">-</span>
+                                </div>
+                            </div>
+
+                            <div class="detail-section">
+                                <h3>GAME STATS</h3>
+                                <div class="detail-row">
+                                    <span>team:</span>
+                                    <span class="team-badge" id="teamBadge">-</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>status:</span>
+                                    <span class="status-badge" id="statusBadge">ACTIVE</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>individual pts:</span>
+                                    <span class="points" id="indPoints">0</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>team pts:</span>
+                                    <span class="points" id="teamPoints">0</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>credits:</span>
+                                    <span class="credits" id="creditsDisplay">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Weapons Inventory -->
+                        <div class="weapons-section">
+                            <h3>🔪 UR WEAPONS 🔪</h3>
+                            <div class="weapons-grid" id="ownedWeapons">
+                                <!-- Weapons will be added here -->
+                            </div>
+                            <button class="get-weapons-btn" id="getMoreWeaponsBtn">
+                                get more weapons →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weapons Shop Modal (keeping existing) -->
+        <div class="modal-overlay" id="weaponsModal">
+            <div class="modal-content window-95">
+                <div class="modal-header">
+                    <span>💊 WEAPONS SHOP 💊</span>
+                    <button class="close-modal" id="closeWeaponsBtn">×</button>
+                </div>
+                <div class="modal-inner">
+                    <div class="shop-header">
+                        <div class="credit-display">ur credits: <span id="shopCredits">0</span></div>
+                        <p class="shop-instruction">click stuff 2 add to cart</p>
+                    </div>
+                    
+                    <div class="weapons-shop-grid" id="weaponsShopGrid">
+                        <!-- Available weapons will be loaded here -->
+                    </div>
+                    
+                    <div class="cart-summary">
+                        <div class="cart-total">total: <span id="cartTotal">0</span> credits</div>
+                        <div class="cart-message" id="cartMessage"></div>
+                        <div class="cart-actions">
+                            <button class="cart-btn checkout" id="checkoutWeaponsBtn">send request →</button>
+                            <button class="cart-btn cancel" id="cancelShopBtn">nvm</button>
+                        </div>
+                    </div>
+                    
+                    <div class="checkout-success" id="checkoutSuccess" style="display: none;">
+                        <p>✨ request sent! check back l8r ✨</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast" id="toast"></div>
+    
+    <!-- Notification (from companies) -->
+    <div class="notification" id="notification"></div>
 
     <script type="module" src="character.js"></script>
 </body>

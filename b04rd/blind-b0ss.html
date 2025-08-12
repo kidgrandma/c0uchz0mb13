@@ -1,854 +1,763 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLIND B0SS 🧸 admin panel</title>
-    <link rel="stylesheet" href="blind.css">
-    <style>
-        body {
-            overflow-y: auto;
-            min-height: 100vh;
-        }
-        .container {
-            min-height: 100vh;
-            overflow-y: auto;
-        }
-        .admin-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 20px;
-            padding: 20px;
-            min-height: calc(100vh - 100px);
-        }
-        .control-panel {
-            background: #ececec;
-            border: 2px solid #0054e3;
-            padding: 15px;
-            height: fit-content;
-            position: sticky;
-            top: 20px;
-            max-height: calc(100vh - 40px);
-            overflow-y: auto;
-        }
-        .box-editor, .challenge-editor {
-            background: white;
-            border: 2px solid #0054e3;
-            padding: 20px;
-            margin-bottom: 10px;
-        }
-        .box-grid-editor {
-            height: fit-content;
-        }
-        .save-indicator {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 10px;
-            background: #90ee90;
-            display: none;
-        }
-        .editor-box {
-            aspect-ratio: 1;
-            background: white;
-            border: 2px solid #0054e3;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 0.8em;
-            position: relative;
-            transition: all 0.2s;
-        }
-        .editor-box:hover {
-            background: #e0f0ff;
-            transform: scale(1.05);
-        }
-        .editor-box.unavailable {
-            background: #f0f0f0;
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .editor-box.available {
-            border-color: #00aa00;
-            background: #e0ffe0;
-        }
-        .editor-box.pending {
-            border-color: #ff9900;
-            background: #fff4e0;
-            animation: pulse 1.5s infinite;
-        }
-        .editor-box.opened {
-            border-color: #0054e3;
-            background: #e0f0ff;
-        }
-        .editor-box.claimed {
-            border-color: #9900ff;
-            background: #f0e0ff;
-        }
-        .editor-box.has-bully {
-            box-shadow: 0 0 10px rgba(255, 153, 0, 0.5);
-        }
-        .editor-box.has-mega {
-            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
-        }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
-        }
-        .status-badge {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            padding: 2px 5px;
-            font-size: 10px;
-            color: white;
-            border-radius: 3px;
-            font-weight: bold;
-            max-width: 80%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .status-badge.active {
-            background: #00aa00;
-        }
-        .status-badge.pending {
-            background: #ff9900;
-            animation: blink 1s infinite;
-        }
-        .status-badge.opened {
-            background: #0054e3;
-        }
-        .status-badge.claimed {
-            background: #9900ff;
-        }
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.3; }
-            100% { opacity: 1; }
-        }
-        .challenge-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-        }
-        .challenge-modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border: 3px solid #0054e3;
-            padding: 30px;
-            min-width: 500px;
-            max-width: 90vw;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        .challenge-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #0054e3;
-        }
-        .close-modal {
-            background: #ff4444;
-            color: white;
-            border: none;
-            padding: 5px 15px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .challenge-field {
-            margin-bottom: 15px;
-        }
-        .challenge-field label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #333;
-        }
-        .challenge-field input,
-        .challenge-field textarea,
-        .challenge-field select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-        }
-        .challenge-field textarea {
-            min-height: 60px;
-        }
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .xp-button {
-            background: linear-gradient(180deg, #fff, #e0e0e0);
-            border: 2px solid #999;
-            padding: 10px 20px;
-            cursor: pointer;
-            font-size: 14px;
-            border-radius: 3px;
-            box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
-        }
-        .xp-button:hover {
-            background: linear-gradient(180deg, #f0f0f0, #d0d0d0);
-        }
-        .xp-button.primary {
-            background: linear-gradient(180deg, #90ee90, #7dd87d);
-            border-color: #5cb85c;
-        }
-        .xp-button.danger {
-            background: linear-gradient(180deg, #ff9999, #ff6666);
-            border-color: #ff4444;
-        }
-        .labubu-preview {
-            width: 100px;
-            height: 100px;
-            object-fit: contain;
-            border: 2px solid #ccc;
-            padding: 5px;
-            background: white;
-        }
-        @media (max-width: 768px) {
-            .admin-grid {
-                grid-template-columns: 1fr;
-            }
-            .challenge-modal-content {
-                min-width: 90vw;
-                padding: 20px;
-            }
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BLIND B0SS 🧸 admin panel</title>
+<style>
+  /* ========= inline admin CSS ========= */
+  *{box-sizing:border-box}
+  body{background:#fff;color:#111;font-family:Tahoma,Arial,sans-serif;margin:0;min-height:100vh;overflow-y:auto}
+  .game-header{padding:16px 20px;border-bottom:2px solid #0054e3;background:#f7f9ff}
+  .game-header h1{margin:0;font-size:22px}
+  .game-header .subtitle{margin:6px 0 0;color:#555}
+
+  .admin-grid{display:grid;grid-template-columns:1fr 2fr;gap:20px;padding:20px}
+  .control-panel{background:#ececec;border:2px solid #0054e3;padding:15px;position:sticky;top:20px;height:fit-content}
+  .control-section{margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #ccc}
+  .control-section h4{margin:0 0 10px;color:#0054e3}
+  .xp-button{background:linear-gradient(180deg,#fff,#e0e0e0);border:2px solid #999;padding:10px 14px;cursor:pointer;font-size:14px;border-radius:3px;box-shadow:2px 2px 0 rgba(0,0,0,.2);margin:0 8px 8px 0}
+  .xp-button.primary{background:linear-gradient(180deg,#90ee90,#7dd87d);border-color:#5cb85c}
+  .xp-button.danger{background:linear-gradient(180deg,#ff9999,#ff6666);border-color:#ff4444}
+  .box-grid-editor{background:#fff;border:2px solid #0054e3;padding:20px}
+  .editor-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  .editor-box{aspect-ratio:1;background:#fff;border:2px solid #0054e3;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:.15s}
+  .editor-box:hover{transform:scale(1.03);background:#eaf3ff}
+  .editor-box.unavailable{background:#f5f5f5;opacity:.5;cursor:not-allowed}
+  .editor-box.available{border-color:#00aa00;background:#eaffea}
+  .editor-box.pending{border-color:#ff9900;background:#fff4e0}
+  .editor-box.opened{border-color:#0054e3;background:#e0f0ff}
+  .editor-box.claimed{border-color:#9900ff;background:#f0e6ff}
+  .editor-box.in-challenge{border-color:#7d5cff;background:#f7e9ff}
+  .status-badge{position:absolute;top:5px;right:5px;padding:2px 5px;font-size:10px;color:#fff;border-radius:3px;font-weight:bold;max-width:80%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:none}
+  .status-badge.active{background:#00aa00;display:block}
+  .status-badge.pending{background:#ff9900;display:block}
+  .status-badge.opened{background:#0054e3;display:block}
+  .status-badge.claimed{background:#9900ff;display:block}
+  .status-badge.in-challenge{background:#7d5cff;display:block}
+  .editor-box.has-bully{box-shadow:0 0 12px rgba(255,153,0,.5)}
+  .editor-box.has-mega{box-shadow:0 0 12px rgba(255,0,0,.5)}
+  .save-indicator{position:fixed;top:18px;right:18px;background:#90ee90;border:2px solid #5cb85c;padding:8px 12px;display:none;z-index:1001}
+
+  .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000}
+  .xp-window{background:#fff;border:3px solid #0054e3;min-width:450px;max-width:90vw;margin:10vh auto;padding:0;border-radius:6px}
+  .xp-window-header{background:linear-gradient(180deg,#0054e3,#0043b8);color:#fff;padding:8px 12px;border-radius:4px 4px 0 0}
+  .xp-window-body{padding:20px}
+  .error-msg{color:#ff4444;margin-top:8px}
+  input[type="password"],input[type="text"],input[type="number"],textarea,select{width:100%;padding:8px;border:1px solid #bbb;font-size:14px}
+  .button-group{display:flex;flex-wrap:wrap;gap:10px}
+  .labubu-preview{width:86px;height:86px;object-fit:contain;border:1px solid #ddd;background:#fff}
+
+  @media (max-width:900px){.admin-grid{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="game-header">
-            <h1>BLIND B0SS <span class="emoji">🧸</span></h1>
-            <p class="subtitle">admin panel. break things responsibly.</p>
-        </header>
+  <header class="game-header">
+    <h1>BLIND B0SS <span class="emoji">🧸</span></h1>
+    <p class="subtitle">admin panel. break things responsibly.</p>
+  </header>
 
-        <!-- Auth Modal -->
-        <div class="modal" id="authModal">
-            <div class="modal-content xp-window">
-                <div class="xp-window-header">
-                    <span class="xp-window-title">🔌 admin access required</span>
-                </div>
-                <div class="xp-window-body">
-                    <p>password or get out</p>
-                    <input type="password" id="adminPassword" placeholder="••••••••">
-                    <button class="xp-button" onclick="authenticate()">let me in</button>
-                    <p class="error-msg" id="authError"></p>
-                </div>
-            </div>
-        </div>
+  <div id="saveIndicator" class="save-indicator">saved.</div>
 
-        <!-- Save Indicator -->
-        <div class="save-indicator" id="saveIndicator">
-            saved. probably.
-        </div>
-
-        <!-- Admin Grid -->
-        <div class="admin-grid" id="adminPanel" style="display: none;">
-            <!-- Left Panel - Controls -->
-            <div class="control-panel">
-                <h3>🎮 Game Controls</h3>
-                
-                <div class="control-section">
-                    <h4>Board Status</h4>
-                    <button class="xp-button" onclick="resetBoard()">Reset All Boxes</button>
-                    <button class="xp-button" onclick="clearTeamScores()">Clear Team Scores</button>
-                    <button class="xp-button danger" onclick="clearPendingSelections()">Clear Pending Selections</button>
-                    <button class="xp-button" onclick="exportGameState()">Export Game State</button>
-                    <button class="xp-button primary" onclick="openChallengeEditor()">Edit Challenges</button>
-                </div>
-
-                <div class="control-section">
-                    <h4>Quick Stats</h4>
-                    <div id="gameStats">
-                        <p>Boxes Available: <span id="boxesAvailable">5/25</span></p>
-                        <p>Boxes Pending: <span id="boxesPending">0</span></p>
-                        <p>Boxes Opened: <span id="boxesOpened">0/5</span></p>
-                        <p>Team 1: <span id="team1Score">0</span></p>
-                        <p>Team 2: <span id="team2Score">0</span></p>
-                    </div>
-                </div>
-
-                <div class="control-section">
-                    <h4>Special Cards</h4>
-                    <select id="specialCardType">
-                        <option value="">Regular Labubu</option>
-                        <option value="bully">Labubu Bully</option>
-                        <option value="mega">Mega Bubu</option>
-                    </select>
-                    <textarea id="specialCardText" placeholder="special card message (if applicable)" rows="3"></textarea>
-                    <button class="xp-button" onclick="applySpecialCard()">Apply to Selected Box</button>
-                </div>
-
-                <div class="control-section">
-                    <h4>Available Labubu Images</h4>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                        <img src="/assets/b04rd/labubu-sports-drunk.png" class="labubu-preview" title="Drunk">
-                        <img src="/assets/b04rd/labubu-sports-heart.png" class="labubu-preview" title="Heart">
-                        <img src="/assets/b04rd/labubu-sports-life.png" class="labubu-preview" title="Life">
-                        <img src="/assets/b04rd/labubu-sports-turkey.png" class="labubu-preview" title="Turkey">
-                        <img src="/assets/b04rd/labubu-bully.png" class="labubu-preview" title="Bully (Special)">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Panel - Box Grid Editor -->
-            <div class="box-grid-editor">
-                <h3>📦 Box Configuration</h3>
-                <p class="hint">Only 5 boxes are available (one per collection). Click to edit challenges.</p>
-                
-                <div class="editor-grid" id="editorGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
-                    <!-- 25 boxes will be generated here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Challenge Editor Modal -->
-        <div class="challenge-modal" id="challengeModal">
-            <div class="challenge-modal-content">
-                <div class="challenge-modal-header">
-                    <h2>📝 Edit Challenges for <span id="challengeBoxId"></span></h2>
-                    <button class="close-modal" onclick="closeChallengeModal()">×</button>
-                </div>
-
-                <div class="challenge-field">
-                    <label>Labubu Name:</label>
-                    <input type="text" id="challenge_labubuName" placeholder="Enter Labubu name">
-                </div>
-
-                <div class="challenge-field">
-                    <label>Labubu Image:</label>
-                    <select id="challenge_imagePath">
-                        <option value="labubu-sports-drunk.png">Drunk Labubu</option>
-                        <option value="labubu-sports-heart.png">Heart Labubu</option>
-                        <option value="labubu-sports-life.png">Life Labubu</option>
-                        <option value="labubu-sports-turkey.png">Turkey Labubu</option>
-                        <option value="labubu-bully.png">Bully (Special)</option>
-                    </select>
-                </div>
-
-                <div class="challenge-field">
-                    <label>Team Challenge Description:</label>
-                    <textarea id="challenge_teamChallenge" placeholder="Enter team challenge description"></textarea>
-                </div>
-
-                <div class="challenge-field">
-                    <label>Team Challenge Points:</label>
-                    <input type="number" id="challenge_teamPoints" placeholder="5000" step="500">
-                </div>
-
-                <div class="challenge-field">
-                    <label>3v3 Battle Description:</label>
-                    <textarea id="challenge_individualChallenge" placeholder="Enter 3v3 battle description"></textarea>
-                </div>
-
-                <div class="challenge-field">
-                    <label>3v3 Battle Points:</label>
-                    <input type="number" id="challenge_individualPoints" placeholder="1000" step="100">
-                </div>
-
-                <div class="challenge-field">
-                    <label>Card Type:</label>
-                    <select id="challenge_cardType" onchange="toggleSpecialMessage()">
-                        <option value="regular">Regular</option>
-                        <option value="bully">Labubu Bully</option>
-                    </select>
-                </div>
-
-                <div class="challenge-field" id="challenge_specialField" style="display: none;">
-                    <label>Special Message:</label>
-                    <textarea id="challenge_specialMessage" placeholder="Special card message"></textarea>
-                </div>
-
-                <div class="button-group">
-                    <button class="xp-button primary" onclick="saveChallenges()">Save Challenges</button>
-                    <button class="xp-button" onclick="closeChallengeModal()">Cancel</button>
-                </div>
-            </div>
-        </div>
+  <!-- Auth Modal -->
+  <div class="modal" id="authModal">
+    <div class="xp-window">
+      <div class="xp-window-header"><span class="xp-window-title">🔌 admin access required</span></div>
+      <div class="xp-window-body">
+        <p>password or get out</p>
+        <input type="password" id="adminPassword" placeholder="••••••••"/>
+        <div class="button-group"><button class="xp-button" id="authBtn">let me in</button></div>
+        <p class="error-msg" id="authError"></p>
+      </div>
     </div>
+  </div>
 
-    <script type="module" src="blind.js"></script>
-    <script>
-        // Available boxes (only 5, one per collection)
-        const AVAILABLE_BOXES = ['christmas-1', 'coke-1', 'energy-1', 'mart-1', 'sports-1'];
-        
-        // Labubu image mapping for the 5 available boxes
-        const LABUBU_IMAGES = {
-            'christmas-1': 'labubu-sports-drunk.png',
-            'coke-1': 'labubu-sports-heart.png', 
-            'energy-1': 'labubu-sports-life.png',
-            'mart-1': 'labubu-sports-turkey.png',
-            'sports-1': 'labubu-bully.png'
-        };
+  <!-- Admin UI -->
+  <div class="admin-grid" id="adminPanel" style="display:none">
+    <aside class="control-panel">
+      <h3>🎮 Game Controls</h3>
 
-        // Store Firebase unsubscribe function
-        window.unsubscribeBoxes = null;
-        window.currentEditingBox = null;
-        window.currentChallengeBox = null;
+      <div class="control-section">
+        <h4>Board Status</h4>
+        <div class="button-group">
+          <button class="xp-button" id="btnReset">Reset All Boxes</button>
+          <button class="xp-button" id="btnClearScores">Clear Team Scores</button>
+          <button class="xp-button danger" id="btnClearPending">Clear Pending Selections</button>
+          <button class="xp-button" id="btnExport">Export Game State</button>
+          <button class="xp-button primary" id="btnOpenEditor">Edit Challenges</button>
+        </div>
+      </div>
 
-        // Authentication
-        window.authenticate = async function() {
-            const password = document.getElementById('adminPassword').value;
-            const hash = await window.hashPassword(password);
-            
-            if (hash === window.ADMIN_PASSWORD_HASH) {
-                localStorage.setItem('blind_boss_session', window.createSessionToken());
-                document.getElementById('authModal').style.display = 'none';
-                document.getElementById('adminPanel').style.display = 'grid';
-                window.initializeAdmin();
-            } else {
-                document.getElementById('authError').textContent = 'wrong password. try harder.';
-            }
+      <div class="control-section">
+        <h4>Turn Control</h4>
+        <p>Current turn: <strong id="adminCurrentTurn">—</strong></p>
+        <div class="button-group">
+          <button class="xp-button" data-turn="team-1">Give Turn to TEAM HOT</button>
+          <button class="xp-button" data-turn="team-2">Give Turn to TEAM COLD</button>
+          <button class="xp-button" data-turn="">Clear Turn</button>
+        </div>
+      </div>
+
+      <div class="control-section" id="pendingApprovalSection" style="display:none">
+        <h4>⏳ Pending Approval</h4>
+        <p>Box: <span id="pendingBoxId"></span></p>
+        <p>Selected by: <span id="pendingSelectedBy"></span></p>
+        <p>Team: <span id="pendingTeam"></span></p>
+        <p>Time: <span id="pendingTime"></span></p>
+        <div class="button-group">
+          <button class="xp-button primary" id="btnApprove">✅ Approve & Reveal</button>
+          <button class="xp-button danger" id="btnReject">❌ Reject Selection</button>
+        </div>
+      </div>
+
+      <div class="control-section">
+        <h4>Winner Selection</h4>
+        <label for="winnerBoxSelect">Box in challenge</label>
+        <select id="winnerBoxSelect"></select>
+        <div class="button-group" style="margin-top:8px">
+          <button class="xp-button" data-win="team-1">TEAM HOT wins</button>
+          <button class="xp-button" data-win="team-2">TEAM COLD wins</button>
+        </div>
+      </div>
+
+      <div class="control-section">
+        <h4>Quick Stats</h4>
+        <div id="gameStats">
+          <p>Boxes Available: <span id="boxesAvailable">5/5</span></p>
+          <p>Boxes Pending: <span id="boxesPending">0</span></p>
+          <p>Boxes Opened: <span id="boxesOpened">0/5</span></p>
+          <p>Team HOT: <span id="team1Score">0</span></p>
+          <p>Team COLD: <span id="team2Score">0</span></p>
+        </div>
+      </div>
+
+      <div class="control-section">
+        <h4>Special Cards</h4>
+        <select id="specialCardType">
+          <option value="">Regular Labubu</option>
+          <option value="bully">Labubu Bully</option>
+          <option value="mega">Mega Bubu</option>
+        </select>
+        <textarea id="specialCardText" placeholder="special card message (if applicable)" rows="3"></textarea>
+        <button class="xp-button" id="btnApplySpecial">Apply to Selected Box</button>
+      </div>
+
+      <div class="control-section">
+        <h4>Available Character Images</h4>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          <img src="/assets/b04rd/glenbubu-1.png" class="labubu-preview" title="Glenbubu 1">
+          <img src="/assets/b04rd/glenbubu-2.png" class="labubu-preview" title="Glenbubu 2">
+          <img src="/assets/b04rd/glenbubu-3.png" class="labubu-preview" title="Glenbubu 3">
+          <img src="/assets/b04rd/daft-tech.png" class="labubu-preview" title="Daft Tech">
+          <img src="/assets/b04rd/daft-harder.png" class="labubu-preview" title="Daft Harder">
+          <img src="/assets/b04rd/daft-5555.png" class="labubu-preview" title="Daft 5555">
+        </div>
+      </div>
+    </aside>
+
+    <section class="box-grid-editor">
+      <h3>📦 Box Configuration</h3>
+      <p class="hint">Only 5 boxes are available (one per collection). Click to edit challenges.</p>
+      <div class="editor-grid" id="editorGrid"></div>
+    </section>
+  </div>
+
+  <!-- Challenge Editor Modal -->
+  <div class="modal" id="challengeModal">
+    <div class="xp-window">
+      <div class="xp-window-header">
+        <span class="xp-window-title">📝 Edit Challenges for <span id="challengeBoxId"></span></span>
+      </div>
+      <div class="xp-window-body">
+        <div class="editor-field">
+          <label>Labubu Name</label>
+          <input type="text" id="challenge_labubuName" placeholder="Enter Labubu name">
+        </div>
+        <div class="editor-field">
+          <label>Character Image</label>
+          <select id="challenge_imagePath">
+            <option value="glenbubu-1.png">Glenbubu 1</option>
+            <option value="glenbubu-2.png">Glenbubu 2</option>
+            <option value="glenbubu-3.png">Glenbubu 3 (Mega)</option>
+            <option value="daft-tech.png">Daft Tech</option>
+            <option value="daft-harder.png">Daft Harder</option>
+            <option value="daft-5555.png">Daft 5555</option>
+          </select>
+        </div>
+        <div class="editor-field">
+          <label>Reveal Sound (optional)</label>
+          <select id="challenge_revealSound">
+            <option value="">Default reveal sound</option>
+            <option value="daft-tech.mp3">Daft Tech Sound</option>
+            <option value="daft-harder.mp3">Daft Harder Sound</option>
+            <option value="daft-5555.mp3">Daft 5555 Sound</option>
+          </select>
+        </div>
+        <div class="editor-field">
+          <label>Team Challenge Description</label>
+          <textarea id="challenge_teamChallenge" placeholder="Enter team challenge description"></textarea>
+        </div>
+        <div class="editor-field">
+          <label>Team Challenge Points</label>
+          <input type="number" id="challenge_teamPoints" placeholder="5000" step="100">
+        </div>
+        <div class="editor-field">
+          <label>3v3 Battle Description</label>
+          <textarea id="challenge_individualChallenge" placeholder="Enter 3v3 battle description"></textarea>
+        </div>
+        <div class="editor-field">
+          <label>3v3 Battle Points</label>
+          <input type="number" id="challenge_individualPoints" placeholder="1000" step="50">
+        </div>
+        <div class="editor-field">
+          <label>Card Type</label>
+          <select id="challenge_cardType">
+            <option value="regular">Regular</option>
+            <option value="bully">Labubu Bully</option>
+            <option value="mega">Mega Bubu</option>
+          </select>
+        </div>
+        <div class="editor-field" id="challenge_specialField" style="display:none">
+          <label>Special Message</label>
+          <textarea id="challenge_specialMessage" placeholder="Special card message"></textarea>
+        </div>
+        <div class="button-group" style="margin-top:8px">
+          <button class="xp-button primary" id="btnSaveChallenge">Save Challenges</button>
+          <button class="xp-button" id="btnCancelChallenge">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========= inline admin JS (Firebase + logic) ========= -->
+  <script type="module">
+    /* Firebase CDN */
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+    import {
+      getFirestore, collection, getDocs, doc, getDoc, updateDoc, setDoc, onSnapshot
+    } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+    // ---- config (from your repo) ----
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO21-40668WNpOdj2w",
+      authDomain: "c0uchz0mb13.firebaseapp.com",
+      projectId: "c0uchz0mb13",
+      storageBucket: "c0uchz0mb13.firebasestorage.app",
+      messagingSenderId: "1051521591004",
+      appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
+      measurementId: "G-6BNDYZQRPE"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    // ---- constants ----
+    const AVAILABLE_BOXES = [
+      'box-1','box-2','box-3','box-4','box-5',
+      'box-6','box-7','box-8','box-9','box-10',
+      'box-11','box-12','box-13','box-14','box-15',
+      'box-16','box-17','box-18','box-19','box-20',
+      'box-21','box-22','box-23','box-24','box-25'
+    ];
+    const DEFAULT_IMAGES = {
+      'box-1':'glenbubu-2.png',
+      'box-2':'glenbubu-2.png',
+      'box-3':'glenbubu-2.png',
+      'box-4':'glenbubu-2.png',
+      'box-5':'glenbubu-2.png',
+      'box-6':'glenbubu-2.png',
+      'box-7':'glenbubu-2.png',
+      'box-8':'glenbubu-2.png',
+      'box-9':'glenbubu-2.png',
+      'box-10':'glenbubu-2.png',
+      'box-11':'glenbubu-2.png',
+      'box-12':'glenbubu-2.png',
+      'box-13':'glenbubu-3.png', // Center mega box
+      'box-14':'glenbubu-2.png',
+      'box-15':'glenbubu-2.png',
+      'box-16':'glenbubu-2.png',
+      'box-17':'glenbubu-2.png',
+      'box-18':'glenbubu-2.png',
+      'box-19':'glenbubu-2.png',
+      'box-20':'glenbubu-2.png',
+      'box-21':'glenbubu-2.png',
+      'box-22':'glenbubu-2.png',
+      'box-23':'glenbubu-2.png',
+      'box-24':'glenbubu-2.png',
+      'box-25':'glenbubu-2.png'
+    };
+
+    // ---- auth helpers (standalone) ----
+    async function hashPassword(pw){
+      const enc = new TextEncoder().encode(pw);
+      const hash = await crypto.subtle.digest('SHA-256', enc);
+      return [...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+    const ADMIN_PASSWORD_HASH = 'f44d66d49ae0e7b1c90914f8a4276d0db4e419f43864750ddaf65ca177c88bf4';
+    function createSessionToken(){
+      const ts = Date.now(), rand = Math.random().toString(36).slice(2);
+      return btoa(`${ts}-${rand}-${ADMIN_PASSWORD_HASH.slice(0,8)}`);
+    }
+    function validateSession(tok){
+      try{
+        const [ts,,frag] = atob(tok).split('-');
+        if (!ts || frag !== ADMIN_PASSWORD_HASH.slice(0,8)) return false;
+        return (Date.now() - parseInt(ts,10)) < 24*60*60*1000;
+      }catch{ return false; }
+    }
+
+    // ---- UI el helpers ----
+    const $ = s => document.querySelector(s);
+    const $$ = s => [...document.querySelectorAll(s)];
+    const toast = (msg, ms=2200) => {
+      const el = $('#saveIndicator');
+      el.textContent = msg; el.style.display='block';
+      setTimeout(()=>{ el.style.display='none'; el.textContent='saved.'; }, ms);
+    };
+
+    // ---- auth flow ----
+    function showAuth(){ $('#authModal').style.display='block'; }
+    function hideAuth(){ $('#authModal').style.display='none'; }
+    function showPanel(){ $('#adminPanel').style.display='grid'; }
+
+    $('#authBtn').addEventListener('click', async ()=>{
+      const pw = $('#adminPassword').value.trim();
+      const h = await hashPassword(pw);
+      if (h === ADMIN_PASSWORD_HASH){
+        localStorage.setItem('blind_boss_session', createSessionToken());
+        hideAuth(); showPanel(); initializeAdmin();
+      }else{
+        $('#authError').textContent = 'wrong password. try harder.';
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const sess = localStorage.getItem('blind_boss_session');
+      if (sess && validateSession(sess)){ hideAuth(); showPanel(); initializeAdmin(); }
+      else showAuth();
+    });
+
+    // ---- render grid ----
+    function renderAdminGrid(){
+      const grid = $('#editorGrid'); 
+      let html='';
+      
+      // Create 5x5 grid
+      for(let i=1; i<=25; i++){
+        const id = `box-${i}`;
+        const isCenter = i === 13;
+        html += `
+        <div class="editor-box available ${isCenter?'center-box':''}" id="edit-${id}" data-box-id="${id}">
+          <img src="/assets/b04rd/glenbubu-1.png" style="width:100%;height:100%;object-fit:contain;${isCenter?'filter:hue-rotate(270deg);':''}">
+          <div class="status-badge" id="status-${id}" style="display:none"></div>
+        </div>`;
+      }
+      
+      grid.innerHTML = html;
+      
+      // bind clicks to open editor
+      AVAILABLE_BOXES.forEach(id=>{
+        const el = $(`#edit-${id}`);
+        if (el) el.addEventListener('click', ()=> openChallengeForBox(id));
+      });
+    }
+
+    // ---- state updaters ----
+    function updateBoxVisualState(boxId, data){
+      const box = $(`#edit-${boxId}`), badge = $(`#status-${boxId}`);
+      if (!box) return;
+      box.classList.remove('available','pending','opened','claimed','in-challenge','has-bully','has-mega');
+      const img = box.querySelector('img');
+
+      if (data?.status === 'pending'){
+        box.classList.add('pending'); 
+        badge.textContent = `PENDING${data.selectedBy?`: ${data.selectedBy}`:''}`; 
+        badge.className='status-badge pending'; 
+        badge.style.display='block'; 
+        if (img) img.style.opacity='1'; 
+        showPendingApproval(boxId,data);
+      } else if (data?.status === 'opened'){
+        box.classList.add('opened'); 
+        badge.textContent='OPENED'; 
+        badge.className='status-badge opened'; 
+        badge.style.display='block'; 
+        if (img) img.style.opacity='1'; 
+        if (window.currentPendingBox===boxId) hidePendingApproval();
+      } else if (data?.status === 'in_challenge' || data?.status === 'in-challenge'){
+        box.classList.add('in-challenge'); 
+        badge.textContent=`IN CHALLENGE: ${(data.challengeType||'').toUpperCase()}`; 
+        badge.className='status-badge in-challenge'; 
+        badge.style.display='block'; 
+        if (img) img.style.opacity='1'; 
+        if (typeof refreshWinnerSelect==='function') refreshWinnerSelect(); 
+        if (window.currentPendingBox===boxId) hidePendingApproval();
+      } else if (data?.status === 'claimed'){
+        box.classList.add('claimed'); 
+        badge.textContent=`CLAIMED${data.claimedBy?`: ${data.claimedBy}`:''}`; 
+        badge.className='status-badge claimed'; 
+        badge.style.display='block'; 
+        if (img) img.style.opacity='0.5'; 
+        if (window.currentPendingBox===boxId) hidePendingApproval();
+      } else {
+        box.classList.add('available'); 
+        badge.textContent='ACTIVE'; 
+        badge.className='status-badge active'; 
+        badge.style.display='block'; 
+        if (img) img.style.opacity='1'; 
+        if (window.currentPendingBox===boxId) hidePendingApproval();
+      }
+      if (data?.cardType==='bully') box.classList.add('has-bully');
+      else if (data?.cardType==='mega') box.classList.add('has-mega');
+    }
+
+    async function loadAllBoxStates(){
+      const snap = await getDocs(collection(db,'blindBoxes'));
+      let hasPending=false;
+      snap.forEach(d=>{
+        const id=d.id, data=d.data();
+        if (AVAILABLE_BOXES.includes(id)){
+          updateBoxVisualState(id,data);
+          if (data.status==='pending') hasPending=true;
         }
+      });
+      if (!hasPending) hidePendingApproval();
+    }
 
-        // Enhanced admin initialization with real-time updates
-        window.initializeAdmin = async function() {
-            console.log('Initializing admin panel...');
-            
-            // Generate editor grid
-            renderAdminGrid();
-            
-            // Set up real-time listeners for all boxes
-            if (window.db && window.onSnapshot && window.collection) {
-                console.log('Setting up real-time listeners...');
-                const boxesRef = window.collection(window.db, 'blindBoxes');
-                
-                window.unsubscribeBoxes = window.onSnapshot(boxesRef, (snapshot) => {
-                    console.log('Received box updates:', snapshot.docChanges().length);
-                    snapshot.docChanges().forEach((change) => {
-                        const boxId = change.doc.id;
-                        const data = change.doc.data();
-                        console.log(`Box ${boxId} ${change.type}:`, data.status);
-                        
-                        // Update the visual state of the box in the admin panel
-                        updateBoxVisualState(boxId, data);
-                    });
-                    
-                    // Update stats after changes
-                    updateGameStats();
-                });
-            }
-            
-            // Load initial state
-            await loadAllBoxStates();
-            
-            // Update stats
-            updateGameStats();
+    async function updateGameStats(){
+      const snap = await getDocs(collection(db,'blindBoxes'));
+      let available=0, opened=0, pending=0, claimed=0, inChallenge=0;
+      snap.forEach(d=>{
+        const id=d.id, data=d.data();
+        if (!AVAILABLE_BOXES.includes(id)) return;
+        if (!data.status || data.status==='available') available++;
+        else if (data.status==='opened') opened++;
+        else if (data.status==='pending') pending++;
+        else if (data.status==='claimed') claimed++;
+        else if (data.status==='in_challenge' || data.status==='in-challenge') inChallenge++;
+      });
+      $('#boxesAvailable').textContent = `${available}/5`;
+      $('#boxesPending').textContent = pending;
+      $('#boxesOpened').textContent = `${opened+claimed}/5`;
+
+      const scoresDoc = await getDoc(doc(db,'gameState','scores'));
+      if (scoresDoc.exists()){
+        const s=scoresDoc.data();
+        $('#team1Score').textContent = s.team1||0;
+        $('#team2Score').textContent = s.team2||0;
+      }
+    }
+
+    // ---- pending controls ----
+    function showPendingApproval(boxId, data){
+      window.currentPendingBox = boxId;
+      $('#pendingApprovalSection').style.display='block';
+      $('#pendingBoxId').textContent = boxId;
+      $('#pendingSelectedBy').textContent = data?.selectedBy || 'Unknown';
+      $('#pendingTeam').textContent = data?.selectedTeam || 'Unknown';
+      if (data?.selectedAt){
+        const t = new Date(data.selectedAt);
+        $('#pendingTime').textContent = t.toLocaleTimeString();
+      }
+    }
+    function hidePendingApproval(){ 
+      $('#pendingApprovalSection').style.display='none'; 
+      window.currentPendingBox=null; 
+    }
+
+    $('#btnApprove').addEventListener('click', approveSelection);
+    $('#btnReject').addEventListener('click', rejectSelection);
+
+    async function approveSelection(){
+      const boxId = window.currentPendingBox;
+      if (!boxId) return alert('No pending selection to approve.');
+      const ds = await getDoc(doc(db,'blindBoxes',boxId));
+      if (!ds.exists()) return alert('Box not found.');
+      const payload = ds.data();
+
+      await updateDoc(doc(db,'blindBoxes',boxId), {
+        status:'opened', 
+        openedAt:new Date().toISOString(), 
+        approvedBy:'admin', 
+        lastUpdated:new Date().toISOString()
+      });
+      await setDoc(doc(db,'gameState','current'), {
+        selectedBox: boxId, 
+        status:'revealing', 
+        revealData: payload, 
+        revealedAt:new Date().toISOString()
+      }, { merge:true });
+
+      toast('Box approved and revealed!');
+      hidePendingApproval();
+    }
+
+    async function rejectSelection(){
+      const boxId = window.currentPendingBox;
+      if (!boxId) return alert('No pending selection to reject.');
+      if (!confirm(`Reject selection for ${boxId}?`)) return;
+
+      await updateDoc(doc(db,'blindBoxes',boxId), {
+        status:'available', 
+        selectedBy:null, 
+        selectedAt:null, 
+        selectedTeam:null,
+        rejectedBy:'admin', 
+        rejectedAt:new Date().toISOString(), 
+        lastUpdated:new Date().toISOString()
+      });
+      await setDoc(doc(db,'gameState','current'), {
+        selectedBox:null, 
+        status:'waiting', 
+        rejectionMessage: 'Selection rejected. Try again.',
+        lastUpdated:new Date().toISOString()
+      }, { merge:true });
+
+      toast('Selection rejected.');
+      hidePendingApproval();
+    }
+
+    // ---- turn control ----
+    $('[data-turn="team-1"]').addEventListener('click', ()=> setTurn('team-1'));
+    $('[data-turn="team-2"]').addEventListener('click', ()=> setTurn('team-2'));
+    $('[data-turn=""]').addEventListener('click', ()=> setTurn(null));
+
+    async function setTurn(teamOrNull){
+      await setDoc(doc(db,'gameState','current'), {
+        currentTurn: teamOrNull || null, 
+        lastUpdated:new Date().toISOString()
+      }, { merge:true });
+      toast(teamOrNull ? `Turn set to ${teamOrNull}` : 'Turn cleared');
+    }
+
+    // live turn label
+    onSnapshot(doc(db,'gameState','current'), snap=>{
+      const d = snap.exists()?snap.data():{};
+      $('#adminCurrentTurn').textContent = d.currentTurn ? d.currentTurn.toUpperCase() : '—';
+    });
+
+    // ---- winner selection ----
+    async function refreshWinnerSelect(){
+      const sel = $('#winnerBoxSelect'); if (!sel) return;
+      const snap = await getDocs(collection(db,'blindBoxes'));
+      const opts=[];
+      snap.forEach(s=>{
+        const id=s.id, data=s.data();
+        if (data.status==='in_challenge' || data.status==='in-challenge') 
+          opts.push({id,label:`${id} (${data.challengeType||'?'})`});
+      });
+      sel.innerHTML = opts.length ? opts.map(o=>`<option value="${o.id}">${o.label}</option>`).join('') : `<option value="">— none —</option>`;
+    }
+    window.refreshWinnerSelect = refreshWinnerSelect; // expose for updateBoxVisualState
+    document.addEventListener('DOMContentLoaded', refreshWinnerSelect);
+    onSnapshot(collection(db,'blindBoxes'), refreshWinnerSelect);
+
+    $('[data-win="team-1"]').addEventListener('click', ()=> assignWinner('team-1'));
+    $('[data-win="team-2"]').addEventListener('click', ()=> assignWinner('team-2'));
+
+    async function assignWinner(team){
+      const sel = $('#winnerBoxSelect');
+      if (!sel || !sel.value) return alert('Pick a box in challenge.');
+      const boxId = sel.value;
+      const ds = await getDoc(doc(db,'blindBoxes',boxId));
+      if (!ds.exists()) return alert('Box not found.');
+      const data = ds.data();
+      const pts = data.points || (data.challengeType==='team'? (data.teamPoints||5000) : (data.individualPoints||1000));
+
+      await updateDoc(doc(db,'blindBoxes',boxId), { 
+        status:'claimed', 
+        claimedBy:team, 
+        claimedAt:new Date().toISOString() 
+      });
+
+      const scoresRef = doc(db,'gameState','scores');
+      const scoresSnap = await getDoc(scoresRef);
+      const curr = scoresSnap.exists()?scoresSnap.data():{};
+      await setDoc(scoresRef, {
+        team1: team==='team-1' ? (curr.team1||0)+pts : (curr.team1||0),
+        team2: team==='team-2' ? (curr.team2||0)+pts : (curr.team2||0),
+        lastUpdated:new Date().toISOString()
+      }, { merge:true });
+
+      await setDoc(doc(db,'gameState','current'), {
+        selectedBox:null, 
+        challengeSelected:null, 
+        status:'waiting', 
+        lastUpdated:new Date().toISOString()
+      }, { merge:true });
+
+      refreshWinnerSelect(); 
+      updateGameStats();
+      toast(`Awarded ${pts} to ${team.toUpperCase()}`);
+    }
+
+    // ---- editor modal ----
+    let currentChallengeBox = null;
+
+    function openChallengeForBox(boxId){
+      currentChallengeBox = boxId;
+      $('#challengeBoxId').textContent = boxId;
+      $('#challengeModal').style.display='block';
+      $('#challenge_imagePath').value = DEFAULT_IMAGES[boxId] || 'glenbubu-2.png';
+      loadChallengeData(boxId);
+    }
+    $('#btnOpenEditor').addEventListener('click', ()=>{
+      alert('Click one of the green boxes to edit challenges.');
+    });
+    $('#btnCancelChallenge').addEventListener('click', ()=> { 
+      $('#challengeModal').style.display='none'; 
+      currentChallengeBox=null; 
+    });
+    $('#challenge_cardType').addEventListener('change', ()=>{
+      $('#challenge_specialField').style.display = 
+        ($('#challenge_cardType').value==='bully' || $('#challenge_cardType').value==='mega') ? 'block' : 'none';
+    });
+    $('#btnSaveChallenge').addEventListener('click', saveChallenges);
+
+    async function loadChallengeData(boxId){
+      const ref = doc(db,'blindBoxes',boxId);
+      const snap = await getDoc(ref);
+      if (snap.exists()){
+        const d = snap.data();
+        $('#challenge_labubuName').value = d.characterName || d.labubuName || d.name || '';
+        $('#challenge_imagePath').value = d.imagePath || d.image || DEFAULT_IMAGES[boxId] || '';
+        $('#challenge_revealSound').value = d.revealSound || '';
+        $('#challenge_teamChallenge').value = d.teamChallenge || '';
+        $('#challenge_teamPoints').value = d.teamPoints || 5000;
+        $('#challenge_individualChallenge').value = d.individualChallenge || '';
+        $('#challenge_individualPoints').value = d.individualPoints || 1000;
+        $('#challenge_cardType').value = d.cardType || 'regular';
+        $('#challenge_specialMessage').value = d.specialMessage || '';
+        $('#challenge_specialField').style.display = (d.cardType==='bully' || d.cardType==='mega') ? 'block' : 'none';
+      } else {
+        $('#challenge_labubuName').value = '';
+        $('#challenge_imagePath').value = DEFAULT_IMAGES[boxId] || '';
+        $('#challenge_revealSound').value = '';
+        $('#challenge_teamChallenge').value = '';
+        $('#challenge_teamPoints').value = 5000;
+        $('#challenge_individualChallenge').value = '';
+        $('#challenge_individualPoints').value = 1000;
+        $('#challenge_cardType').value = 'regular';
+        $('#challenge_specialMessage').value = '';
+        $('#challenge_specialField').style.display = 'none';
+      }
+    }
+
+    async function saveChallenges(){
+      if (!currentChallengeBox) return;
+      const data = {
+        characterName: $('#challenge_labubuName').value.trim(),
+        labubuName: $('#challenge_labubuName').value.trim(), // Keep both for compatibility
+        imagePath: $('#challenge_imagePath').value,
+        revealSound: $('#challenge_revealSound').value,
+        teamChallenge: $('#challenge_teamChallenge').value.trim(),
+        teamPoints: parseInt($('#challenge_teamPoints').value||'5000',10),
+        individualChallenge: $('#challenge_individualChallenge').value.trim(),
+        individualPoints: parseInt($('#challenge_individualPoints').value||'1000',10),
+        cardType: $('#challenge_cardType').value,
+        specialMessage: $('#challenge_specialMessage').value.trim(),
+        status: 'available',
+        lastUpdated: new Date().toISOString()
+      };
+      await setDoc(doc(db,'blindBoxes',currentChallengeBox), data, { merge:true });
+      toast('Saved challenge'); 
+      $('#challengeModal').style.display='none'; 
+      currentChallengeBox=null;
+    }
+
+    // ---- board tools ----
+    $('#btnReset').addEventListener('click', async ()=>{
+      if (!confirm('Reset all boxes to available?')) return;
+      const snap = await getDocs(collection(db,'blindBoxes'));
+      for (const d of snap.docs){
+        if (AVAILABLE_BOXES.includes(d.id)){
+          await updateDoc(doc(db,'blindBoxes',d.id), {
+            status:'available', 
+            selectedBy:null, 
+            selectedAt:null, 
+            selectedTeam:null,
+            claimedBy:null, 
+            lastUpdated:new Date().toISOString()
+          });
         }
+      }
+      await setDoc(doc(db,'gameState','current'), {
+        status:'waiting', 
+        selectedBox:null, 
+        currentTurn:null,
+        lastUpdated:new Date().toISOString()
+      }, { merge:true });
+      toast('Board reset'); 
+      updateGameStats();
+    });
 
-        // Function to render the admin grid
-        window.renderAdminGrid = function() {
-            const editorGrid = document.getElementById('editorGrid');
-            if (!editorGrid) return;
-            
-            let gridHTML = '';
-            const collections = [
-                { name: 'christmas', count: 5 },
-                { name: 'coke', count: 5 },
-                { name: 'energy', count: 5 },
-                { name: 'mart', count: 5 },
-                { name: 'sports', count: 5 }
-            ];
-            
-            collections.forEach(collection => {
-                for (let i = 1; i <= collection.count; i++) {
-                    const boxId = `${collection.name}-${i}`;
-                    const isAvailable = AVAILABLE_BOXES.includes(boxId);
-                    
-                    gridHTML += `
-                        <div class="editor-box ${isAvailable ? 'available' : 'unavailable'}" 
-                             id="edit-${boxId}" 
-                             onclick="${isAvailable ? `openChallengeForBox('${boxId}')` : ''}"
-                             data-box-id="${boxId}">
-                            <img src="/assets/b04rd/labubu-box-${collection.name}.png" 
-                                 style="width: 100%; height: 100%; object-fit: contain; opacity: ${isAvailable ? '1' : '0.3'};">
-                            <div class="status-badge" id="status-${boxId}" style="display: none;"></div>
-                        </div>
-                    `;
-                }
-            });
-            
-            editorGrid.innerHTML = gridHTML;
+    $('#btnClearScores').addEventListener('click', async ()=>{
+      if (!confirm('Clear all team scores?')) return;
+      await setDoc(doc(db,'gameState','scores'), { 
+        team1:0, 
+        team2:0, 
+        lastUpdated:new Date().toISOString() 
+      });
+      toast('Scores cleared'); 
+      updateGameStats();
+    });
+
+    $('#btnClearPending').addEventListener('click', async ()=>{
+      if (!confirm('Clear all pending selections?')) return;
+      const snap = await getDocs(collection(db,'blindBoxes')); 
+      let n=0;
+      for (const d of snap.docs){
+        const data=d.data();
+        if (data.status==='pending'){
+          await updateDoc(doc(db,'blindBoxes',d.id), {
+            status:'available', 
+            selectedBy:null, 
+            selectedAt:null, 
+            selectedTeam:null,
+            lastUpdated:new Date().toISOString()
+          });
+          n++;
         }
+      }
+      toast(`Cleared ${n} pending`);
+    });
 
-        // Function to update box visual state
-        window.updateBoxVisualState = function(boxId, data) {
-            const editorBox = document.getElementById(`edit-${boxId}`);
-            const statusBadge = document.getElementById(`status-${boxId}`);
-            
-            if (!editorBox || !AVAILABLE_BOXES.includes(boxId)) return;
-            
-            // Remove all state classes
-            editorBox.classList.remove('available', 'pending', 'opened', 'claimed', 'has-bully', 'has-mega');
-            
-            // Update box image opacity
-            const boxImg = editorBox.querySelector('img');
-            
-            // Add appropriate class based on status
-            if (data.status === 'pending') {
-                editorBox.classList.add('pending');
-                statusBadge.textContent = data.selectedBy ? `PENDING: ${data.selectedBy}` : 'PENDING';
-                statusBadge.className = 'status-badge pending';
-                statusBadge.style.display = 'block';
-                if (boxImg) boxImg.style.opacity = '1';
-            } else if (data.status === 'opened') {
-                editorBox.classList.add('opened');
-                statusBadge.textContent = 'OPENED';
-                statusBadge.className = 'status-badge opened';
-                statusBadge.style.display = 'block';
-                if (boxImg) boxImg.style.opacity = '1';
-            } else if (data.status === 'claimed') {
-                editorBox.classList.add('claimed');
-                statusBadge.textContent = `CLAIMED: ${data.claimedBy || 'Unknown'}`;
-                statusBadge.className = 'status-badge claimed';
-                statusBadge.style.display = 'block';
-                if (boxImg) boxImg.style.opacity = '0.5';
-            } else if (data.status === 'available' || !data.status) {
-                editorBox.classList.add('available');
-                statusBadge.textContent = 'ACTIVE';
-                statusBadge.className = 'status-badge active';
-                statusBadge.style.display = 'block';
-                if (boxImg) boxImg.style.opacity = '1';
-            }
-            
-            // Add special card indicators
-            if (data.cardType === 'bully') {
-                editorBox.classList.add('has-bully');
-            } else if (data.cardType === 'mega') {
-                editorBox.classList.add('has-mega');
-            }
-        }
+    $('#btnExport').addEventListener('click', async ()=>{
+      const out = { boxes:{}, scores:{}, gameState:{}, timestamp:new Date().toISOString() };
+      const boxSnap = await getDocs(collection(db,'blindBoxes'));
+      boxSnap.forEach(d=> out.boxes[d.id]=d.data());
+      const scoresSnap = await getDoc(doc(db,'gameState','scores'));
+      if (scoresSnap.exists()) out.scores=scoresSnap.data();
+      const gsSnap = await getDoc(doc(db,'gameState','current'));
+      if (gsSnap.exists()) out.gameState=gsSnap.data();
+      const blob = new Blob([JSON.stringify(out,null,2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob); 
+      const a=document.createElement('a');
+      a.href=url; 
+      a.download=`blind-boss-state-${Date.now()}.json`; 
+      a.click(); 
+      URL.revokeObjectURL(url);
+    });
 
-        // Function to load all box states
-        window.loadAllBoxStates = async function() {
-            if (!window.db || !window.getDocs || !window.collection) {
-                console.error('Firebase not initialized properly');
-                return;
-            }
-            
-            try {
-                const querySnapshot = await window.getDocs(window.collection(window.db, 'blindBoxes'));
-                console.log(`Loading ${querySnapshot.size} box states...`);
-                
-                querySnapshot.forEach((doc) => {
-                    const boxId = doc.id;
-                    const data = doc.data();
-                    updateBoxVisualState(boxId, data);
-                });
-            } catch (error) {
-                console.error('Error loading box states:', error);
-            }
-        }
+    $('#btnApplySpecial').addEventListener('click', ()=>{
+      alert('Select a green box then use the editor to set special properties.');
+    });
 
-        // Function to update game statistics
-        window.updateGameStats = async function() {
-            if (!window.db || !window.getDocs || !window.collection) return;
-            
-            try {
-                const querySnapshot = await window.getDocs(window.collection(window.db, 'blindBoxes'));
-                
-                let availableCount = 0;
-                let openedCount = 0;
-                let pendingCount = 0;
-                let claimedCount = 0;
-                
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const boxId = doc.id;
-                    
-                    if (AVAILABLE_BOXES.includes(boxId)) {
-                        if (!data.status || data.status === 'available') availableCount++;
-                        else if (data.status === 'opened') openedCount++;
-                        else if (data.status === 'pending') pendingCount++;
-                        else if (data.status === 'claimed') claimedCount++;
-                    }
-                });
-                
-                // Update display
-                document.getElementById('boxesAvailable').textContent = `${availableCount}/5`;
-                document.getElementById('boxesPending').textContent = pendingCount;
-                document.getElementById('boxesOpened').textContent = `${openedCount + claimedCount}/5`;
-                
-                // Get team scores from Firebase
-                if (window.getDoc && window.doc) {
-                    try {
-                        const scoresDoc = await window.getDoc(window.doc(window.db, 'gameState', 'scores'));
-                        if (scoresDoc.exists()) {
-                            const scores = scoresDoc.data();
-                            document.getElementById('team1Score').textContent = scores.team1 || 0;
-                            document.getElementById('team2Score').textContent = scores.team2 || 0;
-                        }
-                    } catch (error) {
-                        console.error('Error loading scores:', error);
-                    }
-                }
-                
-            } catch (error) {
-                console.error('Error updating stats:', error);
-            }
-        }
-
-        // Clear pending selections
-        window.clearPendingSelections = async function() {
-            if (!window.db || !window.getDocs || !window.collection || !window.updateDoc || !window.doc) {
-                alert('Firebase not properly initialized');
-                return;
-            }
-            
-            if (!confirm('Clear all pending selections and reset them to available?')) return;
-            
-            try {
-                const querySnapshot = await window.getDocs(window.collection(window.db, 'blindBoxes'));
-                let clearedCount = 0;
-                
-                for (const docSnap of querySnapshot.docs) {
-                    const data = docSnap.data();
-                    if (data.status === 'pending') {
-                        await window.updateDoc(window.doc(window.db, 'blindBoxes', docSnap.id), {
-                            status: 'available',
-                            selectedBy: null,
-                            selectedAt: null,
-                            lastUpdated: new Date().toISOString()
-                        });
-                        clearedCount++;
-                    }
-                }
-                
-                alert(`Cleared ${clearedCount} pending selections`);
-            } catch (error) {
-                console.error('Error clearing pending selections:', error);
-                alert('Failed to clear pending selections');
-            }
-        }
-
-        // Challenge editing functions
-        window.openChallengeForBox = function(boxId) {
-            window.currentChallengeBox = boxId;
-            document.getElementById('challengeBoxId').textContent = boxId;
-            document.getElementById('challengeModal').style.display = 'block';
-            
-            // Set default image for this box
-            const defaultImage = LABUBU_IMAGES[boxId];
-            if (defaultImage) {
-                document.getElementById('challenge_imagePath').value = defaultImage;
-            }
-            
-            // Load existing challenge data if available
-            loadChallengeData(boxId);
-        }
-
-        window.openChallengeEditor = function() {
-            alert('Click on any of the 5 active (green) boxes to edit their challenges');
-        }
-
-        window.closeChallengeModal = function() {
-            document.getElementById('challengeModal').style.display = 'none';
-            window.currentChallengeBox = null;
-        }
-
-        window.toggleSpecialMessage = function() {
-            const cardType = document.getElementById('challenge_cardType').value;
-            const specialField = document.getElementById('challenge_specialField');
-            
-            if (cardType === 'bully') {
-                specialField.style.display = 'block';
-            } else {
-                specialField.style.display = 'none';
-            }
-        }
-
-        window.saveChallenges = async function() {
-            if (!window.currentChallengeBox) return;
-            
-            const challengeData = {
-                labubuName: document.getElementById('challenge_labubuName').value,
-                imagePath: document.getElementById('challenge_imagePath').value,
-                teamChallenge: document.getElementById('challenge_teamChallenge').value,
-                teamPoints: parseInt(document.getElementById('challenge_teamPoints').value) || 5000,
-                individualChallenge: document.getElementById('challenge_individualChallenge').value,
-                individualPoints: parseInt(document.getElementById('challenge_individualPoints').value) || 1000,
-                cardType: document.getElementById('challenge_cardType').value,
-                specialMessage: document.getElementById('challenge_specialMessage').value,
-                status: 'available',
-                lastUpdated: new Date().toISOString()
-            };
-            
-            try {
-                // Save to Firebase
-                if (window.db && window.setDoc && window.doc) {
-                    await window.setDoc(window.doc(window.db, 'blindBoxes', window.currentChallengeBox), challengeData);
-                    
-                    console.log('Saved challenge data:', challengeData);
-                    
-                    // Show save indicator
-                    document.getElementById('saveIndicator').style.display = 'block';
-                    setTimeout(() => {
-                        document.getElementById('saveIndicator').style.display = 'none';
-                    }, 2000);
-                    
-                    closeChallengeModal();
-                } else {
-                    alert('Firebase not properly initialized');
-                }
-            } catch (error) {
-                console.error('Error saving challenges:', error);
-                alert('Failed to save challenges. Check console for details.');
-            }
-        }
-
-        window.loadChallengeData = async function(boxId) {
-            // Load from Firebase if available
-            if (window.db && window.getDoc && window.doc) {
-                try {
-                    const docRef = window.doc(window.db, 'blindBoxes', boxId);
-                    const docSnap = await window.getDoc(docRef);
-                    
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        document.getElementById('challenge_labubuName').value = data.labubuName || '';
-                        document.getElementById('challenge_imagePath').value = data.imagePath || LABUBU_IMAGES[boxId] || '';
-                        document.getElementById('challenge_teamChallenge').value = data.teamChallenge || '';
-                        document.getElementById('challenge_teamPoints').value = data.teamPoints || 5000;
-                        document.getElementById('challenge_individualChallenge').value = data.individualChallenge || '';
-                        document.getElementById('challenge_individualPoints').value = data.individualPoints || 1000;
-                        document.getElementById('challenge_cardType').value = data.cardType || 'regular';
-                        document.getElementById('challenge_specialMessage').value = data.specialMessage || '';
-                        
-                        toggleSpecialMessage();
-                    } else {
-                        // Set defaults for new box
-                        document.getElementById('challenge_labubuName').value = '';
-                        document.getElementById('challenge_imagePath').value = LABUBU_IMAGES[boxId] || '';
-                        document.getElementById('challenge_teamChallenge').value = '';
-                        document.getElementById('challenge_teamPoints').value = 5000;
-                        document.getElementById('challenge_individualChallenge').value = '';
-                        document.getElementById('challenge_individualPoints').value = 1000;
-                        document.getElementById('challenge_cardType').value = 'regular';
-                        document.getElementById('challenge_specialMessage').value = '';
-                        toggleSpecialMessage();
-                    }
-                } catch (error) {
-                    console.error('Error loading challenge data:', error);
-                }
-            }
-        }
-
-        // Additional admin functions (stubs for missing functions referenced in HTML)
-        window.resetBoard = async function() {
-            if (!confirm('Reset all boxes to available state? This will clear all progress!')) return;
-            
-            try {
-                const querySnapshot = await window.getDocs(window.collection(window.db, 'blindBoxes'));
-                
-                for (const docSnap of querySnapshot.docs) {
-                    if (AVAILABLE_BOXES.includes(docSnap.id)) {
-                        await window.updateDoc(window.doc(window.db, 'blindBoxes', docSnap.id), {
-                            status: 'available',
-                            selectedBy: null,
-                            selectedAt: null,
-                            claimedBy: null,
-                            lastUpdated: new Date().toISOString()
-                        });
-                    }
-                }
-                
-                alert('Board reset successfully');
-            } catch (error) {
-                console.error('Error resetting board:', error);
-                alert('Failed to reset board');
-            }
-        }
-
-        window.clearTeamScores = async function() {
-            if (!confirm('Clear all team scores?')) return;
-            
-            try {
-                await window.setDoc(window.doc(window.db, 'gameState', 'scores'), {
-                    team1: 0,
-                    team2: 0,
-                    lastUpdated: new Date().toISOString()
-                });
-                
-                alert('Team scores cleared');
-                updateGameStats();
-            } catch (error) {
-                console.error('Error clearing scores:', error);
-                alert('Failed to clear scores');
-            }
-        }
-
-        window.exportGameState = async function() {
-            try {
-                const gameState = {
-                    boxes: {},
-                    scores: {},
-                    timestamp: new Date().toISOString()
-                };
-                
-                // Get all box states
-                const boxSnapshot = await window.getDocs(window.collection(window.db, 'blindBoxes'));
-                boxSnapshot.forEach(doc => {
-                    gameState.boxes[doc.id] = doc.data();
-                });
-                
-                // Get scores
-                const scoresDoc = await window.getDoc(window.doc(window.db, 'gameState', 'scores'));
-                if (scoresDoc.exists()) {
-                    gameState.scores = scoresDoc.data();
-                }
-                
-                // Download as JSON
-                const blob = new Blob([JSON.stringify(gameState, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `blind-boss-state-${Date.now()}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-            } catch (error) {
-                console.error('Error exporting game state:', error);
-                alert('Failed to export game state');
-            }
-        }
-
-        window.applySpecialCard = function() {
-            alert('Select a box first by clicking on it, then use the challenge editor to set special card properties');
-        }
-
-        // Clean up listeners when leaving admin panel
-        window.addEventListener('beforeunload', () => {
-            if (window.unsubscribeBoxes) {
-                window.unsubscribeBoxes();
-            }
+    // ---- listeners ----
+    function initializeAdmin(){
+      renderAdminGrid();
+      // boxes realtime
+      onSnapshot(collection(db,'blindBoxes'), (snap)=>{
+        snap.docChanges().forEach(ch=>{
+          const id=ch.doc.id, data=ch.doc.data();
+          if (AVAILABLE_BOXES.includes(id)) updateBoxVisualState(id,data);
         });
+        updateGameStats();
+      });
+      // game state realtime (turn updates handled above)
+      loadAllBoxStates(); 
+      updateGameStats();
+    }
 
-        // Initialize on page load if already authenticated
-        document.addEventListener('DOMContentLoaded', () => {
-            const session = localStorage.getItem('blind_boss_session');
-            if (session && window.validateSession && window.validateSession(session)) {
-                document.getElementById('authModal').style.display = 'none';
-                document.getElementById('adminPanel').style.display = 'grid';
-                window.initializeAdmin();
-            }
-        });
-    </script>
+  </script>
 </body>
 </html>
