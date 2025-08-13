@@ -1,21 +1,21 @@
-// character.js - PLAYPEN STYLE WITH DRAG & DROP
+// character.js - INTERNET OLYMPICS 2 Character Portal
+
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
 import { 
     getFirestore, 
     collection, 
     getDocs, 
     doc, 
-    getDoc, 
-    setDoc,
+    getDoc,
     updateDoc,
     addDoc,
-    deleteDoc,
+    onSnapshot,
     query,
     where,
-    onSnapshot
+    orderBy
 } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
-// Firebase configuration (keeping your existing)
+// Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO21-40668WNpOdj2w",
     authDomain: "c0uchz0mb13.firebaseapp.com",
@@ -26,678 +26,11 @@ const firebaseConfig = {
     measurementId: "G-6BNDYZQRPE"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Global state
-const state = {
-    currentUser: null,
-    currentAccessCode: null,
-    allUsers: [],
-    cart: {},
-    draggedPlayer: null,
-    draggedElement: null,
-    dragOffset: null,
-    teamTotals: { HOT: 0, COLD: 0 },
-    lastModNote: null
-};
-
-// Initialize
-document.addEventListener('DOMContentLoaded', init);
-
-async function init() {
-    console.log('Initializing Playpen...');
-    setupEventListeners();
-    loadRandomBackground();
-    
-    // Try to restore session
-    const savedCode = sessionStorage.getItem('accessCode');
-    if (savedCode) {
-        await attemptAutoLogin(savedCode);
-    }
-}
-
-// Load random background (from companies.html)
-function loadRandomBackground() {
-    const backgrounds = [
-        { file: 'game-bg-1.jpg', weight: 3 },
-        { file: 'game-bg-2.jpg', weight: 3 },
-        { file: 'game-bg-3.jpg', weight: 2 },
-        { file: 'game-bg-4.jpg', weight: 1 },
-        { file: 'game-bg-5.jpg', weight: 1 }
-    ];
-    
-    const totalWeight = backgrounds.reduce((sum, bg) => sum + bg.weight, 0);
-    let random = Math.random() * totalWeight;
-    let selectedBg = backgrounds[0].file;
-    
-    for (const bg of backgrounds) {
-        random -= bg.weight;
-        if (random <= 0) {
-            selectedBg = bg.file;
-            break;
-        }
-    }
-    
-    const liminalBg = document.querySelector('.liminal-bg');
-    if (liminalBg) {
-        liminalBg.style.backgroundImage = `url('../assets/backgrounds/${selectedBg}')`;
-    }
-}
-
-// Event Listeners
-function setupEventListeners() {
-    // Login
-    const validateBtn = document.getElementById('validateCodeBtn');
-    const codeInput = document.getElementById('accessCodeInput');
-    
-    if (validateBtn) {
-        validateBtn.addEventListener('click', validateAccessCode);
-    }
-    
-    if (codeInput) {
-        codeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') validateAccessCode();
-        });
-    }
-    
-    // Navigation
-    document.getElementById('rulesBtn')?.addEventListener('click', () => {
-        showToast('rules coming soon... or not');
-    });
-    
-    // Profile & Shop
-    document.getElementById('myProfileBtn')?.addEventListener('click', showMyProfile);
-    document.getElementById('weaponsShopBtn')?.addEventListener('click', openWeaponsShop);
-    
-    // Modal controls
-    document.getElementById('closeProfileBtn')?.addEventListener('click', closeProfileModal);
-    document.getElementById('closeWeaponsBtn')?.addEventListener('click', closeWeaponsModal);
-    
-    // Weapons shop
-    document.getElementById('getMoreWeaponsBtn')?.addEventListener('click', openWeaponsShop);
-    document.getElementById('checkoutWeaponsBtn')?.addEventListener('click', checkoutWeapons);
-    document.getElementById('cancelShopBtn')?.addEventListener('click', closeWeaponsModal);
-    
-    // Setup zones
-    setupZones();
-}
-
-// Setup drop zones
-function setupZones() {
-    const zones = document.querySelectorAll('.zone');
-    
-    zones.forEach(zone => {
-        zone.addEventListener('dragover', handleDragOver);
-        zone.addEventListener('drop', handleDrop);
-        zone.addEventListener('dragleave', handleDragLeave);
-    });
-    
-    // Playpen container for dragging back
-    const playpen = document.getElementById('playpenContainer');
-    if (playpen) {
-        playpen.addEventListener('dragover', handleDragOver);
-        playpen.addEventListener('drop', handleDropToPlaypen);
-    }
-}
-
-// Authentication (keeping your existing)
-async function validateAccessCode() {
-    const input = document.getElementById('accessCodeInput');
-    const code = input.value.trim().toUpperCase();
-    
-    if (!code) {
-        showError('type something first');
-        return;
-    }
-    
-    console.log('Validating code:', code);
-    
-    try {
-        const userDoc = await getDoc(doc(db, 'users', code));
-        
-        if (!userDoc.exists()) {
-            showError('wrong code. dm the mod if ur lost');
-            return;
-        }
-        
-        const userData = userDoc.data();
-        
-        if (userData.status === 'blocked') {
-            showError('ur blocked 🚫 talk 2 the mod');
-            return;
-        }
-        
-        if (userData.status === 'dead') {
-            showToast('ur dead but u can still watch 💀');
-        }
-        
-        state.currentUser = { id: code, ...userData };
-        state.currentAccessCode = code;
-        sessionStorage.setItem('accessCode', code);
-        
-        console.log('Login successful:', state.currentUser);
-        await enterLeaderboard();
-        
-    } catch (error) {
-        console.error('Login error:', error);
-        showError('something broke. try again');
-    }
-}
-
-async function attemptAutoLogin(code) {
-    try {
-        const userDoc = await getDoc(doc(db, 'users', code));
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
-            if (userData.status !== 'blocked') {
-                state.currentUser = { id: code, ...userData };
-                state.currentAccessCode = code;
-                await enterLeaderboard();
-            }
-        }
-    } catch (error) {
-        console.error('Auto-login failed:', error);
-        sessionStorage.clear();
-    }
-}
-
-// Enter Leaderboard
-async function enterLeaderboard() {
-    document.getElementById('accessScreen').style.display = 'none';
-    document.getElementById('leaderboardView').style.display = 'block';
-    
-    // Start music (soft)
-    const music = document.getElementById('bgMusic');
-    if (music) {
-        music.volume = 0.2;
-        music.play().catch(() => {
-            document.addEventListener('click', () => {
-                music.play().catch(() => {});
-            }, { once: true });
-        });
-    }
-    
-    await loadAllPlayers();
-    setupRealtimeListeners();
-    
-    showNotification(`ur in! welcome back @${state.currentUser.handle || state.currentUser.id}`);
-}
-
-// Load all players and render as cards
-async function loadAllPlayers() {
-    try {
-        const snapshot = await getDocs(collection(db, 'users'));
-        state.allUsers = [];
-        
-        let hotTotal = 0;
-        let coldTotal = 0;
-        
-        snapshot.forEach(doc => {
-            const userData = { id: doc.id, ...doc.data() };
-            state.allUsers.push(userData);
-            
-            // Calculate team totals (using $ prefix like companies)
-            const totalPoints = (userData.individualPoints || 0) + (userData.teamPoints || 0);
-            if (userData.team === 'HOT') {
-                hotTotal += totalPoints;
-            } else if (userData.team === 'COLD') {
-                coldTotal += totalPoints;
-            }
-        });
-        
-        // Update team scores with $ prefix
-        document.getElementById('hotPoints').textContent = `$${hotTotal}`;
-        document.getElementById('coldPoints').textContent = `$${coldTotal}`;
-        state.teamTotals = { HOT: hotTotal, COLD: coldTotal };
-        
-        // Render player cards
-        renderPlayers();
-        
-    } catch (error) {
-        console.error('Error loading players:', error);
-        showToast('error loading players');
-    }
-}
-
-// Create player card (styled like founder cards)
-function createPlayerCard(player, isInZone = false) {
-    const teamClass = player.team ? `team-${player.team.toLowerCase()}` : '';
-    const deadClass = player.status === 'dead' ? 'dead' : '';
-    const style = isInZone ? '' : `style="transform: rotate(${-15 + Math.random() * 30}deg);"`;
-    
-    // Get character image path
-    const imagePath = player.characterId ? 
-        `../assets/cast/cast-members/${player.characterId}-disc.png` : 
-        '../assets/cast/default-disc.png';
-    
-    return `
-        <div class="player-card ${teamClass} ${deadClass}" 
-             data-player="${player.id}"
-             draggable="true"
-             ${style}>
-            <div class="player-card-inner">
-                <img src="${imagePath}" 
-                     alt="${player.characterName || player.handle}" 
-                     class="player-image"
-                     onerror="this.src='../assets/cast/default-disc.png'">
-                <div class="player-name">${player.handle || player.id}</div>
-            </div>
-        </div>
-    `;
-}
-
-// Render players with scattered positions
-function renderPlayers() {
-    const container = document.getElementById('playpenContainer');
-    const isMobile = window.innerWidth <= 768;
-    
-    container.innerHTML = '';
-    
-    // Filter for players with characters
-    const playersWithCharacters = state.allUsers.filter(user => user.characterId);
-    
-    if (playersWithCharacters.length === 0) {
-        container.innerHTML = '<div class="loading">No players yet...</div>';
-        return;
-    }
-    
-    playersWithCharacters.forEach((player, index) => {
-        const card = document.createElement('div');
-        card.innerHTML = createPlayerCard(player);
-        const playerEl = card.firstElementChild;
-        
-        // Position cards randomly
-        const x = 5 + (Math.random() * 85);
-        const y = 5 + (Math.random() * 85);
-        playerEl.style.left = `${x}%`;
-        playerEl.style.top = `${y}%`;
-        
-        container.appendChild(playerEl);
-    });
-    
-    // Add drag event listeners
-    addDragListeners();
-    
-    // Add touch event support for mobile
-    if (isMobile) {
-        addTouchListeners();
-    }
-}
-
-// Drag and Drop functionality
-function addDragListeners() {
-    const cards = document.querySelectorAll('.player-card');
-    
-    cards.forEach(card => {
-        card.removeEventListener('dragstart', handleDragStart);
-        card.removeEventListener('dragend', handleDragEnd);
-        card.removeEventListener('click', handlePlayerClick);
-        
-        card.addEventListener('dragstart', handleDragStart);
-        card.addEventListener('dragend', handleDragEnd);
-        card.addEventListener('click', handlePlayerClick);
-        
-        card.setAttribute('draggable', 'true');
-    });
-}
-
-function handleDragStart(e) {
-    const playerId = e.currentTarget.dataset.player;
-    state.draggedPlayer = playerId;
-    state.draggedElement = e.currentTarget;
-    e.currentTarget.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    state.dragOffset = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-    };
-}
-
-function handleDragEnd(e) {
-    e.currentTarget.classList.remove('dragging');
-    state.draggedPlayer = null;
-    state.draggedElement = null;
-    state.dragOffset = null;
-}
-
-function handleDragOver(e) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    if (e.currentTarget.classList.contains('zone')) {
-        e.currentTarget.classList.add('drag-over');
-    }
-}
-
-function handleDragLeave(e) {
-    if (e.currentTarget.classList.contains('zone')) {
-        e.currentTarget.classList.remove('drag-over');
-    }
-}
-
-function handleDrop(e) {
-    e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
-    
-    if (!state.draggedPlayer) return;
-    
-    const zoneId = e.currentTarget.id;
-    const player = state.allUsers.find(p => p.id === state.draggedPlayer);
-    
-    if (player) {
-        if (zoneId === 'irsZone') {
-            showPlayerDetails(player);
-            showToast(`Checking ${player.handle}'s stats... 📊`);
-        } else if (zoneId === 'weaponsZone') {
-            if (player.id === state.currentAccessCode) {
-                openWeaponsShop();
-            } else {
-                showToast('u can only shop for urself');
-            }
-        }
-    }
-}
-
-function handleDropToPlaypen(e) {
-    e.preventDefault();
-    
-    if (!state.draggedElement || !state.draggedPlayer) return;
-    
-    const playpen = document.getElementById('playpenContainer');
-    const rect = playpen.getBoundingClientRect();
-    
-    let x = e.clientX - rect.left - (state.dragOffset?.x || 50);
-    let y = e.clientY - rect.top - (state.dragOffset?.y || 60);
-    
-    x = Math.max(0, Math.min(x, rect.width - 100));
-    y = Math.max(0, Math.min(y, rect.height - 120));
-    
-    state.draggedElement.style.left = x + 'px';
-    state.draggedElement.style.top = y + 'px';
-    
-    const rotation = -15 + Math.random() * 30;
-    state.draggedElement.style.transform = `rotate(${rotation}deg)`;
-}
-
-function handlePlayerClick(e) {
-    const playerId = e.currentTarget.dataset.player;
-    const player = state.allUsers.find(p => p.id === playerId);
-    if (player) {
-        showPlayerDetails(player);
-    }
-}
-
-// Add touch support for mobile
-function addTouchListeners() {
-    const cards = document.querySelectorAll('.player-card');
-    
-    cards.forEach(card => {
-        let touchItem = null;
-        let touchOffset = null;
-        let activeCard = null;
-        
-        card.addEventListener('touchstart', (e) => {
-            touchItem = e.currentTarget;
-            activeCard = e.currentTarget;
-            const touch = e.touches[0];
-            const rect = touchItem.getBoundingClientRect();
-            touchOffset = {
-                x: touch.clientX - rect.left,
-                y: touch.clientY - rect.top
-            };
-            touchItem.classList.add('dragging');
-            e.preventDefault();
-        }, {passive: false});
-        
-        card.addEventListener('touchmove', (e) => {
-            if (!touchItem) return;
-            const touch = e.touches[0];
-            const playpen = document.getElementById('playpenContainer');
-            const rect = playpen.getBoundingClientRect();
-            
-            let x = touch.clientX - rect.left - touchOffset.x;
-            let y = touch.clientY - rect.top - touchOffset.y;
-            
-            x = Math.max(0, Math.min(x, rect.width - 80));
-            y = Math.max(0, Math.min(y, rect.height - 100));
-            
-            touchItem.style.left = x + 'px';
-            touchItem.style.top = y + 'px';
-            touchItem.style.transform = 'scale(1.1) rotate(0deg)';
-            e.preventDefault();
-        }, {passive: false});
-        
-        card.addEventListener('touchend', (e) => {
-            if (!touchItem) return;
-            
-            touchItem.classList.remove('dragging');
-            const rotation = -15 + Math.random() * 30;
-            touchItem.style.transform = `rotate(${rotation}deg)`;
-            
-            const touch = e.changedTouches[0];
-            const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-            
-            // Check if dropped on a zone
-            if (elementBelow) {
-                const zone = elementBelow.closest('.zone');
-                if (zone) {
-                    const playerId = activeCard.dataset.player;
-                    const player = state.allUsers.find(p => p.id === playerId);
-                    
-                    if (player) {
-                        if (zone.id === 'irsZone') {
-                            showPlayerDetails(player);
-                            showToast(`Checking ${player.handle}'s stats... 📊`);
-                        } else if (zone.id === 'weaponsZone') {
-                            if (player.id === state.currentAccessCode) {
-                                openWeaponsShop();
-                            } else {
-                                showToast('u can only shop for urself');
-                            }
-                        }
-                    }
-                }
-            }
-            
-            touchItem = null;
-            touchOffset = null;
-            activeCard = null;
-        }, {passive: false});
-    });
-}
-
-// Show player details popup (styled like companies)
-function showPlayerDetails(player) {
-    const details = document.getElementById('playerDetails');
-    if (!details) return;
-    
-    // Update player image
-    const imagePath = player.characterId ? 
-        `../assets/cast/cast-members/${player.characterId}-disc.png` : 
-        '../assets/cast/default-disc.png';
-    
-    document.getElementById('detailsImage').src = imagePath;
-    document.getElementById('detailsImage').onerror = function() { 
-        this.src = '../assets/cast/default-disc.png'; 
-    };
-    
-    // Update player info
-    document.getElementById('detailsName').textContent = player.characterName || 'Unknown';
-    document.getElementById('detailsHandle').textContent = `@${player.handle || player.id}`;
-    document.getElementById('detailsWealth').textContent = 
-        `${((player.individualPoints || 0) + (player.teamPoints || 0)).toLocaleString()}`;
-    
-    // Update stats
-    document.getElementById('detailsTeam').textContent = player.team || 'None';
-    document.getElementById('detailsTeam').className = player.team ? 
-        `team-${player.team.toLowerCase()}` : '';
-    
-    document.getElementById('detailsStatus').textContent = 
-        (player.status || 'active').toUpperCase();
-    document.getElementById('detailsStatus').style.color = 
-        player.status === 'dead' ? '#ff0000' : 
-        player.status === 'blocked' ? '#ff00ff' : '#00cc00';
-    
-    document.getElementById('detailsIndPoints').textContent = player.individualPoints || 0;
-    document.getElementById('detailsTeamPoints').textContent = player.teamPoints || 0;
-    
-    details.classList.add('active');
-}
-
-// Close details popup
-function closeDetails() {
-    const detailsPopup = document.getElementById('playerDetails');
-    if (detailsPopup) {
-        detailsPopup.classList.remove('active');
-    }
-}
-
-// Make closeDetails global for onclick
-window.closeDetails = closeDetails;
-
-// Show My Profile (keeping your existing)
-async function showMyProfile() {
-    // Refresh user data first
-    try {
-        const userDoc = await getDoc(doc(db, 'users', state.currentAccessCode));
-        if (userDoc.exists()) {
-            state.currentUser = { id: state.currentAccessCode, ...userDoc.data() };
-        }
-    } catch (error) {
-        console.error('Error refreshing user data:', error);
-    }
-    
-    const user = state.currentUser;
-    
-    // Update modal title
-    document.getElementById('modalTitle').textContent = `@${user.handle || user.id}'s stuff`;
-    
-    // Check for moderator message
-    const modMsg = document.getElementById('modMessage');
-    if (user.moderatorNote) {
-        modMsg.style.display = 'block';
-        document.getElementById('modMessageText').textContent = user.moderatorNote;
-    } else {
-        modMsg.style.display = 'none';
-    }
-    
-    // Profile disc
-    const profileDisc = document.getElementById('profileDisc');
-    if (user.characterId) {
-        profileDisc.innerHTML = `
-            <img src="../assets/cast/cast-members/${user.characterId}-disc.png" 
-                 alt="${user.characterName}"
-                 onerror="this.src='../assets/cast/default-disc.png'">
-        `;
-    } else {
-        profileDisc.innerHTML = '<div class="no-character">no character yet</div>';
-    }
-    
-    // Profile info
-    document.getElementById('profileHandle').textContent = `@${user.handle || user.id}`;
-    document.getElementById('characterName').textContent = user.characterName || 'none';
-    document.getElementById('characterShow').textContent = user.characterShow || '-';
-    
-    // Team badge
-    const teamBadge = document.getElementById('teamBadge');
-    teamBadge.textContent = user.team || 'none';
-    teamBadge.className = `team-badge ${user.team ? `team-${user.team.toLowerCase()}` : ''}`;
-    
-    // Status badge
-    const statusBadge = document.getElementById('statusBadge');
-    statusBadge.textContent = (user.status || 'active').toUpperCase();
-    statusBadge.className = `status-badge status-${(user.status || 'active').toLowerCase()}`;
-    
-    // Points
-    document.getElementById('indPoints').textContent = user.individualPoints || 0;
-    document.getElementById('teamPoints').textContent = user.teamPoints || 0;
-    
-    // Calculate credits
-    const credits = calculateCredits(user.transactions || []);
-    const creditsEl = document.getElementById('creditsDisplay');
-    creditsEl.textContent = credits;
-    creditsEl.className = credits < 0 ? 'credits negative' : 'credits';
-    
-    // Show owned weapons
-    displayOwnedWeapons(user.tools || []);
-    
-    // Show modal
-    document.getElementById('profileModal').style.display = 'flex';
-}
-
-// Calculate credits from transactions (keeping your existing)
-function calculateCredits(transactions) {
-    return transactions.reduce((total, t) => {
-        if (t.type === 'payment' || t.type === 'gift' || t.type === 'refund') {
-            return total + (t.amount || 0);
-        } else if (t.type === 'purchase') {
-            return total - (t.amount || 0);
-        } else if (t.type === 'adjustment') {
-            return total + (t.amount || 0);
-        }
-        return total;
-    }, 0);
-}
-
-// Display owned weapons (keeping your existing)
-function displayOwnedWeapons(tools) {
-    const grid = document.getElementById('ownedWeapons');
-    if (!grid) return;
-    
-    if (!tools || tools.length === 0) {
-        grid.innerHTML = '<p class="no-weapons">no weapons yet. get some!</p>';
-        return;
-    }
-    
-    // Group tools by name and status
-    const toolGroups = {};
-    tools.forEach(tool => {
-        const key = tool.name || 'Unknown';
-        if (!toolGroups[key]) {
-            toolGroups[key] = { 
-                available: 0, 
-                used: 0, 
-                pending: 0,
-                blocked: 0
-            };
-        }
-        
-        const status = tool.status || 'available';
-        if (status === 'used') {
-            toolGroups[key].used++;
-        } else if (status === 'pending') {
-            toolGroups[key].pending++;
-        } else if (status === 'blocked') {
-            toolGroups[key].blocked++;
-        } else {
-            toolGroups[key].available++;
-        }
-    });
-    
-    grid.innerHTML = Object.entries(toolGroups).map(([name, counts]) => {
-        const total = counts.available + counts.used + counts.pending + counts.blocked;
-        const allUsed = counts.used === total;
-        const hasAvailable = counts.available > 0;
-        
-        return `
-            <div class="weapon-item ${allUsed ? 'used' : ''}">
-                <div class="weapon-icon">
-                    <img src="../assets/cast/${getToolIcon(name)}" 
-                         alt="${name}"
-                         onerror="this.src='../assets/cast/default-tool.png'">
-                    ${total > 1 ? `<span class="weapon-count">${total}</span>` : ''}
-                    ${allUsed ? '<span class="weapon-status">USED</span>' : 
-                      !hasAvailable ? '<span class="weapon-status">PENDING</span>' : ''}
-                </div>
-                <div class="weapon-name">${name}</div>
-            </div>
-        `;
-    }).join('');
-}
-
-// Get tool icon filename (keeping your existing)
+// Tool Icon Mapping
 function getToolIcon(toolName) {
     const iconMap = {
         'GAME PASS': 'game-pass.png',
@@ -714,283 +47,795 @@ function getToolIcon(toolName) {
     return iconMap[toolName] || 'default-tool.png';
 }
 
-// Open Weapons Shop (keeping your existing)
-async function openWeaponsShop() {
-    try {
-        const snapshot = await getDocs(collection(db, 'tools'));
-        const tools = [];
+// Character App Module
+const CharacterApp = {
+    // State
+    state: {
+        currentUser: null,
+        allUsers: [],
+        tools: [],
+        cart: {},
+        draggedCD: null,
+        listeners: [],
+        touchItem: null,
+        touchOffset: null
+    },
+
+    // Initialize
+    init() {
+        console.log('Initializing Character Portal...');
+        this.setupEventListeners();
+        this.checkAutoLogin();
+    },
+
+    // Setup Event Listeners
+    setupEventListeners() {
+        // Enter key on login
+        const accessInput = document.getElementById('accessInput');
+        if (accessInput) {
+            accessInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.validateAccess();
+                }
+            });
+        }
+
+        // Portal drag events
+        const portal = document.getElementById('portal');
+        if (portal) {
+            portal.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                portal.classList.add('drag-over');
+            });
+
+            portal.addEventListener('dragleave', () => {
+                portal.classList.remove('drag-over');
+            });
+
+            portal.addEventListener('drop', (e) => {
+                e.preventDefault();
+                portal.classList.remove('drag-over');
+                
+                if (this.state.draggedCD) {
+                    const userId = this.state.draggedCD.dataset.userId;
+                    const user = this.state.allUsers.find(u => u.id === userId);
+                    if (user) {
+                        this.showPlayerDetails(user);
+                        this.playSound('popOpen');
+                    }
+                }
+            });
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            this.state.listeners.forEach(unsub => unsub());
+        });
+    },
+
+    // Access Validation
+    async validateAccess() {
+        const input = document.getElementById('accessInput');
+        const code = input.value.trim().toUpperCase();
         
-        snapshot.forEach(doc => {
-            const toolData = doc.data();
-            if (toolData.visible !== false) {
-                tools.push({ id: doc.id, ...toolData });
+        if (!code) {
+            this.showError('enter something first');
+            return;
+        }
+
+        try {
+            const userDoc = await getDoc(doc(db, 'users', code));
+            
+            if (!userDoc.exists()) {
+                this.showError('wrong code. dm the mod');
+                return;
+            }
+
+            const userData = userDoc.data();
+            
+            if (userData.status === 'blocked') {
+                this.showError('ur blocked 🚫');
+                return;
+            }
+
+            this.state.currentUser = { id: code, ...userData };
+            sessionStorage.setItem('accessCode', code);
+            
+            this.enterGame();
+            
+        } catch (error) {
+            console.error('Login error:', error);
+            this.showError('something broke. try again');
+        }
+    },
+
+    showError(msg) {
+        const errorEl = document.getElementById('errorMsg');
+        errorEl.textContent = msg;
+        errorEl.style.display = 'block';
+        setTimeout(() => {
+            errorEl.style.display = 'none';
+        }, 3000);
+    },
+
+    // Enter Game
+    async enterGame() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('gameView').style.display = 'block';
+        
+        // Start music softly
+        const music = document.getElementById('bgMusic');
+        music.volume = 0.05;
+        music.play().catch(() => {});
+        
+        await this.loadAllData();
+        this.setupRealtimeListeners();
+        
+        this.showToast(`welcome @${this.state.currentUser.handle || this.state.currentUser.id}! drag CDs to the portal`);
+    },
+
+    // Load Data
+    async loadAllData() {
+        // Load users
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        this.state.allUsers = [];
+        
+        usersSnapshot.forEach(doc => {
+            const userData = { id: doc.id, ...doc.data() };
+            this.state.allUsers.push(userData);
+        });
+        
+        // Load ONLY team wallets for the score display
+        const teamWalletsDoc = await getDoc(doc(db, 'gameState', 'teamWallets'));
+        let hotTotal = 0;
+        let coldTotal = 0;
+        
+        if (teamWalletsDoc.exists()) {
+            const wallets = teamWalletsDoc.data();
+            hotTotal = wallets.HOT || 0;
+            coldTotal = wallets.COLD || 0;
+        }
+        
+        // Display ONLY team wallet totals (not individual points)
+        document.getElementById('hotScore').textContent = hotTotal;
+        document.getElementById('coldScore').textContent = coldTotal;
+        // Update duplicate ticker items for seamless loop
+        const hotScore2 = document.getElementById('hotScore2');
+        const coldScore2 = document.getElementById('coldScore2');
+        if (hotScore2) hotScore2.textContent = hotTotal;
+        if (coldScore2) coldScore2.textContent = coldTotal;
+        
+        // Load tools
+        const toolsSnapshot = await getDocs(collection(db, 'tools'));
+        this.state.tools = [];
+        toolsSnapshot.forEach(doc => {
+            this.state.tools.push({ id: doc.id, ...doc.data() });
+        });
+        
+        this.renderCDs();
+    },
+
+    // Render CDs
+    renderCDs() {
+        const container = document.getElementById('cdContainer');
+        container.innerHTML = '';
+        
+        // Only show users with characters
+        const playersWithChars = this.state.allUsers.filter(u => u.characterId);
+        
+        playersWithChars.forEach((user, index) => {
+            const cd = document.createElement('div');
+            cd.className = 'cd-disc';
+            cd.draggable = true;
+            cd.dataset.userId = user.id;
+            
+            // Add team class
+            if (user.team) {
+                cd.classList.add(`team-${user.team.toLowerCase()}`);
+            }
+            
+            // Add dead class
+            if (user.status === 'dead') {
+                cd.classList.add('dead');
+            }
+            
+            // Random position
+            const x = 5 + Math.random() * 80;
+            const y = 5 + Math.random() * 80;
+            cd.style.left = `${x}%`;
+            cd.style.top = `${y}%`;
+            
+            // Random rotation
+            cd.style.transform = `rotate(${-30 + Math.random() * 60}deg)`;
+            
+            // CD image
+            const img = document.createElement('img');
+            img.src = `../assets/cast/cast-members/${user.characterId}-disc.png`;
+            img.onerror = () => { img.src = '../assets/cast/default-disc.png'; };
+            cd.appendChild(img);
+            
+            // Drag events
+            cd.addEventListener('dragstart', (e) => this.handleDragStart(e));
+            cd.addEventListener('dragend', (e) => this.handleDragEnd(e));
+            
+            // Touch events for mobile
+            cd.addEventListener('touchstart', (e) => this.handleTouchStart(e), {passive: false});
+            cd.addEventListener('touchmove', (e) => this.handleTouchMove(e), {passive: false});
+            cd.addEventListener('touchend', (e) => this.handleTouchEnd(e), {passive: false});
+            
+            container.appendChild(cd);
+        });
+    },
+
+    // Drag and Drop Handlers
+    handleDragStart(e) {
+        this.state.draggedCD = e.target;
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        
+        // Store original position
+        this.state.originalPosition = {
+            left: e.target.style.left,
+            top: e.target.style.top
+        };
+    },
+
+    handleDragEnd(e) {
+        e.target.classList.remove('dragging');
+        
+        // Check if it was dropped on portal
+        const portal = document.getElementById('portal');
+        const rect = portal.getBoundingClientRect();
+        const x = e.clientX;
+        const y = e.clientY;
+        
+        if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+            // Dropped on portal - place at new random position
+            const container = document.getElementById('cdContainer');
+            const newX = 5 + Math.random() * 80;
+            const newY = 5 + Math.random() * 80;
+            e.target.style.left = `${newX}%`;
+            e.target.style.top = `${newY}%`;
+        } else {
+            // Not on portal - return to original position
+            if (this.state.originalPosition) {
+                e.target.style.transition = 'all 0.3s ease';
+                e.target.style.left = this.state.originalPosition.left;
+                e.target.style.top = this.state.originalPosition.top;
+                
+                setTimeout(() => {
+                    e.target.style.transition = '';
+                }, 300);
+            }
+        }
+        
+        portal.classList.remove('drag-over');
+        this.state.draggedCD = null;
+        this.state.originalPosition = null;
+    },
+
+    // Touch Handlers for Mobile
+    handleTouchStart(e) {
+        const cd = e.target.closest('.cd-disc');
+        if (!cd) return;
+        
+        this.state.touchItem = cd;
+        const touch = e.touches[0];
+        const rect = cd.getBoundingClientRect();
+        
+        this.state.touchOffset = {
+            x: touch.clientX - rect.left,
+            y: touch.clientY - rect.top
+        };
+        
+        this.state.originalPosition = {
+            left: cd.style.left,
+            top: cd.style.top
+        };
+        
+        // Make it draggable
+        cd.style.position = 'fixed';
+        cd.style.zIndex = '9999';
+        cd.classList.add('dragging');
+        cd.style.left = (touch.clientX - this.state.touchOffset.x) + 'px';
+        cd.style.top = (touch.clientY - this.state.touchOffset.y) + 'px';
+        
+        e.preventDefault();
+    },
+
+    handleTouchMove(e) {
+        if (!this.state.touchItem) return;
+        
+        const touch = e.touches[0];
+        this.state.touchItem.style.left = (touch.clientX - this.state.touchOffset.x) + 'px';
+        this.state.touchItem.style.top = (touch.clientY - this.state.touchOffset.y) + 'px';
+        
+        // Check if over portal
+        const portal = document.getElementById('portal');
+        const portalRect = portal.getBoundingClientRect();
+        
+        if (touch.clientX >= portalRect.left && 
+            touch.clientX <= portalRect.right && 
+            touch.clientY >= portalRect.top && 
+            touch.clientY <= portalRect.bottom) {
+            portal.classList.add('drag-over');
+        } else {
+            portal.classList.remove('drag-over');
+        }
+        
+        e.preventDefault();
+    },
+
+    handleTouchEnd(e) {
+        if (!this.state.touchItem) return;
+        
+        const touch = e.changedTouches[0];
+        const portal = document.getElementById('portal');
+        const portalRect = portal.getBoundingClientRect();
+        
+        let dropSuccessful = false;
+        
+        // Check if dropped on portal
+        if (touch.clientX >= portalRect.left && 
+            touch.clientX <= portalRect.right && 
+            touch.clientY >= portalRect.top && 
+            touch.clientY <= portalRect.bottom) {
+            const userId = this.state.touchItem.dataset.userId;
+            const user = this.state.allUsers.find(u => u.id === userId);
+            if (user) {
+                this.showPlayerDetails(user);
+                this.playSound('popOpen');
+                dropSuccessful = true;
+            }
+        }
+        
+        // Clean up
+        portal.classList.remove('drag-over');
+        this.state.touchItem.classList.remove('dragging');
+        
+        // Return to original position
+        this.state.touchItem.style.position = 'absolute';
+        this.state.touchItem.style.zIndex = '';
+        
+        if (!dropSuccessful) {
+            // Return to original position smoothly
+            this.state.touchItem.style.transition = 'all 0.3s ease';
+            this.state.touchItem.style.left = this.state.originalPosition.left;
+            this.state.touchItem.style.top = this.state.originalPosition.top;
+            
+            setTimeout(() => {
+                if (this.state.touchItem) {
+                    this.state.touchItem.style.transition = '';
+                }
+            }, 300);
+        } else {
+            // Place at new random position after successful drop
+            const container = document.getElementById('cdContainer');
+            const x = 5 + Math.random() * 80;
+            const y = 5 + Math.random() * 80;
+            this.state.touchItem.style.left = `${x}%`;
+            this.state.touchItem.style.top = `${y}%`;
+        }
+        
+        this.state.touchItem = null;
+        this.state.touchOffset = null;
+        this.state.originalPosition = null;
+    },
+
+    // Show Player Details
+    showPlayerDetails(user) {
+        const popup = document.getElementById('playerPopup');
+        const portal = document.getElementById('portal');
+        
+        // Change portal to closed state (CD loaded)
+        portal.classList.add('closed');
+        
+        document.getElementById('popupTitle').textContent = `@${user.handle || user.id}`;
+        document.getElementById('popupHandle').textContent = `@${user.handle || user.id}`;
+        document.getElementById('popupCharacter').textContent = user.characterName || '-';
+        document.getElementById('popupTeam').textContent = user.team || 'none';
+        document.getElementById('popupTeam').className = user.team ? `team-${user.team.toLowerCase()}` : '';
+        document.getElementById('popupStatus').textContent = (user.status || 'active').toUpperCase();
+        document.getElementById('popupStatus').style.color = 
+            user.status === 'dead' ? '#ff0000' : 
+            user.status === 'blocked' ? '#ff00ff' : '#00cc00';
+        document.getElementById('popupIndPoints').textContent = user.individualPoints || 0;
+        
+        const disc = document.getElementById('popupDisc');
+        disc.src = user.characterId ? 
+            `../assets/cast/cast-members/${user.characterId}-disc.png` : 
+            '../assets/cast/default-disc.png';
+        disc.onerror = () => { disc.src = '../assets/cast/default-disc.png'; };
+        
+        popup.classList.add('active');
+        
+        // Reopen portal after a delay
+        setTimeout(() => {
+            portal.classList.remove('closed');
+        }, 1500);
+    },
+
+    closePopup() {
+        document.getElementById('playerPopup').classList.remove('active');
+        this.playSound('popClose');
+    },
+
+    // Profile Modal
+    async showMyProfile() {
+        // Refresh user data
+        const userDoc = await getDoc(doc(db, 'users', this.state.currentUser.id));
+        if (userDoc.exists()) {
+            this.state.currentUser = { id: this.state.currentUser.id, ...userDoc.data() };
+        }
+        
+        const user = this.state.currentUser;
+        
+        document.getElementById('profileTitle').textContent = `@${user.handle || user.id}'s stuff`;
+        
+        // Mod message
+        if (user.moderatorNote) {
+            document.getElementById('modMessage').style.display = 'block';
+            document.getElementById('modMessageText').textContent = user.moderatorNote;
+        } else {
+            document.getElementById('modMessage').style.display = 'none';
+        }
+        
+        // Character info
+        const disc = document.getElementById('profileDisc');
+        disc.src = user.characterId ? 
+            `../assets/cast/cast-members/${user.characterId}-disc.png` : 
+            '../assets/cast/default-disc.png';
+        disc.onerror = () => { disc.src = '../assets/cast/default-disc.png'; };
+        
+        document.getElementById('profileCharName').textContent = user.characterName || 'none';
+        document.getElementById('profileShow').textContent = user.characterShow || '-';
+        document.getElementById('profileTeam').textContent = user.team || 'none';
+        document.getElementById('profileTeam').className = user.team ? `team-${user.team.toLowerCase()}` : '';
+        document.getElementById('profileIndPts').textContent = user.individualPoints || 0;
+        
+        // Credits
+        const credits = user.credits || 0;
+        const creditsEl = document.getElementById('creditsDisplay');
+        creditsEl.textContent = `credits: ${credits}`;
+        creditsEl.className = credits < 0 ? 'credits-display negative' : 'credits-display';
+        
+        // Tools
+        this.displayTools(user.tools || []);
+        
+        document.getElementById('profileModal').classList.add('active');
+        this.playSound('popOpen');
+    },
+
+    displayTools(tools) {
+        const grid = document.getElementById('weaponsGrid');
+        
+        if (!tools || tools.length === 0) {
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #666;">no tools yet. grab some!</div>';
+            return;
+        }
+        
+        // Group by name
+        const grouped = {};
+        tools.forEach(tool => {
+            const name = tool.name || 'Unknown';
+            if (!grouped[name]) {
+                grouped[name] = { available: 0, used: 0, name: name };
+            }
+            if (tool.status === 'used') {
+                grouped[name].used++;
+            } else {
+                grouped[name].available++;
             }
         });
         
-        tools.sort((a, b) => (a.price || 0) - (b.price || 0));
+        grid.innerHTML = Object.entries(grouped).map(([name, data]) => {
+            const total = data.available + data.used;
+            const allUsed = data.used === total;
+            
+            return `
+                <div class="weapon-item ${allUsed ? 'used' : ''}">
+                    <div class="weapon-icon">
+                        <img src="../assets/cast/${getToolIcon(name)}" 
+                             onerror="this.src='../assets/cast/default-tool.png'">
+                        ${total > 1 ? `<span class="weapon-count">${total}</span>` : ''}
+                        ${allUsed ? '<span class="weapon-status">USED</span>' : ''}
+                    </div>
+                    <div class="weapon-name">${name}</div>
+                </div>
+            `;
+        }).join('');
+    },
+
+    closeProfile() {
+        document.getElementById('profileModal').classList.remove('active');
+        this.playSound('popClose');
+    },
+
+    // Shop
+    async openShop() {
+        const credits = this.state.currentUser.credits || 0;
+        document.getElementById('shopCredits').textContent = `ur credits: ${credits}`;
         
-        const credits = calculateCredits(state.currentUser.transactions || []);
-        document.getElementById('shopCredits').textContent = credits;
+        const grid = document.getElementById('shopGrid');
+        const visibleTools = this.state.tools.filter(w => w.visible !== false);
         
-        const grid = document.getElementById('weaponsShopGrid');
-        grid.innerHTML = tools.map(tool => {
-            const owned = (state.currentUser.tools || []).some(t => 
+        this.state.cart = {};
+        
+        grid.innerHTML = visibleTools.map(tool => {
+            const owned = (this.state.currentUser.tools || []).some(t => 
                 t.name === tool.name && t.status !== 'used'
             );
             
             return `
-                <div class="shop-weapon ${owned ? 'owned' : ''}" 
+                <div class="shop-item ${owned ? 'owned' : ''}" 
                      data-tool-id="${tool.id}"
                      data-tool-name="${tool.name}"
+                     data-tool-icon="${getToolIcon(tool.name)}"
                      data-price="${tool.price || 0}">
                     <div class="weapon-icon">
                         <img src="../assets/cast/${getToolIcon(tool.name)}" 
-                             alt="${tool.name}"
                              onerror="this.src='../assets/cast/default-tool.png'">
                     </div>
                     <div class="weapon-name">${tool.name}</div>
-                    <div class="weapon-price">${owned ? 'OWNED' : (tool.price || 0) + ' credits'}</div>
-                    ${tool.description ? `<div class="weapon-desc">${tool.description}</div>` : ''}
-                    ${state.cart[tool.id] ? `<div class="in-cart">×${state.cart[tool.id].count}</div>` : ''}
+                    <div class="shop-price">${owned ? 'OWNED' : `${tool.price || 0} credits`}</div>
+                    ${tool.description ? `<div class="shop-desc">${tool.description}</div>` : ''}
                 </div>
             `;
         }).join('');
         
-        grid.querySelectorAll('.shop-weapon:not(.owned)').forEach(el => {
-            el.addEventListener('click', () => toggleCartItem(el));
+        // Add click handlers
+        grid.querySelectorAll('.shop-item:not(.owned)').forEach(item => {
+            item.addEventListener('click', () => this.toggleCartItem(item));
         });
         
-        state.cart = {};
-        updateCartTotal();
+        this.updateCartTotal();
         
-        document.getElementById('weaponsModal').style.display = 'flex';
+        document.getElementById('shopModal').classList.add('active');
+    },
+
+    toggleCartItem(element) {
+        const toolId = element.dataset.toolId;
+        const toolName = element.dataset.toolName;
+        const toolIcon = element.dataset.toolIcon;
+        const price = parseInt(element.dataset.price) || 0;
         
-    } catch (error) {
-        console.error('Error loading weapons shop:', error);
-        showToast('shop broke. try again');
-    }
-}
+        if (!this.state.cart[toolId]) {
+            this.state.cart[toolId] = { 
+                name: toolName, 
+                icon: toolIcon,
+                count: 1, 
+                price: price 
+            };
+            element.classList.add('in-cart');
+            
+            // Add badge
+            const badge = document.createElement('div');
+            badge.className = 'cart-badge';
+            badge.textContent = '1';
+            element.appendChild(badge);
+        } else {
+            this.state.cart[toolId].count++;
+            element.querySelector('.cart-badge').textContent = this.state.cart[toolId].count;
+        }
+        
+        this.updateCartTotal();
+    },
 
-// Cart management (keeping your existing)
-function toggleCartItem(element) {
-    const toolId = element.dataset.toolId;
-    const toolName = element.dataset.toolName;
-    const price = parseInt(element.dataset.price) || 0;
-    
-    if (!state.cart[toolId]) {
-        state.cart[toolId] = { 
-            name: toolName,
-            count: 1, 
-            price: price 
-        };
-    } else {
-        state.cart[toolId].count++;
-    }
-    
-    let cartBadge = element.querySelector('.in-cart');
-    if (!cartBadge) {
-        cartBadge = document.createElement('div');
-        cartBadge.className = 'in-cart';
-        element.appendChild(cartBadge);
-    }
-    cartBadge.textContent = `×${state.cart[toolId].count}`;
-    
-    updateCartTotal();
-}
+    updateCartTotal() {
+        const total = Object.values(this.state.cart).reduce((sum, item) => 
+            sum + (item.count * item.price), 0);
+        
+        const credits = this.state.currentUser.credits || 0;
+        const cartEl = document.getElementById('cartTotal');
+        
+        if (total > credits) {
+            cartEl.innerHTML = `total: ${total} credits<br><small style="color: red;">need ${total - credits} more! send funds to unlock</small>`;
+        } else {
+            cartEl.textContent = `total: ${total} credits`;
+        }
+    },
 
-function updateCartTotal() {
-    const total = Object.values(state.cart).reduce((sum, item) => 
-        sum + (item.count * item.price), 0);
-    
-    document.getElementById('cartTotal').textContent = total;
-    
-    const credits = calculateCredits(state.currentUser.transactions || []);
-    const cartMsg = document.getElementById('cartMessage');
-    
-    if (total > credits) {
-        const difference = total - credits;
-        cartMsg.textContent = `need ${difference} more credits! send funds to unlock`;
-        cartMsg.style.display = 'block';
-    } else if (total > 0) {
-        cartMsg.textContent = 'u have enough credits!';
-        cartMsg.style.display = 'block';
-    } else {
-        cartMsg.style.display = 'none';
-    }
-}
+    clearCart() {
+        this.state.cart = {};
+        document.querySelectorAll('.shop-item').forEach(item => {
+            item.classList.remove('in-cart');
+            const badge = item.querySelector('.cart-badge');
+            if (badge) badge.remove();
+        });
+        this.updateCartTotal();
+    },
 
-// Checkout weapons (keeping your existing)
-async function checkoutWeapons() {
-    const cartItems = Object.entries(state.cart);
-    if (cartItems.length === 0) {
-        showToast('cart empty. click some weapons first');
-        return;
-    }
-    
-    const total = Object.values(state.cart).reduce((sum, item) => 
-        sum + (item.count * item.price), 0);
-    const credits = calculateCredits(state.currentUser.transactions || []);
-    
-    try {
+    async checkout() {
+        if (Object.keys(this.state.cart).length === 0) {
+            this.showToast('pick something first');
+            return;
+        }
+        
+        const total = Object.values(this.state.cart).reduce((sum, item) => 
+            sum + (item.count * item.price), 0);
+        const credits = this.state.currentUser.credits || 0;
+        
+        // Create tools array for pending selection
+        const tools = [];
+        Object.entries(this.state.cart).forEach(([toolId, data]) => {
+            for (let i = 0; i < data.count; i++) {
+                tools.push({
+                    toolId: toolId,
+                    name: data.name,
+                    icon: data.icon,
+                    price: data.price
+                });
+            }
+        });
+        
         const pendingData = {
-            userId: state.currentAccessCode,
-            handle: state.currentUser.handle || state.currentAccessCode,
-            items: state.cart,
+            userId: this.state.currentUser.id,
+            handle: this.state.currentUser.handle || this.state.currentUser.id,
+            tools: tools,
             totalCost: total,
-            creditsAvailable: credits,
-            needsPayment: total > credits ? total - credits : 0,
-            type: 'weapon_purchase',
-            status: 'pending',
-            timestamp: new Date().toISOString()
+            creditsNeeded: Math.max(0, total - credits),
+            timestamp: new Date().toISOString(),
+            type: 'tools_purchase',
+            status: 'pending'
         };
         
-        await addDoc(collection(db, 'pendingSelections'), pendingData);
+        await addDoc(collection(db, 'pendingApprovals'), pendingData);
         
-        document.getElementById('checkoutSuccess').style.display = 'block';
-        state.cart = {};
+        document.getElementById('successMsg').style.display = 'block';
+        this.state.cart = {};
         
         setTimeout(() => {
-            closeWeaponsModal();
+            this.closeShop();
             if (total > credits) {
-                showToast(`request sent! send ${total - credits} credits to unlock`);
+                this.showToast(`request sent! send ${total - credits} credits to unlock`);
             } else {
-                showToast('request sent! wait 4 mod approval');
+                this.showToast('request sent! wait for approval');
             }
         }, 2000);
+    },
+
+    closeShop() {
+        document.getElementById('shopModal').classList.remove('active');
+        document.getElementById('successMsg').style.display = 'none';
+        this.playSound('popClose');
+    },
+
+    // Leaderboard - UPDATED TO SHOW TOP 5 WITH TEAM COLORS
+    showLeaderboard() {
+        const sortedUsers = [...this.state.allUsers]
+            .filter(u => u.characterId && u.status !== 'blocked')
+            .sort((a, b) => (b.individualPoints || 0) - (a.individualPoints || 0));
         
-    } catch (error) {
-        console.error('Error submitting request:', error);
-        showToast('failed. try again');
-    }
-}
+        const tbody = document.getElementById('leaderboardBody');
+        
+        // Get current user's rank for highlighting
+        const currentUserRank = sortedUsers.findIndex(u => u.id === this.state.currentUser.id) + 1;
+        
+        // Show only top 5
+        const top5Users = sortedUsers.slice(0, 5);
+        
+        tbody.innerHTML = top5Users.map((user, index) => {
+            const rank = index + 1;
+            const isCurrentUser = user.id === this.state.currentUser.id;
+            
+            // Determine row class based on team
+            let rowClass = '';
+            if (isCurrentUser) {
+                rowClass = 'current-user';
+            } else if (user.team === 'HOT') {
+                rowClass = 'row-hot';
+            } else if (user.team === 'COLD') {
+                rowClass = 'row-cold';
+            }
+            
+            return `
+                <tr class="${rowClass}">
+                    <td style="padding: 8px; font-weight: bold; font-size: 14px;">${rank}</td>
+                    <td style="padding: 8px; font-weight: ${isCurrentUser ? 'bold' : 'normal'};">@${user.handle || user.id}</td>
+                    <td style="padding: 8px;">
+                        <span class="team-${user.team ? user.team.toLowerCase() : ''}">${user.team || '-'}</span>
+                    </td>
+                    <td style="padding: 8px; font-weight: bold;">${user.individualPoints || 0}</td>
+                </tr>
+            `;
+        }).join('');
+        
+        // If current user is not in top 5, add a note at the bottom
+        if (currentUserRank > 5 && currentUserRank > 0) {
+            tbody.innerHTML += `
+                <tr>
+                    <td colspan="4" style="padding: 10px; text-align: center; font-style: italic; color: #666;">
+                        ur rank: #${currentUserRank} with ${this.state.currentUser.individualPoints || 0} points
+                    </td>
+                </tr>
+            `;
+        }
+        
+        document.getElementById('leaderboardModal').classList.add('active');
+        this.playSound('popOpen');
+    },
 
-// Modal controls
-function closeProfileModal() {
-    document.getElementById('profileModal').style.display = 'none';
-}
+    closeLeaderboard() {
+        document.getElementById('leaderboardModal').classList.remove('active');
+        this.playSound('popClose');
+    },
 
-function closeWeaponsModal() {
-    document.getElementById('weaponsModal').style.display = 'none';
-    document.getElementById('checkoutSuccess').style.display = 'none';
-    state.cart = {};
-}
-
-// Real-time listeners (keeping your existing)
-function setupRealtimeListeners() {
-    if (state.currentAccessCode) {
-        onSnapshot(doc(db, 'users', state.currentAccessCode), (doc) => {
+    // Realtime Listeners
+    setupRealtimeListeners() {
+        // Listen to current user changes
+        const unsubUser = onSnapshot(doc(db, 'users', this.state.currentUser.id), (doc) => {
             if (doc.exists()) {
                 const newData = doc.data();
-                const oldData = state.currentUser;
+                const oldData = this.state.currentUser;
                 
-                state.currentUser = { id: state.currentAccessCode, ...newData };
-                
-                if (newData.moderatorNote && newData.moderatorNote !== state.lastModNote) {
-                    state.lastModNote = newData.moderatorNote;
-                    showToast('📬 new message from mod! check ur profile');
+                // Check for changes
+                if (oldData.moderatorNote !== newData.moderatorNote && newData.moderatorNote) {
+                    this.showToast('📬 new message from mod!');
                 }
                 
-                if (oldData && oldData.status !== newData.status) {
+                if (oldData.status !== newData.status) {
                     if (newData.status === 'dead') {
-                        showToast('💀 ur dead now. rip');
+                        this.showToast('💀 ur dead now');
                     } else if (newData.status === 'blocked') {
-                        showToast('🚫 ur blocked. talk 2 mod');
+                        this.showToast('🚫 ur blocked');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 3000);
                     }
                 }
                 
-                if (oldData && oldData.team !== newData.team) {
-                    showToast(`ur on team ${newData.team} now!`);
+                if (oldData.credits !== newData.credits) {
+                    if (newData.credits > oldData.credits) {
+                        this.showToast(`💰 received ${newData.credits - oldData.credits} credits!`);
+                    }
                 }
+                
+                this.state.currentUser = { id: this.state.currentUser.id, ...newData };
             }
         });
-    }
-    
-    onSnapshot(collection(db, 'users'), (snapshot) => {
-        const changes = snapshot.docChanges();
-        if (changes.length > 0) {
-            console.log('Users updated, refreshing leaderboard...');
-            loadAllPlayers();
-        }
-    });
-    
-    if (state.currentAccessCode) {
-        const pendingQuery = query(
-            collection(db, 'pendingSelections'),
-            where('userId', '==', state.currentAccessCode)
-        );
         
-        onSnapshot(pendingQuery, (snapshot) => {
-            snapshot.docChanges().forEach(change => {
-                if (change.type === 'modified') {
-                    const data = change.doc.data();
-                    if (data.status === 'approved') {
-                        showToast('✨ weapons approved! check ur profile');
-                    } else if (data.status === 'rejected') {
-                        showToast('❌ weapons rejected. talk 2 mod');
-                    }
-                }
-            });
+        // Listen to all users for leaderboard updates
+        const unsubUsers = onSnapshot(collection(db, 'users'), () => {
+            this.loadAllData();
         });
-    }
-}
+        
+        this.state.listeners.push(unsubUser, unsubUsers);
+    },
 
-// Utilities
-function showToast(message, duration = 3000) {
-    const toast = document.getElementById('toast');
-    if (!toast) return;
-    
-    toast.textContent = message;
-    toast.style.display = 'block';
-    
-    if (state.toastTimeout) {
-        clearTimeout(state.toastTimeout);
-    }
-    
-    state.toastTimeout = setTimeout(() => {
-        toast.style.display = 'none';
-    }, duration);
-}
+    // Utilities
+    showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    },
 
-function showNotification(message) {
-    const notification = document.getElementById('notification');
-    if (!notification) return;
-    
-    notification.textContent = message;
-    notification.style.display = 'block';
-    
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.style.display = 'none';
+    playSound(soundId) {
+        const audio = document.getElementById(soundId);
+        if (audio) {
+            audio.currentTime = 0;
+            audio.volume = 0.3;
+            audio.play().catch(() => {});
         }
-    }, 3000);
-}
+    },
 
-function showError(message) {
-    const errorEl = document.getElementById('errorMessage');
-    if (!errorEl) return;
-    
-    errorEl.textContent = message;
-    errorEl.style.display = 'block';
-    
-    setTimeout(() => {
-        errorEl.style.display = 'none';
-    }, 3000);
-}
-
-// Handle resize
-window.addEventListener('resize', () => {
-    renderPlayers();
-});
-
-// Handle ESC key to close popups
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-        closeDetails();
+    // Auto-login Check
+    checkAutoLogin() {
+        const savedCode = sessionStorage.getItem('accessCode');
+        if (savedCode) {
+            document.getElementById('accessInput').value = savedCode;
+            this.validateAccess();
+        }
     }
+};
+
+// Make CharacterApp globally accessible
+window.CharacterApp = CharacterApp;
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    CharacterApp.init();
 });
-
-// Export for debugging
-window.gameState = state;
-window.refreshLeaderboard = loadAllPlayers;
-
-console.log('Playpen initialized! Drag player cards to zones to interact.');

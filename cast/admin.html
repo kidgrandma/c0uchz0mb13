@@ -2,668 +2,418 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>INTERNET OLYMPICS 2 • Enhanced Admin Board</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INTERNET OLYMPICS 2 🎮 admin control</title>
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-    <!-- Login Window -->
-    <div class="window login-window" id="loginWindow">
-        <div class="window-header">
-            <span>🔐 System Login</span>
-            <button class="window-close" disabled>×</button>
-        </div>
-        <div class="window-body">
-            <div class="login-icon">🎮</div>
-            <div class="login-message">hey. it's the enhanced admin panel. you know what to do.</div>
-            <input type="password" 
-                   id="adminPassword" 
-                   class="text-input" 
-                   placeholder="password goes here"
-                   autocomplete="off">
-            <button class="button primary" onclick="adminLogin()">let me in →</button>
-            <div class="error-message" id="loginError">nope. try again.</div>
+    <!-- Login Screen -->
+    <div id="loginScreen">
+        <div class="login-box">
+            <div class="window-title">
+                <span>🔐 Admin Login</span>
+            </div>
+            <div class="window-body">
+                <div class="input-group">
+                    <label class="input-label">password:</label>
+                    <input type="password" id="adminPassword" class="xp-input" placeholder="enter admin password">
+                </div>
+                <button class="xp-button" id="loginBtn">login</button>
+                <div class="error" id="loginError">wrong password. try again.</div>
+            </div>
         </div>
     </div>
 
-    <!-- Main Admin Panel -->
-    <div class="admin-container" id="adminPanel" style="display: none;">
-        <!-- Desktop -->
-        <div class="desktop">
-            <!-- Header Bar -->
-            <div class="taskbar">
-                <div class="start-button">
-                    <span>🎮 INTERNET OLYMPICS 2</span>
-                </div>
-                <div class="taskbar-clock" id="clock"></div>
-                <button class="logout-button" onclick="adminLogout()">log out →</button>
+    <!-- Desktop -->
+    <div id="desktop">
+        <div class="desktop-icons">
+            <div class="desktop-icon" data-window="dashboard">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23008080'/%3E%3Crect x='8' y='8' width='32' height='24' fill='white'/%3E%3Crect x='12' y='20' width='6' height='8' fill='%23008080'/%3E%3Crect x='21' y='16' width='6' height='12' fill='%23008080'/%3E%3Crect x='30' y='12' width='6' height='16' fill='%23008080'/%3E%3C/svg%3E" alt="Dashboard">
+                <div class="icon-label">Dashboard</div>
             </div>
+            
+            <div class="desktop-icon" data-window="users">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23ffcc00'/%3E%3Ccircle cx='24' cy='16' r='8' fill='white'/%3E%3Cellipse cx='24' cy='40' rx='16' ry='12' fill='white'/%3E%3C/svg%3E" alt="Users">
+                <div class="icon-label">Players</div>
+                <span class="notification-badge" id="playerCount" style="display:none">0</span>
+            </div>
+            
+            <div class="desktop-icon" data-window="wallets">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%2300cc00'/%3E%3Ctext x='24' y='32' text-anchor='middle' fill='white' font-size='20' font-weight='bold'%3E$%3C/text%3E%3C/svg%3E" alt="Wallets">
+                <div class="icon-label">Wallets 💰</div>
+            </div>
+            
+            <div class="desktop-icon" data-window="tools">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%236600cc'/%3E%3Cpolygon points='24,8 32,20 20,20 20,32 28,32 28,20 36,32 12,32' fill='white'/%3E%3C/svg%3E" alt="Tools">
+                <div class="icon-label">Tools</div>
+            </div>
+            
+            <div class="desktop-icon" data-action="logout">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23cc0000'/%3E%3Crect x='8' y='22' width='24' height='4' fill='white'/%3E%3Cpolygon points='40,24 32,16 32,20 28,20 28,28 32,28 32,32' fill='white'/%3E%3C/svg%3E" alt="Logout">
+                <div class="icon-label">Logout</div>
+            </div>
+        </div>
 
-            <!-- Desktop Icons -->
-            <div class="desktop-icons">
-                <div class="desktop-icon" onclick="openWindow('dashboard')">
-                    <div class="icon">📊</div>
-                    <div class="label">Dashboard</div>
-                </div>
-                <div class="desktop-icon" onclick="openWindow('users')">
-                    <div class="icon">🐰</div>
-                    <div class="label">Players</div>
-                </div>
-                <div class="desktop-icon" onclick="openWindow('characters')">
-                    <div class="icon">💿</div>
-                    <div class="label">Characters</div>
-                </div>
-                <div class="desktop-icon" onclick="openWindow('tools')">
-                    <div class="icon">🔪</div>
-                    <div class="label">Tools</div>
-                </div>
-                <div class="desktop-icon" onclick="openWindow('points')">
-                    <div class="icon">🎱</div>
-                    <div class="label">Points</div>
-                </div>
-                <div class="desktop-icon" onclick="openWindow('money')">
-                    <div class="icon">💊</div>
-                    <div class="label">Credits</div>
-                </div>
-                <div class="desktop-icon" onclick="openWindow('teams')">
-                    <div class="icon">🦓</div>
-                    <div class="label">Teams</div>
-                </div>
-                <div class="desktop-icon" onclick="openWindow('pending')">
-                    <div class="icon">⚠️</div>
-                    <div class="label">Pending</div>
-                </div>
-                <div class="desktop-icon" onclick="openWindow('database')">
-                    <div class="icon">💾</div>
-                    <div class="label">Database</div>
+        <!-- Windows -->
+        <!-- Dashboard Window -->
+        <div class="window" id="window-dashboard" style="left: 100px; top: 50px;">
+            <div class="window-header">
+                <span>📊 Dashboard</span>
+                <div class="window-controls">
+                    <button class="window-btn" data-action="minimize" data-window="dashboard">_</button>
+                    <button class="window-btn" data-action="close" data-window="dashboard">×</button>
                 </div>
             </div>
-
-            <!-- Windows Container -->
-            <div class="windows-container" id="windowsContainer">
-                <!-- Dashboard Window -->
-                <div class="window draggable" id="window-dashboard" style="display: none;">
-                    <div class="window-header">
-                        <span>📊 Dashboard</span>
-                        <div class="window-controls">
-                            <button class="minimize" onclick="minimizeWindow('dashboard')">_</button>
-                            <button class="maximize" onclick="maximizeWindow('dashboard')">□</button>
-                            <button class="window-close" onclick="closeWindow('dashboard')">×</button>
-                        </div>
+            <div class="window-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalPlayers">0</div>
+                        <div class="stat-label">total players</div>
                     </div>
-                    <div class="drag-handle"></div>
-                    <div class="window-body">
-                        <div class="stats-grid" id="statsGrid">
-                            <div class="stat-card">
-                                <div class="stat-number" id="totalUsers">0</div>
-                                <div class="stat-label">players</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number" id="activeUsers">0</div>
-                                <div class="stat-label">still alive</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number" id="totalRevenue">0</div>
-                                <div class="stat-label">collected</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number" id="totalCredit">0</div>
-                                <div class="stat-label">credits available</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number" id="totalPending">0</div>
-                                <div class="stat-label">pending</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number" id="totalPoints">0</div>
-                                <div class="stat-label">points given</div>
-                            </div>
-                        </div>
-                        <div class="recent-activity" id="recentActivity">
-                            <h3>🐛 recent activity</h3>
-                            <div id="activityList"></div>
-                        </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="activePlayers">0</div>
+                        <div class="stat-label">active</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalCredits">0</div>
+                        <div class="stat-label">total credits</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="pendingCount">0</div>
+                        <div class="stat-label">pending</div>
                     </div>
                 </div>
-
-                <!-- Users Window -->
-                <div class="window draggable" id="window-users" style="display: none;">
-                    <div class="window-header">
-                        <span>🐰 Player Management</span>
-                        <div class="window-controls">
-                            <button class="minimize" onclick="minimizeWindow('users')">_</button>
-                            <button class="maximize" onclick="maximizeWindow('users')">□</button>
-                            <button class="window-close" onclick="closeWindow('users')">×</button>
-                        </div>
+                
+                <h3>Team Wallets</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value team-hot" id="hotTeamWallet">0</div>
+                        <div class="stat-label">HOT 🔥 wallet</div>
                     </div>
-                    <div class="drag-handle"></div>
-                    <div class="window-body">
-                        <div class="toolbar">
-                            <button class="button" onclick="showCreateUser()">+ new player 🍄</button>
-                            <input type="text" 
-                                   class="text-input search" 
-                                   id="searchUsers" 
-                                   placeholder="search @handle..."
-                                   onkeyup="searchUsers()">
-                        </div>
-                        <div class="users-table-container">
-                            <table class="data-table" id="usersTable">
-                                <thead>
-                                    <tr>
-                                        <th>@handle</th>
-                                        <th>access code</th>
-                                        <th>character</th>
-                                        <th>status</th>
-                                        <th>team</th>
-                                        <th>credits</th>
-                                        <th>ind pts</th>
-                                        <th>team pts</th>
-                                        <th>tools</th>
-                                        <th>actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="usersTableBody">
-                                    <tr><td colspan="10">loading...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="stat-card">
+                        <div class="stat-value team-cold" id="coldTeamWallet">0</div>
+                        <div class="stat-label">COLD ❄️ wallet</div>
                     </div>
                 </div>
+                
+                <h3>Recent Activity</h3>
+                <div id="recentActivity">
+                    <p>Loading...</p>
+                </div>
+            </div>
+        </div>
 
-                <!-- Create User Dialog -->
-                <div class="window dialog" id="createUserDialog" style="display: none;">
-                    <div class="window-header">
-                        <span>🍄 Create Player</span>
-                        <button class="window-close" onclick="hideCreateUser()">×</button>
-                    </div>
-                    <div class="window-body">
+        <!-- Users Window -->
+        <div class="window" id="window-users" style="left: 150px; top: 100px; width: 900px;">
+            <div class="window-header">
+                <span>👥 Players Management</span>
+                <div class="window-controls">
+                    <button class="window-btn" data-action="minimize" data-window="users">_</button>
+                    <button class="window-btn" data-action="close" data-window="users">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="quick-actions">
+                    <button class="xp-button" onclick="AdminApp.showAddUserModal()">+ add player</button>
+                </div>
+                
+                <table class="data-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Handle</th>
+                            <th>Character</th>
+                            <th>Team</th>
+                            <th>Status</th>
+                            <th>Credits</th>
+                            <th>Ind. Points</th>
+                            <th>Tools</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <!-- Will be populated -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Wallets Window -->
+        <div class="window" id="window-wallets" style="left: 200px; top: 150px; width: 700px;">
+            <div class="window-header">
+                <span>💰 Wallets Management</span>
+                <div class="window-controls">
+                    <button class="window-btn" data-action="minimize" data-window="wallets">_</button>
+                    <button class="window-btn" data-action="close" data-window="wallets">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="tabs">
+                    <div class="tab active" onclick="AdminApp.switchTab('team-wallets')">Team Wallets</div>
+                    <div class="tab" onclick="AdminApp.switchTab('individual-wallets')">Individual Points</div>
+                    <div class="tab" onclick="AdminApp.switchTab('bulk-actions')">Bulk Actions</div>
+                </div>
+                
+                <div class="tab-content active" id="tab-team-wallets">
+                    <div class="wallet-display">
+                        <div class="wallet-header">
+                            <span>HOT 🔥 Team Wallet</span>
+                            <span class="wallet-balance" id="hotWalletBalance">0</span>
+                        </div>
                         <div class="form-grid">
-                            <div class="form-group">
-                                <label>access code* (unique)</label>
-                                <input type="text" class="text-input" id="newAccessCode" placeholder="PLAYER001">
-                            </div>
-                            <div class="form-group">
-                                <label>@handle* (instagram)</label>
-                                <input type="text" class="text-input" id="newHandle" placeholder="@coolguy2000">
-                            </div>
-                            <div class="form-group">
-                                <label>email (optional)</label>
-                                <input type="email" class="text-input" id="newEmail" placeholder="optional">
-                            </div>
-                            <div class="form-group">
-                                <label>character (optional)</label>
-                                <select class="select-input" id="newCharacter">
-                                    <option value="">-- pick later --</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>team</label>
-                                <select class="select-input" id="newTeam">
-                                    <option value="">unassigned</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>initial credits</label>
-                                <input type="number" class="text-input" id="newPayment" value="0" min="0">
-                            </div>
+                            <label class="form-label">Points:</label>
+                            <input type="number" class="form-input" id="hotWalletInput" placeholder="0">
+                            
+                            <label class="form-label">Action:</label>
+                            <select class="form-select" id="hotWalletAction">
+                                <option value="add">Add to wallet</option>
+                                <option value="subtract">Subtract from wallet</option>
+                                <option value="set">Set wallet to</option>
+                                <option value="distribute">Distribute to team</option>
+                            </select>
                         </div>
-                        <div class="form-group full-width">
-                            <label>welcome note (they'll see this) 💌</label>
-                            <textarea class="text-input" id="newUserNote" placeholder="hey you made it..."></textarea>
-                        </div>
-                        <div class="dialog-buttons">
-                            <button class="button primary" onclick="createUser()">create player 🐳</button>
-                            <button class="button" onclick="hideCreateUser()">cancel</button>
-                        </div>
-                        <div id="createUserMessage"></div>
+                        <button class="xp-button" onclick="AdminApp.updateTeamWallet('HOT')">update HOT wallet</button>
                     </div>
-                </div>
-
-                <!-- Edit User Dialog -->
-                <div class="window dialog" id="editUserDialog" style="display: none;">
-                    <div class="window-header">
-                        <span>📟 Edit: <span id="editUserHandle"></span></span>
-                        <button class="window-close" onclick="hideEditUser()">×</button>
-                    </div>
-                    <div class="window-body">
-                        <div class="tabs">
-                            <button class="tab active" onclick="switchEditTab('info')">info</button>
-                            <button class="tab" onclick="switchEditTab('credits')">credits</button>
-                            <button class="tab" onclick="switchEditTab('tools')">tools</button>
-                            <button class="tab" onclick="switchEditTab('points')">points</button>
-                            <button class="tab" onclick="switchEditTab('team')">team</button>
-                            <button class="tab" onclick="switchEditTab('message')">message</button>
+                    
+                    <div class="wallet-display">
+                        <div class="wallet-header">
+                            <span>COLD ❄️ Team Wallet</span>
+                            <span class="wallet-balance" id="coldWalletBalance">0</span>
                         </div>
-                        
-                        <div class="tab-content" id="edit-info-tab">
-                            <input type="hidden" id="editUserId">
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label>@handle</label>
-                                    <input type="text" class="text-input" id="editHandle">
-                                </div>
-                                <div class="form-group">
-                                    <label>status</label>
-                                    <select class="select-input" id="editStatus">
-                                        <option value="active">active</option>
-                                        <option value="blocked">blocked 🚭</option>
-                                        <option value="dead">dead 💣</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>character</label>
-                                    <select class="select-input" id="editCharacter">
-                                        <option value="">-- none --</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="tab-content" id="edit-credits-tab" style="display: none;">
-                            <div class="credit-display" id="userCreditDisplay">
-                                current credits: 0
-                            </div>
-                            <div class="transaction-history" id="userTransactionHistory"></div>
-                            <div class="quick-actions">
-                                <button class="button small" onclick="quickAddCredits(25, false)">+25 credits</button>
-                                <button class="button small" onclick="quickAddCredits(50, false)">+50 credits</button>
-                                <button class="button small" onclick="quickAddCredits(100, false)">+100 credits</button>
-                                <button class="button small special" onclick="quickAddCredits(25, true)">🎁 gift 25</button>
-                                <button class="button small warning" onclick="clearPending()">clear pending</button>
-                            </div>
-                            <div class="form-grid" style="margin-top: 15px;">
-                                <div class="form-group">
-                                    <label>add custom credits</label>
-                                    <input type="number" class="text-input" id="customCreditAmount" placeholder="amount">
-                                </div>
-                                <div class="form-group">
-                                    <label>note</label>
-                                    <input type="text" class="text-input" id="customCreditNote" placeholder="venmo received">
-                                </div>
-                            </div>
-                            <button class="button" onclick="addCustomCredits()">add credits 💊</button>
-                        </div>
-                        
-                        <div class="tab-content" id="edit-tools-tab" style="display: none;">
-                            <div class="user-tools" id="userToolsList"></div>
-                            <h4 style="margin-top: 20px;">🔪 give tools (costs credits)</h4>
-                            <div class="available-tools" id="availableToolsList"></div>
-                        </div>
-                        
-                        <div class="tab-content" id="edit-points-tab" style="display: none;">
-                            <div class="points-display">
-                                <div class="point-stat">
-                                    <span class="label">individual points:</span>
-                                    <span class="value" id="userIndPoints">0</span>
-                                </div>
-                                <div class="point-stat">
-                                    <span class="label">team points:</span>
-                                    <span class="value" id="userTeamPoints">0</span>
-                                </div>
-                            </div>
-                            <div class="points-history" id="userPointsHistory"></div>
-                            <div class="quick-actions" style="margin-top: 15px;">
-                                <button class="button small" onclick="quickAdjustPoints('individual', 10)">+10 ind</button>
-                                <button class="button small" onclick="quickAdjustPoints('individual', -10)">-10 ind</button>
-                                <button class="button small" onclick="quickAdjustPoints('team', 10)">+10 team</button>
-                                <button class="button small" onclick="quickAdjustPoints('team', -10)">-10 team</button>
-                            </div>
-                            <div class="form-grid" style="margin-top: 15px;">
-                                <div class="form-group">
-                                    <label>points to add/remove</label>
-                                    <input type="number" class="text-input" id="pointsAmount" placeholder="10">
-                                </div>
-                                <div class="form-group">
-                                    <label>point type</label>
-                                    <select class="select-input" id="pointType">
-                                        <option value="standard">standard</option>
-                                        <option value="double">double points 🔋</option>
-                                        <option value="super">super points 🍓</option>
-                                        <option value="bonus">bonus points 🎱</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>apply to</label>
-                                    <select class="select-input" id="pointTarget">
-                                        <option value="individual">individual only</option>
-                                        <option value="team">team only</option>
-                                        <option value="both">both (team event)</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>reason</label>
-                                    <input type="text" class="text-input" id="pointReason" placeholder="won challenge">
-                                </div>
-                            </div>
-                            <button class="button primary" onclick="addPoints()">add points 🎱</button>
-                        </div>
-                        
-                        <div class="tab-content" id="edit-team-tab" style="display: none;">
-                            <div class="form-group">
-                                <label>current team</label>
-                                <select class="select-input" id="editUserTeam">
-                                    <option value="">unassigned</option>
-                                </select>
-                            </div>
-                            <button class="button primary" onclick="changeUserTeam()">change team 🦓</button>
-                            <div class="team-impact-info" style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 6px;">
-                                <h4>Team Impact:</h4>
-                                <p>Changing teams will:</p>
-                                <ul>
-                                    <li>Move player to new team</li>
-                                    <li>Keep individual points</li>
-                                    <li>Team points stay with player</li>
-                                </ul>
-                            </div>
-                        </div>
-                        
-                        <div class="tab-content" id="edit-message-tab" style="display: none;">
-                            <div class="previous-notes" id="previousNotes"></div>
-                            <textarea class="text-input" id="editUserMessage" placeholder="send them a note... 💌"></textarea>
-                            <div class="quick-messages">
-                                <button class="button small" onclick="quickMsg('ur doing great')">ur doing great</button>
-                                <button class="button small" onclick="quickMsg('something big is coming...')">something big...</button>
-                                <button class="button small" onclick="quickMsg('check ur tools 🔪')">check tools</button>
-                            </div>
-                        </div>
-                        
-                        <div class="dialog-buttons">
-                            <button class="button primary" onclick="saveUserEdit()">save changes 💽</button>
-                            <button class="button" onclick="hideEditUser()">cancel</button>
-                        </div>
-                        <div id="editUserMessage"></div>
-                    </div>
-                </div>
-
-                <!-- Characters Window -->
-                <div class="window draggable" id="window-characters" style="display: none;">
-                    <div class="window-header">
-                        <span>💿 Characters</span>
-                        <div class="window-controls">
-                            <button class="minimize" onclick="minimizeWindow('characters')">_</button>
-                            <button class="maximize" onclick="maximizeWindow('characters')">□</button>
-                            <button class="window-close" onclick="closeWindow('characters')">×</button>
-                        </div>
-                    </div>
-                    <div class="drag-handle"></div>
-                    <div class="window-body">
-                        <div class="character-stats">
-                            <span class="stat">available: <strong id="availableChars">0</strong></span>
-                            <span class="stat">taken: <strong id="takenChars">0</strong></span>
-                        </div>
-                        <div class="characters-grid" id="charactersGrid"></div>
-                    </div>
-                </div>
-
-                <!-- Tools Window -->
-                <div class="window draggable" id="window-tools" style="display: none;">
-                    <div class="window-header">
-                        <span>🔪 Tools Management</span>
-                        <div class="window-controls">
-                            <button class="minimize" onclick="minimizeWindow('tools')">_</button>
-                            <button class="maximize" onclick="maximizeWindow('tools')">□</button>
-                            <button class="window-close" onclick="closeWindow('tools')">×</button>
-                        </div>
-                    </div>
-                    <div class="drag-handle"></div>
-                    <div class="window-body">
-                        <div class="toolbar">
-                            <button class="button" onclick="showCreateTool()">+ new tool 🪤</button>
-                        </div>
-                        <div class="tools-list" id="toolsList"></div>
-                    </div>
-                </div>
-
-                <!-- Create/Edit Tool Dialog -->
-                <div class="window dialog" id="toolDialog" style="display: none;">
-                    <div class="window-header">
-                        <span id="toolDialogTitle">🪤 Create Tool</span>
-                        <button class="window-close" onclick="hideToolDialog()">×</button>
-                    </div>
-                    <div class="window-body">
-                        <input type="hidden" id="editingToolId">
                         <div class="form-grid">
-                            <div class="form-group">
-                                <label>name*</label>
-                                <input type="text" class="text-input" id="toolName" placeholder="SUPER HAMMER">
-                            </div>
-                            <div class="form-group">
-                                <label>price* (credits)</label>
-                                <input type="number" class="text-input" id="toolPrice" placeholder="100" min="1">
-                            </div>
-                            <div class="form-group">
-                                <label>icon filename</label>
-                                <input type="text" class="text-input" id="toolIcon" placeholder="hammer.png">
-                            </div>
-                            <div class="form-group">
-                                <label>visible?</label>
-                                <select class="select-input" id="toolVisible">
-                                    <option value="true">yes - show in store</option>
-                                    <option value="false">no - hidden</option>
-                                </select>
-                            </div>
-                            <div class="form-group full-width">
-                                <label>description</label>
-                                <textarea class="text-input" id="toolDescription" placeholder="what does it do?"></textarea>
-                            </div>
+                            <label class="form-label">Points:</label>
+                            <input type="number" class="form-input" id="coldWalletInput" placeholder="0">
+                            
+                            <label class="form-label">Action:</label>
+                            <select class="form-select" id="coldWalletAction">
+                                <option value="add">Add to wallet</option>
+                                <option value="subtract">Subtract from wallet</option>
+                                <option value="set">Set wallet to</option>
+                                <option value="distribute">Distribute to team</option>
+                            </select>
                         </div>
-                        <div class="dialog-buttons">
-                            <button class="button primary" onclick="saveTool()">save tool 🔧</button>
-                            <button class="button" onclick="hideToolDialog()">cancel</button>
-                        </div>
-                        <div id="toolMessage"></div>
+                        <button class="xp-button" onclick="AdminApp.updateTeamWallet('COLD')">update COLD wallet</button>
                     </div>
                 </div>
-
-                <!-- Points Window -->
-                <div class="window draggable" id="window-points" style="display: none;">
-                    <div class="window-header">
-                        <span>🎱 Points Overview</span>
-                        <div class="window-controls">
-                            <button class="minimize" onclick="minimizeWindow('points')">_</button>
-                            <button class="maximize" onclick="maximizeWindow('points')">□</button>
-                            <button class="window-close" onclick="closeWindow('points')">×</button>
-                        </div>
+                
+                <div class="tab-content" id="tab-individual-wallets">
+                    <div class="form-grid">
+                        <label class="form-label">Player:</label>
+                        <select class="form-select" id="pointsPlayerSelect">
+                            <option value="">Select player...</option>
+                        </select>
+                        
+                        <label class="form-label">Points:</label>
+                        <input type="number" class="form-input" id="individualPointsInput" placeholder="0">
+                        
+                        <label class="form-label">Type:</label>
+                        <select class="form-select" id="pointsType">
+                            <option value="add">Add</option>
+                            <option value="subtract">Subtract</option>
+                            <option value="set">Set to</option>
+                        </select>
                     </div>
-                    <div class="drag-handle"></div>
-                    <div class="window-body">
-                        <div class="points-types">
-                            <h3>point types configured:</h3>
-                            <div class="point-type-list">
-                                <div class="point-type">
-                                    <span class="type-name">standard</span>
-                                    <span class="type-multiplier">1x</span>
-                                </div>
-                                <div class="point-type">
-                                    <span class="type-name">double 🔋</span>
-                                    <span class="type-multiplier">2x</span>
-                                </div>
-                                <div class="point-type">
-                                    <span class="type-name">super 🍓</span>
-                                    <span class="type-multiplier">5x</span>
-                                </div>
-                                <div class="point-type">
-                                    <span class="type-name">bonus 🎱</span>
-                                    <span class="type-multiplier">3x</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="points-leaderboard" id="pointsLeaderboard"></div>
-                        <div class="points-log">
-                            <h3>recent points activity:</h3>
-                            <div id="pointsActivityLog"></div>
-                        </div>
+                    <div class="form-buttons">
+                        <button class="xp-button" onclick="AdminApp.updateIndividualPoints()">update points</button>
                     </div>
                 </div>
-
-                <!-- Teams Window -->
-                <div class="window draggable" id="window-teams" style="display: none;">
-                    <div class="window-header">
-                        <span>🦓 Teams</span>
-                        <div class="window-controls">
-                            <button class="minimize" onclick="minimizeWindow('teams')">_</button>
-                            <button class="maximize" onclick="maximizeWindow('teams')">□</button>
-                            <button class="window-close" onclick="closeWindow('teams')">×</button>
-                        </div>
-                    </div>
-                    <div class="drag-handle"></div>
-                    <div class="window-body">
-                        <div class="team-management">
-                            <h3>Team Configuration</h3>
-                            <div class="team-list" id="teamsList"></div>
-                            <button class="button primary" onclick="addNewTeam()">+ Add New Team</button>
-                        </div>
-                        <div class="teams-standings" id="teamsStandings"></div>
-                    </div>
-                </div>
-
-                <!-- Credits Overview Window -->
-                <div class="window draggable" id="window-money" style="display: none;">
-                    <div class="window-header">
-                        <span>💊 Credits Overview</span>
-                        <div class="window-controls">
-                            <button class="minimize" onclick="minimizeWindow('money')">_</button>
-                            <button class="maximize" onclick="maximizeWindow('money')">□</button>
-                            <button class="window-close" onclick="closeWindow('money')">×</button>
-                        </div>
-                    </div>
-                    <div class="drag-handle"></div>
-                    <div class="window-body">
-                        <div class="money-stats">
-                            <div class="stat-card">
-                                <div class="stat-number" id="totalCollected">0</div>
-                                <div class="stat-label">collected</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number" id="totalPendingAmount">0</div>
-                                <div class="stat-label">pending</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number" id="totalGifted">0</div>
-                                <div class="stat-label">gifted</div>
-                            </div>
-                        </div>
-                        <div class="pending-payments">
-                            <h3>🧧 players who need to send funds:</h3>
-                            <div id="pendingPaymentsList"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pending Requests Window -->
-                <div class="window draggable" id="window-pending" style="display: none;">
-                    <div class="window-header">
-                        <span>⚠️ Pending Requests</span>
-                        <div class="window-controls">
-                            <button class="minimize" onclick="minimizeWindow('pending')">_</button>
-                            <button class="maximize" onclick="maximizeWindow('pending')">□</button>
-                            <button class="window-close" onclick="closeWindow('pending')">×</button>
-                        </div>
-                    </div>
-                    <div class="drag-handle"></div>
-                    <div class="window-body">
-                        <div class="pending-stats">
-                            <span id="pendingCount">0</span> requests waiting for approval
-                        </div>
-                        <div class="pending-list" id="pendingList">
-                            <p style="text-align: center; color: #666;">no pending requests</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Database Export Window -->
-                <div class="window draggable" id="window-database" style="display: none;">
-                    <div class="window-header">
-                        <span>💾 Database Management</span>
-                        <div class="window-controls">
-                            <button class="minimize" onclick="minimizeWindow('database')">_</button>
-                            <button class="maximize" onclick="maximizeWindow('database')">□</button>
-                            <button class="window-close" onclick="closeWindow('database')">×</button>
-                        </div>
-                    </div>
-                    <div class="drag-handle"></div>
-                    <div class="window-body">
-                        <h3>Database Export Tools</h3>
-                        <div class="database-actions">
-                            <button class="button primary" onclick="exportFullDatabase()">📦 Export Full Database</button>
-                            <button class="button" onclick="exportUsers()">👥 Export Users Only</button>
-                            <button class="button" onclick="exportTeams()">🦓 Export Teams Only</button>
-                            <button class="button" onclick="exportTools()">🔪 Export Tools Only</button>
-                            <button class="button" onclick="exportCharacters()">💿 Export Characters Only</button>
-                            <button class="button warning" onclick="createBackup()">💾 Create Local Backup</button>
-                        </div>
-                        <div class="database-info" id="databaseInfo">
-                            <h4>Database Statistics</h4>
-                            <div id="dbStats"></div>
-                        </div>
-                        <div class="api-integration">
-                            <h4>API Integration</h4>
-                            <p>Use exported JSON files to integrate with:</p>
-                            <ul>
-                                <li>Public leaderboards</li>
-                                <li>Score displays</li>
-                                <li>Analytics tools</li>
-                                <li>Backup systems</li>
-                                <li>Other admin interfaces</li>
-                            </ul>
-                            <div class="api-endpoints">
-                                <h5>Firebase Collections:</h5>
-                                <code>/users</code>
-                                <code>/teams</code>
-                                <code>/tools</code>
-                                <code>/characters</code>
-                                <code>/pendingSelections</code>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Team Editor Dialog -->
-                <div class="window dialog" id="teamEditorDialog" style="display: none;">
-                    <div class="window-header">
-                        <span>🦓 Edit Team</span>
-                        <button class="window-close" onclick="hideTeamEditor()">×</button>
-                    </div>
-                    <div class="window-body">
-                        <input type="hidden" id="editingTeamId">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Team Name</label>
-                                <input type="text" class="text-input" id="teamName" placeholder="Team Name">
-                            </div>
-                            <div class="form-group">
-                                <label>Team Color</label>
-                                <input type="color" class="text-input" id="teamColor">
-                            </div>
-                        </div>
-                        <div class="team-members-list" id="teamMembersList"></div>
-                        <div class="team-points-adjustment">
-                            <h4>Adjust All Member Points</h4>
-                            <div class="quick-actions">
-                                <button class="button small" onclick="adjustAllTeamPoints(10)">+10 All</button>
-                                <button class="button small" onclick="adjustAllTeamPoints(-10)">-10 All</button>
-                                <button class="button small" onclick="adjustAllIndPoints(10)">+10 Ind All</button>
-                                <button class="button small" onclick="adjustAllIndPoints(-10)">-10 Ind All</button>
-                            </div>
-                        </div>
-                        <div class="dialog-buttons">
-                            <button class="button primary" onclick="saveTeamEdit()">Save Team</button>
-                            <button class="button danger" onclick="deleteTeam()">Delete Team</button>
-                            <button class="button" onclick="hideTeamEditor()">Cancel</button>
-                        </div>
+                
+                <div class="tab-content" id="tab-bulk-actions">
+                    <div class="quick-actions">
+                        <button class="quick-btn" onclick="AdminApp.resetAllPoints()">reset all individual points</button>
+                        <button class="quick-btn" onclick="AdminApp.resetTeamWallets()">reset team wallets</button>
+                        <button class="quick-btn" onclick="AdminApp.doubleAllPoints()">double all individual points</button>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Minimized Windows Bar -->
-            <div class="minimized-bar" id="minimizedBar"></div>
+        <!-- Tools Window -->
+        <div class="window" id="window-tools" style="left: 300px; top: 200px; width: 700px;">
+            <div class="window-header">
+                <span>🔧 Tools Management</span>
+                <div class="window-controls">
+                    <button class="window-btn" data-action="minimize" data-window="tools">_</button>
+                    <button class="window-btn" data-action="close" data-window="tools">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="quick-actions">
+                    <button class="xp-button" onclick="AdminApp.showAddToolModal()">+ add tool</button>
+                </div>
+                
+                <div class="tools-grid" id="toolsGrid">
+                    <!-- Will be populated -->
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Toast Notification -->
+    <!-- Taskbar -->
+    <div class="taskbar">
+        <button class="start-button">
+            <span>🪟</span>
+            <span>Start</span>
+        </button>
+        <div class="taskbar-windows" id="taskbarWindows">
+            <!-- Will be populated -->
+        </div>
+        <div class="system-tray">
+            <span id="clock">00:00</span>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Edit User Modal -->
+    <div class="modal" id="editUserModal">
+        <div class="modal-header">
+            <span>Edit Player</span>
+            <button class="window-btn" onclick="AdminApp.closeModal('editUserModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <label class="form-label">Access Code:</label>
+                <input type="text" class="form-input" id="editAccessCode" readonly>
+                
+                <label class="form-label">Handle:</label>
+                <input type="text" class="form-input" id="editHandle">
+                
+                <label class="form-label">Character:</label>
+                <select class="form-select" id="editCharacterSelect">
+                    <option value="">None</option>
+                </select>
+                
+                <label class="form-label">Team:</label>
+                <select class="form-select" id="editTeam">
+                    <option value="">None</option>
+                    <option value="HOT">HOT 🔥</option>
+                    <option value="COLD">COLD ❄️</option>
+                </select>
+                
+                <label class="form-label">Status:</label>
+                <select class="form-select" id="editStatus">
+                    <option value="active">Active</option>
+                    <option value="dead">Dead</option>
+                    <option value="blocked">Blocked</option>
+                </select>
+                
+                <label class="form-label">Credits:</label>
+                <input type="number" class="form-input" id="editCredits">
+                
+                <label class="form-label">Individual Points:</label>
+                <input type="number" class="form-input" id="editIndividualPoints">
+            </div>
+            
+            <!-- User's Tools -->
+            <div class="tools-section">
+                <h4>Player's Tools</h4>
+                <div class="tools-list" id="editUserTools">
+                    <!-- Will be populated -->
+                </div>
+                <button class="xp-button" style="margin-top: 10px;" onclick="AdminApp.showAssignToolModal()">+ assign tool</button>
+            </div>
+            
+            <div class="form-buttons">
+                <button class="xp-button" onclick="AdminApp.saveUserEdit()">save</button>
+                <button class="xp-button" onclick="AdminApp.closeModal('editUserModal')">cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal" id="addUserModal">
+        <div class="modal-header">
+            <span>Add New Player</span>
+            <button class="window-btn" onclick="AdminApp.closeModal('addUserModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <label class="form-label">Access Code:</label>
+                <input type="text" class="form-input" id="newAccessCode" placeholder="UNIQUE CODE">
+                
+                <label class="form-label">Handle:</label>
+                <input type="text" class="form-input" id="newHandle" placeholder="@username">
+                
+                <label class="form-label">Initial Credits:</label>
+                <input type="number" class="form-input" id="newCredits" value="0">
+            </div>
+            <div class="form-buttons">
+                <button class="xp-button" onclick="AdminApp.addNewUser()">create player</button>
+                <button class="xp-button" onclick="AdminApp.closeModal('addUserModal')">cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Tool Modal -->
+    <div class="modal" id="addToolModal">
+        <div class="modal-header">
+            <span>Add New Tool</span>
+            <button class="window-btn" onclick="AdminApp.closeModal('addToolModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <label class="form-label">Name:</label>
+                <input type="text" class="form-input" id="newToolName" placeholder="Tool name">
+                
+                <label class="form-label">Description:</label>
+                <textarea class="form-input" id="newToolDesc" rows="2"></textarea>
+                
+                <label class="form-label">Price:</label>
+                <input type="number" class="form-input" id="newToolPrice" value="25">
+                
+                <label class="form-label">Image file:</label>
+                <select class="form-select" id="newToolImage">
+                    <option value="anon-hack.png">anon-hack.png</option>
+                    <option value="glasses-see.png">glasses-see.png</option>
+                    <option value="kool-aid-life.png">kool-aid-life.png</option>
+                    <option value="labubu-voodoo.png">labubu-voodoo.png</option>
+                    <option value="blessed-beyblade.png">blessed-beyblade.png</option>
+                    <option value="game-pass.png">game-pass.png</option>
+                </select>
+                
+                <label class="form-label">Visible:</label>
+                <select class="form-select" id="newToolVisible">
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                </select>
+            </div>
+            <div class="form-buttons">
+                <button class="xp-button" onclick="AdminApp.addNewTool()">create tool</button>
+                <button class="xp-button" onclick="AdminApp.closeModal('addToolModal')">cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Tool Modal -->
+    <div class="modal" id="assignToolModal">
+        <div class="modal-header">
+            <span>Assign Tool to Player</span>
+            <button class="window-btn" onclick="AdminApp.closeModal('assignToolModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <label class="form-label">Tool:</label>
+                <select class="form-select" id="assignToolSelect">
+                    <option value="">Select tool...</option>
+                </select>
+                
+                <label class="form-label">Status:</label>
+                <select class="form-select" id="assignToolStatus">
+                    <option value="available">Available</option>
+                    <option value="used">Used</option>
+                </select>
+            </div>
+            <div class="form-buttons">
+                <button class="xp-button" onclick="AdminApp.assignToolToUser()">assign</button>
+                <button class="xp-button" onclick="AdminApp.closeModal('assignToolModal')">cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <!-- Firebase & Main Script -->
+    <!-- Scripts -->
     <script type="module" src="admin.js"></script>
 </body>
 </html>

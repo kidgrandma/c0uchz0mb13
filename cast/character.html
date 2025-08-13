@@ -2,244 +2,247 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>INTERNET OLYMPICS 2 💿 THE PLAYPEN</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>INTERNET OLYMPICS 2 📀 player portal</title>
     <link rel="stylesheet" href="character.css">
 </head>
 <body>
-    <!-- Liminal Background (from companies.html) -->
-    <div class="liminal-bg"></div>
-    
-    <!-- Background Music -->
-    <audio id="bgMusic" loop>
-        <source src="../assets/cast/encore.mp3" type="audio/mpeg">
-    </audio>
-    
-    <div class="main-container">
-        <!-- Login Screen -->
-        <div class="access-screen" id="accessScreen">
-            <div class="playpen-header">
-                <h1>🧸 xm4s tim3 🧩</h1>
+    <!-- Login Screen -->
+    <div id="loginScreen">
+        <div class="login-window">
+            <div class="window-header">
+                <span>🔐 INTERNET OLYMPICS 2 - access required</span>
             </div>
-            
-            <div class="access-code-container window-95">
-                <h2>📟 ACCESS REQUIRED 📟</h2>
-                <input type="text" 
-                       class="access-code-input" 
-                       id="accessCodeInput" 
-                       placeholder="TYPE CODE HERE"
-                       maxlength="20"
-                       autocomplete="off">
-                <button class="access-code-btn" id="validateCodeBtn">let me in →</button>
-                <div class="error-message" id="errorMessage"></div>
-                <p class="help-text">lost? dm the mod on ig</p>
-            </div>
-        </div>
-
-        <!-- Leaderboard View -->
-        <div class="leaderboard-view" id="leaderboardView" style="display: none;">
-            <!-- PLAYFUL HEADER (from companies) -->
-            <div class="playpen-header">
-                <h1>🧸 the gift room 🧩</h1>
-            </div>
-
-            <!-- COMPANY SCORES (Team Scores) -->
-            <div class="scores">
-                <div class="company-score">
-                    <img src="../assets/b04rd/hot-team.png" alt="HOT Team" class="team-avatar">
-                    <span class="company-name">🔥 HOT</span>
-                    <span class="company-valuation" id="hotPoints">$0</span>
-                </div>
-                <div class="company-score">
-                    <img src="../assets/b04rd/cold-team.png" alt="COLD Team" class="team-avatar">
-                    <span class="company-name">❄️ COLD </span>
-                    <span class="company-valuation" id="coldPoints">$0</span>
-                </div>
-            </div>
-
-            <!-- GAME AREA -->
-            <div class="game-area">
-                <!-- PLAYPEN CONTAINER (CD Field) -->
-                <div class="playpen-container" id="playpenContainer">
-                    <div class="loading">Loading players...</div>
-                </div>
-
-                <!-- ZONES -->
-                <div class="zones-container">
-                    <!-- IRS ZONE (Stats Zone) -->
-                    <div class="zone irs-zone" id="irsZone">
-                        <div class="zone-title">CHECK STATS</div>
-                        <img src="../assets/b04rd/irs.png" alt="Stats" class="irs-logo">
-                        <div class="zone-contents"></div>
+            <div class="window-body">
+                <div class="access-form">
+                    <div>
+                        <div class="form-label">enter ur access code:</div>
+                        <input type="text" id="accessInput" class="xp-input" placeholder="TYPE HERE" maxlength="20">
                     </div>
-
-                    <!-- WEAPONS ZONE -->
-                    <div class="zone weapons-zone" id="weaponsZone">
-                        <div class="zone-title">GET WEAPONS</div>
-                        <div class="zone-contents">
-                            <button class="zone-action-btn" id="weaponsShopBtn">💊 SHOP NOW 💊</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Floating Action Button for Profile -->
-            <div class="floating-actions">
-                <button class="fab-btn profile-btn" id="myProfileBtn" title="ur profile">
-                    <span>👤</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Player Details Popup (when CD dropped in zone) -->
-        <div class="player-details" id="playerDetails">
-            <div class="details-header">
-                <img class="details-image" id="detailsImage" src="" alt="">
-                <div class="details-info">
-                    <h3 id="detailsName"></h3>
-                    <div class="details-handle" id="detailsHandle">@handle</div>
-                    <div class="details-wealth" id="detailsWealth">$0</div>
-                </div>
-            </div>
-            <div class="achievements-list">
-                <h4>📊 STATS</h4>
-                <div id="achievementsList">
-                    <div class="achievement-item">
-                        <span>Team:</span>
-                        <span id="detailsTeam">-</span>
-                    </div>
-                    <div class="achievement-item">
-                        <span>Status:</span>
-                        <span id="detailsStatus">ACTIVE</span>
-                    </div>
-                    <div class="achievement-item">
-                        <span>Individual Points:</span>
-                        <span id="detailsIndPoints">0</span>
-                    </div>
-                    <div class="achievement-item">
-                        <span>Team Points:</span>
-                        <span id="detailsTeamPoints">0</span>
-                    </div>
-                </div>
-            </div>
-            <button class="close-details" onclick="closeDetails()">Close</button>
-        </div>
-
-        <!-- Player Profile Modal (Full Details - keeping existing) -->
-        <div class="modal-overlay" id="profileModal">
-            <div class="modal-content window-95">
-                <div class="modal-header">
-                    <span id="modalTitle">UR PROFILE</span>
-                    <button class="close-modal" id="closeProfileBtn">×</button>
-                </div>
-                <div class="modal-inner">
-                    <!-- Mod Message -->
-                    <div id="modMessage" class="mod-message" style="display: none;">
-                        <div class="message-header">📬 MESSAGE FROM MOD:</div>
-                        <div class="message-content" id="modMessageText"></div>
-                    </div>
-
-                    <!-- Profile Content -->
-                    <div class="profile-content">
-                        <div class="profile-disc" id="profileDisc">
-                            <!-- Disc image here -->
-                        </div>
-                        
-                        <h2 class="profile-handle" id="profileHandle">@handle</h2>
-                        
-                        <div class="profile-details">
-                            <div class="detail-section">
-                                <h3>CHARACTER INFO</h3>
-                                <div class="detail-row">
-                                    <span>name:</span>
-                                    <span id="characterName">-</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span>show:</span>
-                                    <span id="characterShow">-</span>
-                                </div>
-                            </div>
-
-                            <div class="detail-section">
-                                <h3>GAME STATS</h3>
-                                <div class="detail-row">
-                                    <span>team:</span>
-                                    <span class="team-badge" id="teamBadge">-</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span>status:</span>
-                                    <span class="status-badge" id="statusBadge">ACTIVE</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span>individual pts:</span>
-                                    <span class="points" id="indPoints">0</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span>team pts:</span>
-                                    <span class="points" id="teamPoints">0</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span>credits:</span>
-                                    <span class="credits" id="creditsDisplay">0</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Weapons Inventory -->
-                        <div class="weapons-section">
-                            <h3>🔪 UR WEAPONS 🔪</h3>
-                            <div class="weapons-grid" id="ownedWeapons">
-                                <!-- Weapons will be added here -->
-                            </div>
-                            <button class="get-weapons-btn" id="getMoreWeaponsBtn">
-                                get more weapons →
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Weapons Shop Modal (keeping existing) -->
-        <div class="modal-overlay" id="weaponsModal">
-            <div class="modal-content window-95">
-                <div class="modal-header">
-                    <span>💊 WEAPONS SHOP 💊</span>
-                    <button class="close-modal" id="closeWeaponsBtn">×</button>
-                </div>
-                <div class="modal-inner">
-                    <div class="shop-header">
-                        <div class="credit-display">ur credits: <span id="shopCredits">0</span></div>
-                        <p class="shop-instruction">click stuff 2 add to cart</p>
-                    </div>
-                    
-                    <div class="weapons-shop-grid" id="weaponsShopGrid">
-                        <!-- Available weapons will be loaded here -->
-                    </div>
-                    
-                    <div class="cart-summary">
-                        <div class="cart-total">total: <span id="cartTotal">0</span> credits</div>
-                        <div class="cart-message" id="cartMessage"></div>
-                        <div class="cart-actions">
-                            <button class="cart-btn checkout" id="checkoutWeaponsBtn">send request →</button>
-                            <button class="cart-btn cancel" id="cancelShopBtn">nvm</button>
-                        </div>
-                    </div>
-                    
-                    <div class="checkout-success" id="checkoutSuccess" style="display: none;">
-                        <p>✨ request sent! check back l8r ✨</p>
+                    <div class="error-msg" id="errorMsg"></div>
+                    <button class="xp-button" onclick="CharacterApp.validateAccess()">
+                        enter 📀
+                    </button>
+                    <div style="font-size: 10px; color: #666; margin-top: 10px;">
+                        no code? dm the moderator on instagram
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notifications -->
-    <div class="toast" id="toast"></div>
-    
-    <!-- Notification (from companies) -->
-    <div class="notification" id="notification"></div>
+    <!-- Game View -->
+    <div id="gameView">
+        <!-- Score Ticker -->
+        <div class="score-ticker">
+            <div class="ticker-content">
+                <span class="ticker-item">🌐 INTERNET OLYMPICS 2 🌐</span>
+                <span class="ticker-item hot-score">🔥 HOT: <span id="hotScore">0</span> 🔥</span>
+                <span class="ticker-item cold-score">❄️ COLD: <span id="coldScore">0</span> ❄️</span>
+                <span class="ticker-item">🌐 INTERNET OLYMPICS 2 🌐</span>
+                <span class="ticker-item hot-score">🔥 HOT: <span id="hotScore2">0</span> 🔥</span>
+                <span class="ticker-item cold-score">❄️ COLD: <span id="coldScore2">0</span> ❄️</span>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="action-bar">
+            <button class="action-btn" onclick="CharacterApp.showMyProfile()">
+                my stuff 📀
+            </button>
+            <button class="action-btn" onclick="CharacterApp.showLeaderboard()">
+                leaderboard 📊
+            </button>
+        </div>
 
+        <div class="cd-playground">
+            <div class="cd-container" id="cdContainer">
+                <!-- CDs will be dynamically added here -->
+            </div>
+            <div class="portal-zone" id="portal">
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Details Popup -->
+    <div class="xp-popup player-popup" id="playerPopup">
+        <div class="popup-header">
+            <span id="popupTitle">player info</span>
+            <button class="popup-close" onclick="CharacterApp.closePopup()">×</button>
+        </div>
+        <div class="popup-body">
+            <div class="player-info">
+                <div class="player-disc-display">
+                    <img id="popupDisc" src="" alt="disc">
+                </div>
+                <div class="player-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">handle:</span>
+                        <span id="popupHandle">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">character:</span>
+                        <span id="popupCharacter">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">team:</span>
+                        <span id="popupTeam">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">status:</span>
+                        <span id="popupStatus">-</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">individual pts:</span>
+                        <span id="popupIndPoints">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal-window">
+            <div class="modal-header">
+                <span id="profileTitle">ur stuff</span>
+                <button class="popup-close" onclick="CharacterApp.closeProfile()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="mod-message" id="modMessage">
+                    <strong>📬 message from moderator:</strong><br>
+                    <span id="modMessageText"></span>
+                </div>
+
+                <div class="profile-section">
+                    <div class="section-title">ur character</div>
+                    <div class="player-info">
+                        <div class="player-disc-display">
+                            <img id="profileDisc" src="" alt="ur disc">
+                        </div>
+                        <div class="player-stats">
+                            <div class="stat-row">
+                                <span class="stat-label">character:</span>
+                                <span id="profileCharName">-</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">show:</span>
+                                <span id="profileShow">-</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">team:</span>
+                                <span id="profileTeam">-</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">individual pts:</span>
+                                <span id="profileIndPts">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-section">
+                    <div class="section-title">ur credits</div>
+                    <div class="credits-display" id="creditsDisplay">
+                        credits: 0
+                    </div>
+                </div>
+
+                <div class="profile-section">
+                    <div class="section-title">ur tools</div>
+                    <div class="weapons-grid" id="weaponsGrid">
+                        <!-- Tools will be added here -->
+                    </div>
+                    <button class="xp-button" style="margin-top: 15px; width: 100%;" onclick="CharacterApp.openShop()">
+                        grab more tools 🔪
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shop Modal -->
+    <div class="modal-overlay" id="shopModal">
+        <div class="modal-window">
+            <div class="modal-header">
+                <span>tool shop 🪤</span>
+                <button class="popup-close" onclick="CharacterApp.closeShop()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="credits-display" id="shopCredits">
+                    ur credits: 0
+                </div>
+
+                <div class="shop-grid" id="shopGrid">
+                    <!-- Shop items will be added here -->
+                </div>
+
+                <div class="cart-total" id="cartTotal">
+                    total: 0 credits
+                </div>
+
+                <div class="success-msg" id="successMsg">
+                    ✓ request sent! wait for approval
+                </div>
+
+                <div class="shop-buttons">
+                    <button class="xp-button" onclick="CharacterApp.checkout()">
+                        send request 📡
+                    </button>
+                    <button class="xp-button" onclick="CharacterApp.clearCart()">
+                        clear cart
+                    </button>
+                    <button class="xp-button" onclick="CharacterApp.closeShop()">
+                        cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div class="modal-overlay" id="leaderboardModal">
+        <div class="modal-window">
+            <div class="modal-header">
+                <span>📊 leaderboard</span>
+                <button class="popup-close" onclick="CharacterApp.closeLeaderboard()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="profile-section">
+                    <div class="section-title">top players</div>
+                    <table style="width: 100%; font-size: 11px;">
+                        <thead>
+                            <tr style="background: #000080; color: white;">
+                                <th style="padding: 5px;">rank</th>
+                                <th style="padding: 5px;">handle</th>
+                                <th style="padding: 5px;">team</th>
+                                <th style="padding: 5px;">points</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardBody">
+                            <!-- Will be populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Audio -->
+    <audio id="bgMusic" loop>
+        <source src="../assets/cast/character-bg.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="popOpen" preload>
+        <source src="../assets/cast/pop-open.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="popClose" preload>
+        <source src="../assets/cast/pop-close.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Scripts -->
     <script type="module" src="character.js"></script>
 </body>
 </html>
