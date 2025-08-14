@@ -1,278 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>INTERNET OLYMPICS 2 💿 blind box board</title>
-  <link rel="stylesheet" href="blind.css"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blind Box Challenge</title>
+    <link rel="stylesheet" href="blind.css">
 </head>
 <body>
-  <div class="game-container" style="background-image:url('/assets/b04rd/blind-bg.jpg')">
-    <!-- Current Turn Indicator -->
-    <div class="turn-indicator">
-      <span id="currentTurn">waiting to start…</span>
+    <!-- Intro Modal -->
+    <div id="introModal" class="xp-modal active">
+        <div class="xp-window">
+            <div class="xp-window-header">
+                <span>WELCOME_2_THE_B04RD.exe</span>
+                <button class="xp-close-btn" onclick="closeIntro()">×</button>
+            </div>
+            <div class="xp-window-body">
+                <div class="intro-content">
+                    <h2>WELCOME 2 THE B04RD</h2>
+                    <h3>(finally)</h3>
+                    <p class="sponsor-text">tonites game is sponsored by THEEEEE one and only.</p>
+                    <div class="ready-text">Ready???</div>
+                    <button class="xp-button primary" onclick="startExperience()">START →</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Team Scores (Fixed IDs to match JS) -->
-    <div class="score-bar">
-      <div class="team-score team-1">
-        <span class="team-name">TEAM HOT</span>
-        <span class="team-points" id="team1Points">0</span>
-      </div>
-      <div class="team-score team-2">
-        <span class="team-name">TEAM COLD</span>
-        <span class="team-points" id="team2Points">0</span>
-      </div>
+    <!-- Team Selection Modal -->
+    <div id="teamModal" class="xp-modal">
+        <div class="xp-window">
+            <div class="xp-window-header">
+                <span>TEAM_SELECT.exe</span>
+            </div>
+            <div class="xp-window-body">
+                <h2>First, which team are you?</h2>
+                <div class="team-selection">
+                    <button class="team-btn hot-team" data-team="hot">
+                        <span class="team-icon">🔥</span>
+                        <span>Team Hot</span>
+                    </button>
+                    <button class="team-btn cold-team" data-team="cold">
+                        <span class="team-icon">❄️</span>
+                        <span>Team Cold</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Blind Box Grid — 25 boxes (5 collections × 5 each) - ALL GLENBUBU NOW -->
-    <div class="blind-box-container" id="boxContainer">
-      <!-- Row 1 -->
-      <div class="blind-box" data-box-id="box-1" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-2" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-3" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-4" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-5" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
+    <!-- Main Game Board -->
+    <div id="gameBoard" class="game-board hidden">
+        <div class="header">
+            <div class="team-display">
+                <span id="teamName"></span>
+            </div>
+            <div class="score-display">
+                <span>Score: </span><span id="teamScore">0</span>
+            </div>
+        </div>
 
-      <!-- Row 2 -->
-      <div class="blind-box" data-box-id="box-6" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-7" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-8" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-9" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-10" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
+        <div class="cans-container">
+            <div class="can-wrapper" data-can="lamby">
+                <div class="can-card">
+                    <div class="can-front">
+                        <img src="../assets/b04rd/lamby.png" alt="Lamby Can">
+                    </div>
+                    <div class="can-back">
+                        <div class="challenge-content">
+                            <h3>Challenge</h3>
+                            <p class="challenge-text">Waiting for challenge...</p>
+                            <button class="complete-btn hidden">Mark Complete</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="points-selector hidden">
+                    <button class="points-btn" data-points="15000">15K</button>
+                    <button class="points-btn" data-points="25000">25K</button>
+                    <button class="points-btn" data-points="50000">50K</button>
+                </div>
+            </div>
 
-      <!-- Row 3 -->
-      <div class="blind-box" data-box-id="box-11" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-12" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-13" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-14" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-15" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
+            <div class="can-wrapper" data-can="flyers">
+                <div class="can-card">
+                    <div class="can-front">
+                        <img src="../assets/b04rd/flyers.png" alt="Flyers Can">
+                    </div>
+                    <div class="can-back">
+                        <div class="challenge-content">
+                            <h3>Challenge</h3>
+                            <p class="challenge-text">Waiting for challenge...</p>
+                            <button class="complete-btn hidden">Mark Complete</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="points-selector hidden">
+                    <button class="points-btn" data-points="15000">15K</button>
+                    <button class="points-btn" data-points="25000">25K</button>
+                    <button class="points-btn" data-points="50000">50K</button>
+                </div>
+            </div>
 
-      <!-- Row 4 -->
-      <div class="blind-box" data-box-id="box-16" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-17" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-18" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-19" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-20" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
+            <div class="can-wrapper" data-can="mashups">
+                <div class="can-card">
+                    <div class="can-front">
+                        <img src="../assets/b04rd/mashups.png" alt="Mashups Can">
+                    </div>
+                    <div class="can-back">
+                        <div class="challenge-content">
+                            <h3>Challenge</h3>
+                            <p class="challenge-text">Waiting for challenge...</p>
+                            <button class="complete-btn hidden">Mark Complete</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="points-selector hidden">
+                    <button class="points-btn" data-points="15000">15K</button>
+                    <button class="points-btn" data-points="25000">25K</button>
+                    <button class="points-btn" data-points="50000">50K</button>
+                </div>
+            </div>
 
-      <!-- Row 5 -->
-      <div class="blind-box" data-box-id="box-21" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-22" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-23" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-24" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
-      <div class="blind-box" data-box-id="box-25" data-collection="glen">
-        <img src="/assets/b04rd/glenbubu-1.png" alt="box"/>
-      </div>
+            <div class="can-wrapper" data-can="twitter">
+                <div class="can-card">
+                    <div class="can-front">
+                        <img src="../assets/b04rd/twitter.png" alt="Twitter Can">
+                    </div>
+                    <div class="can-back">
+                        <div class="challenge-content">
+                            <h3>Challenge</h3>
+                            <p class="challenge-text">Waiting for challenge...</p>
+                            <button class="complete-btn hidden">Mark Complete</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="points-selector hidden">
+                    <button class="points-btn" data-points="15000">15K</button>
+                    <button class="points-btn" data-points="25000">25K</button>
+                    <button class="points-btn" data-points="50000">50K</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-message" id="statusMessage"></div>
     </div>
 
-    <!-- Waiting Modal -->
-    <div class="modal" id="waitingModal">
-      <div class="modal-content xp-window">
-        <div class="xp-window-header">
-          <span class="xp-window-title">⏳ hold up…</span>
-        </div>
-        <div class="xp-window-body">
-          <p>waiting for moderator to reveal…</p>
-          <div class="loading-spinner">📦</div>
-        </div>
-      </div>
-    </div>
+    <!-- Background Audio -->
+    <audio id="bgMusic" loop>
+        <source src="../assets/b04rd/mike-bg.mp3" type="audio/mpeg">
+    </audio>
 
-    <!-- Rejection Modal -->
-    <div class="modal" id="rejectionModal">
-      <div class="modal-content xp-window">
-        <div class="xp-window-header">
-          <span class="xp-window-title">❌ nope.</span>
-        </div>
-        <div class="xp-window-body">
-          <p id="rejectionMessage">Selection rejected. Try again.</p>
-          <button class="xp-button" onclick="closeRejection()">whatever</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Turn Warning Modal -->
-    <div class="modal" id="turnWarningModal">
-      <div class="modal-content xp-window">
-        <div class="xp-window-header">
-          <span class="xp-window-title">🚫 not your turn</span>
-        </div>
-        <div class="xp-window-body">
-          <p id="turnWarningMessage">It's not your team's turn!</p>
-          <button class="xp-button" onclick="closeTurnWarning()">ok fine</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Reveal Modal -->
-    <div class="modal" id="revealModal">
-      <div class="modal-content xp-window reveal-window">
-        <div class="xp-window-header">
-          <span class="xp-window-title">📦 box opening…</span>
-          <button class="xp-close" onclick="closeReveal()">×</button>
-        </div>
-        <div class="xp-window-body">
-          <div class="reveal-animation">
-            <img id="revealedDoll" src="" alt="character"/>
-            <h2 id="dollName"></h2>
-          </div>
-          <div class="challenge-selection">
-            <p>choose your destiny:</p>
-            <button class="xp-button team-challenge" id="teamBtn">
-              TEAM CHALLENGE<br/>
-              <span class="points" id="teamPoints">0</span>
-            </button>
-            <button class="xp-button individual-challenge" id="individualBtn">
-              3v3 BATTLE<br/>
-              <span class="points" id="individualPoints">0</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Challenge Details Modal -->
-    <div class="modal" id="challengeDetailsModal">
-      <div class="modal-content xp-window">
-        <div class="xp-window-header">
-          <span class="xp-window-title">🎯 Challenge Details</span>
-          <button class="xp-close" onclick="closeChallengeDetails()">×</button>
-        </div>
-        <div class="xp-window-body">
-          <h3 id="challengeType"></h3>
-          <p id="challengeDescription" style="font-size:1.2em;margin:20px 0"></p>
-          <p style="font-size:1.5em;color:#0054e3">Points: <span id="challengePointsValue"></span></p>
-          <button class="xp-button" id="confirmChallengeBtn" onclick="confirmChallenge()">Accept Challenge</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Special Card Modal (Bully) -->
-    <div class="modal" id="specialModal">
-      <div class="modal-content xp-window special-window">
-        <div class="xp-window-header">
-          <span class="xp-window-title">⚠️ SPECIAL CARD ⚠️</span>
-        </div>
-        <div class="xp-window-body">
-          <img id="specialImage" src="" alt="special"/>
-          <h1 id="specialTitle"></h1>
-          <p id="specialText"></p>
-          <button class="xp-button" id="confirmSpecialBtn" onclick="confirmSpecial()">whatever.</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mega Card Modal -->
-    <div class="modal" id="megaModal">
-      <div class="modal-content xp-window mega-window">
-        <div class="xp-window-header">
-          <span class="xp-window-title">💣 MEGA BUBU 💣</span>
-        </div>
-        <div class="xp-window-body">
-          <img id="megaImage" src="/assets/b04rd/glenbubu-3.png" alt="mega"/>
-          <h1 id="megaTitle">MEGA BUBU</h1>
-          <p id="megaText">double or nothing. all points x2. no mercy.</p>
-          <button class="xp-button" id="confirmMegaBtn" onclick="confirmMega()">bring it on</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Login Modal -->
-    <div class="modal" id="loginModal">
-      <div class="modal-content xp-window">
-        <div class="xp-window-header">
-          <span class="xp-window-title">🔌 access required</span>
-        </div>
-        <div class="xp-window-body">
-          <p>enter your access code:</p>
-          <input type="text" id="accessCode" placeholder="code here" autocomplete="one-time-code"/>
-          <button class="xp-button" onclick="login()">enter</button>
-          <p class="error-msg" id="loginError"></p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Audio -->
-  <audio id="bgMusic" src="/assets/b04rd/blind.mp3" loop autoplay></audio>
-  <audio id="revealSound" src="/assets/b04rd/reveal.mp3" preload="auto"></audio>
-  <audio id="selectSound" src="/assets/b04rd/select.mp3" preload="auto"></audio>
-  <audio id="specialSound" src="/assets/b04rd/special.mp3" preload="auto"></audio>
-  <audio id="waitingSound" src="/assets/b04rd/waiting.mp3" preload="auto"></audio>
-  
-  <!-- Challenge reveal sounds -->
-  <audio id="daftTechSound" src="/assets/b04rd/daft-tech.mp3" preload="auto"></audio>
-  <audio id="daftHarderSound" src="/assets/b04rd/daft-harder.mp3" preload="auto"></audio>
-  <audio id="daft5555Sound" src="/assets/b04rd/daft-5555.mp3" preload="auto"></audio>
-
-  <!-- Logic -->
-  <script type="module" src="blind.js"></script>
-  <script>
-    // Modal helpers exposed for buttons
-    window.closeReveal = () => document.getElementById('revealModal').style.display = 'none';
-    window.closeChallengeDetails = () => document.getElementById('challengeDetailsModal').style.display = 'none';
-    window.closeRejection = () => document.getElementById('rejectionModal').style.display = 'none';
-    window.closeTurnWarning = () => document.getElementById('turnWarningModal').style.display = 'none';
-    window.confirmSpecial = () => {}; // Will be overridden by blind.js
-    window.confirmMega = () => {}; // Will be overridden by blind.js
-    window.confirmChallenge = () => {}; // Will be overridden by blind.js
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, doc, setDoc, onSnapshot, query, orderBy, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        // Make Firebase available globally
+        window.firebaseConfig = {
+            apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO21-40668WNpOdj2w",
+            authDomain: "c0uchz0mb13.firebaseapp.com",
+            projectId: "c0uchz0mb13",
+            storageBucket: "c0uchz0mb13.firebasestorage.app",
+            messagingSenderId: "1051521591004",
+            appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
+            measurementId: "G-6BNDYZQRPE"
+        };
+        
+        window.app = initializeApp(window.firebaseConfig);
+        window.db = getFirestore(window.app);
+        window.firebaseUtils = {
+            collection, doc, setDoc, onSnapshot, query, orderBy, limit, serverTimestamp
+        };
+    </script>
     
-    // Start background music on first interaction
-    document.addEventListener('click', function() {
-      const bgMusic = document.getElementById('bgMusic');
-      if (bgMusic && bgMusic.paused) {
-        bgMusic.volume = 0.3; // Set to 30% volume
-        bgMusic.play().catch(e => console.log('Music autoplay prevented'));
-      }
-    }, { once: true });
-  </script>
+    <script src="blind.js"></script>
 </body>
 </html>
