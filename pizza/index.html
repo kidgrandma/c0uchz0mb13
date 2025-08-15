@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pizza's Paizley'd</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Sans+MS&family=Trebuchet+MS&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><circle cx="16" cy="16" r="2" fill="yellow"/></svg>') 16 16, auto;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Trebuchet MS', 'Comic Sans MS', sans-serif;
+            overflow: hidden;
+            background: #87CEEB;
+            position: fixed;
+            width: 100%;
+            height: 100vh;
+            touch-action: none;
+        }
+        
+        #gameContainer {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh; /* Dynamic viewport height for mobile */
+            position: relative;
+            background-image: url('../assets/b04rd/tommy-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        
+        /* Windows XP style UI panels */
+        .ui-panel {
+            position: absolute;
+            background: linear-gradient(180deg, #ECE9D8 0%, #FFFFFF 3%, #ECE9D8 100%);
+            border: 2px solid;
+            border-color: #0054E3 #003C9E #003C9E #0054E3;
+            border-radius: 6px 6px 0 0;
+            box-shadow: inset -1px -1px 0 #404040, inset 1px 1px 0 #FFFFFF, 2px 2px 5px rgba(0,0,0,0.3);
+            padding: 2px;
+        }
+        
+        .ui-header {
+            background: linear-gradient(180deg, #0054E3 0%, #0089FF 50%, #0054E3 100%);
+            color: white;
+            padding: 4px 8px;
+            font-weight: bold;
+            font-size: clamp(12px, 3vw, 14px);
+            border-radius: 4px 4px 0 0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        #scoreBoard {
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            min-width: clamp(150px, 25vw, 200px);
+        }
+        
+        #scoreContent {
+            padding: 8px;
+            background: white;
+            border: 1px solid #8B8989;
+            margin: 2px;
+            font-size: clamp(12px, 3vw, 16px);
+        }
+        
+        #timer {
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            min-width: clamp(100px, 20vw, 150px);
+        }
+        
+        #timerContent {
+            padding: 8px;
+            background: white;
+            border: 1px solid #8B8989;
+            margin: 2px;
+            font-size: clamp(18px, 5vw, 24px);
+            font-weight: bold;
+            color: #FF0000;
+            text-align: center;
+        }
+        
+        #startScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 200;
+            text-align: center;
+            width: min(90%, 500px);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        #startContent {
+            padding: clamp(15px, 4vw, 30px);
+            background: white;
+            border: 1px solid #8B8989;
+            margin: 2px;
+        }
+        
+        #startScreen h1 {
+            font-size: clamp(24px, 6vw, 36px);
+            color: #FF6B35;
+            text-shadow: 2px 2px 0px #FFD700;
+            margin-bottom: 15px;
+            animation: wobble 2s infinite;
+        }
+        
+        @keyframes wobble {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+        
+        .menu-text {
+            font-size: clamp(13px, 3vw, 16px);
+            margin: 15px 0;
+            color: #333;
+            line-height: 1.6;
+            text-align: left;
+            padding: 10px;
+            background: #FFFACD;
+            border: 1px dashed #FF6B35;
+            border-radius: 5px;
+        }
+        
+        .menu-item {
+            margin: 8px 0;
+            font-weight: bold;
+            color: #FF6B35;
+        }
+        
+        .menu-description {
+            font-weight: normal;
+            color: #555;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .handle-input {
+            width: 100%;
+            padding: 10px;
+            font-size: clamp(14px, 3.5vw, 16px);
+            border: 2px solid #0054E3;
+            border-radius: 3px;
+            margin: 15px 0;
+            text-align: center;
+            text-transform: uppercase;
+        }
+        
+        .xp-button {
+            background: linear-gradient(180deg, #FFFFFF 0%, #ECE9D8 100%);
+            border: 2px solid #003C9E;
+            border-radius: 3px;
+            padding: 10px 20px;
+            font-size: clamp(14px, 3.5vw, 16px);
+            font-weight: bold;
+            color: #000000;
+            cursor: pointer;
+            box-shadow: inset -1px -1px 0 #404040, inset 1px 1px 0 #FFFFFF;
+            margin: 10px;
+            width: calc(100% - 20px);
+        }
+        
+        .xp-button:hover {
+            background: linear-gradient(180deg, #FFE4B5 0%, #FFD700 100%);
+        }
+        
+        .xp-button:active {
+            box-shadow: inset 1px 1px 0 #404040, inset -1px -1px 0 #FFFFFF;
+        }
+        
+        /* Desktop larger sprites */
+        @media (min-width: 769px) {
+            #honeyBottle {
+                width: 140px;
+                height: 140px;
+            }
+            
+            .pizza {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .honeySplat {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .splatOnPizza {
+                width: 40px;
+                height: 40px;
+            }
+        }
+        
+        /* Mobile sprites */
+        @media (max-width: 768px) {
+            #honeyBottle {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .pizza {
+                width: 75px;
+                height: 75px;
+            }
+            
+            .honeySplat {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .splatOnPizza {
+                width: 30px;
+                height: 30px;
+            }
+        }
+        
+        #honeyBottle {
+            position: absolute;
+            bottom: clamp(10px, 2vh, 20px);
+            background-image: url('../assets/b04rd/pizza-honey.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            z-index: 80;  /* Increased to stay above pizzas */
+            transition: transform 0.1s;
+        }
+        
+        #honeyBottle:hover {
+            transform: scale(1.1);
+        }
+        
+        .pizza {
+            position: absolute;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: float 0.5s ease-in-out infinite alternate;
+            z-index: 40;
+        }
+        
+        @keyframes float {
+            from { transform: translateY(-5px) rotate(-5deg); }
+            to { transform: translateY(5px) rotate(5deg); }
+        }
+        
+        .honeySplat {
+            position: absolute;
+            background-image: url('../assets/b04rd/honey-splat.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            z-index: 60;
+            pointer-events: none;
+        }
+        
+        .splatOnPizza {
+            z-index: 61;
+        }
+        
+        .countdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .countdown-number {
+            font-size: clamp(80px, 20vw, 150px);
+            color: #FFD700;
+            font-weight: 900;
+            text-shadow: 0 0 20px #FF6B35, 3px 3px 0 #000;
+            animation: countdownPulse 1s ease-in-out;
+        }
+        
+        @keyframes countdownPulse {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 200;
+            text-align: center;
+            display: none;
+            width: min(90%, 450px);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        #gameOverContent {
+            padding: clamp(15px, 4vw, 30px);
+            background: white;
+            border: 1px solid #8B8989;
+            margin: 2px;
+        }
+        
+        #gameOver h2 {
+            font-size: clamp(24px, 6vw, 32px);
+            color: #FF6B35;
+            margin-bottom: 15px;
+        }
+        
+        #finalScore {
+            font-size: clamp(18px, 4.5vw, 24px);
+            color: #0054E3;
+            margin: 15px 0;
+        }
+        
+        .leaderboard {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .leaderboard h3 {
+            font-size: clamp(16px, 4vw, 20px);
+            color: #FF6B35;
+            margin-bottom: 10px;
+        }
+        
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 3px;
+            font-size: clamp(12px, 3vw, 14px);
+        }
+        
+        .leaderboard-entry.current-player {
+            background: #FFD700;
+            font-weight: bold;
+        }
+        
+        .score-popup {
+            position: absolute;
+            color: #FFD700;
+            font-size: clamp(20px, 5vw, 28px);
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+            z-index: 150;
+            animation: scoreFloat 1s ease-out forwards;
+        }
+        
+        @keyframes scoreFloat {
+            to {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes bossDefeat {
+            0% { 
+                transform: translate(-50%, -50%) scale(0.5) rotate(-10deg);
+                opacity: 0;
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.5) rotate(10deg);
+                opacity: 1;
+            }
+            100% { 
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        /* Mobile optimizations */
+        @media (max-height: 600px) {
+            #scoreBoard, #timer {
+                top: 5px;
+            }
+            
+            #honeyBottle {
+                bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- Score Board -->
+        <div id="scoreBoard" class="ui-panel">
+            <div class="ui-header">Pizza's Paizley'd</div>
+            <div id="scoreContent">
+                Pizzas Hit: <span id="pizzaCount">0</span>
+            </div>
+        </div>
+        
+        <!-- Timer -->
+        <div id="timer" class="ui-panel">
+            <div class="ui-header">Time</div>
+            <div id="timerContent">15</div>
+        </div>
+        
+        <!-- Start Screen -->
+        <div id="startScreen" class="ui-panel">
+            <div class="ui-header">Welcome to PAISORTEDZ</div>
+            <div id="startContent">
+                <h1>🍕 Pizza's Paizley'd 🍯</h1>
+                <div class="menu-text">
+                    <div style="text-align: center; margin-bottom: 10px; color: #FF6B35; font-size: 1.1em;">
+                        ⭐ TODAY'S SPECIAL MENU ⭐
+                    </div>
+                    <div class="menu-item" style="display: flex; align-items: center; margin: 12px 0;">
+                        <img src="../assets/b04rd/pizza-paizley.png" style="width: 40px; height: 40px; margin-right: 10px;">
+                        <div>
+                            🍕 The Normie
+                            <div class="menu-description">The one everyone gets when they aren't sure if this place is good or not.</div>
+                        </div>
+                    </div>
+                    <div class="menu-item" style="display: flex; align-items: center; margin: 12px 0;">
+                        <img src="../assets/b04rd/pizza-movie.png" style="width: 40px; height: 40px; margin-right: 10px;">
+                        <div>
+                            🎬 Pasta Spaghetti Lasanga Pizza
+                            <div class="menu-description">All Tomato no vibes XXL cheez!</div>
+                        </div>
+                    </div>
+                    <div class="menu-item" style="display: flex; align-items: center; margin: 12px 0;">
+                        <img src="../assets/b04rd/pizza-music.png" style="width: 40px; height: 40px; margin-right: 10px;">
+                        <div>
+                            🎵 The Sound of Pizza
+                            <div class="menu-description">It's a pizza u get to eat if u watch Wicked first.</div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 15px; color: #0054E3; font-weight: bold;">
+                        You have 15 seconds to PAIZLEY'S WAY these pizZaz with MIKES HAWT HUNNY!
+                    </div>
+                </div>
+                <input type="text" 
+                       id="handleInput" 
+                       class="handle-input" 
+                       placeholder="ENTER YOUR NAME" 
+                       maxlength="20">
+                <button class="xp-button" id="startButton">START HUNT</button>
+            </div>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div id="gameOver" class="ui-panel">
+            <div class="ui-header">Game Over!</div>
+            <div id="gameOverContent">
+                <h2>Time's Up!</h2>
+                <div id="finalScore"></div>
+                <div class="leaderboard">
+                    <h3>🍕 TOP PAIZLEYERS 🍕</h3>
+                    <div id="leaderboardList"></div>
+                </div>
+                <button class="xp-button" onclick="location.reload()">Play Again</button>
+            </div>
+        </div>
+        
+        <!-- Honey Bottle -->
+        <div id="honeyBottle"></div>
+        
+        <!-- Audio -->
+        <audio id="introMusic" loop>
+            <source src="../assets/b04rd/intro.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="countdownSound">
+            <source src="../assets/b04rd/countdown.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="bgMusic" loop>
+            <source src="../assets/b04rd/blind.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="shootSound">
+            <source src="../assets/b04rd/shoot.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="hitSound">
+            <source src="../assets/b04rd/hit.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="pizzaGuySound">
+            <source src="../assets/b04rd/pizza-guy.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="fireKillSound">
+            <source src="../assets/b04rd/fire-kill.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="partySound" loop>
+            <source src="../assets/b04rd/party.mp3" type="audio/mpeg">
+        </audio>
+    </div>
+    
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { 
+            getFirestore, 
+            collection, 
+            getDocs, 
+            addDoc,
+            query,
+            orderBy,
+            limit
+        } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO21-40668WNpOdj2w",
+            authDomain: "c0uchz0mb13.firebaseapp.com",
+            projectId: "c0uchz0mb13",
+            storageBucket: "c0uchz0mb13.firebasestorage.app",
+            messagingSenderId: "1051521591004",
+            appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
+            measurementId: "G-6BNDYZQRPE"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Make db available globally
+        window.firebaseDb = db;
+        window.firebaseCollections = { collection, getDocs, addDoc, query, orderBy, limit };
+    </script>
+    
+    <script>
+        class PizzaGame {
+            constructor() {
+                this.pizzaCount = 0;
+                this.timeLeft = 15;
+                this.gameActive = false;
+                this.pizzas = [];
+                this.honeyShots = [];
+                this.bottleX = window.innerWidth / 2;
+                this.gameInterval = null;
+                this.timerInterval = null;
+                this.playerHandle = '';
+                this.speedMultiplier = 1;
+                this.maxPizzas = 6; // Start with 6, will increase
+                
+                this.pizzaImages = [
+                    '../assets/b04rd/pizza-movie.png',
+                    '../assets/b04rd/pizza-music.png',
+                    '../assets/b04rd/pizza-paizley.png'
+                ];
+                
+                this.firePizzaImage = '../assets/b04rd/pizza-fire.png';
+                
+                this.initElements();
+                this.setupEventListeners();
+                this.preventMobileIssues();
+                
+                // Start intro music
+                setTimeout(() => {
+                    const introMusic = document.getElementById('introMusic');
+                    if (introMusic) {
+                        introMusic.volume = 0.3;
+                        introMusic.play().catch(e => console.log('Intro music autoplay prevented'));
+                    }
+                }, 100);
+            }
+            
+            initElements() {
+                this.honeyBottle = document.getElementById('honeyBottle');
+                this.gameContainer = document.getElementById('gameContainer');
+                this.introMusic = document.getElementById('introMusic');
+                this.countdownSound = document.getElementById('countdownSound');
+                this.bgMusic = document.getElementById('bgMusic');
+                this.shootSound = document.getElementById('shootSound');
+                this.hitSound = document.getElementById('hitSound');
+                this.pizzaGuySound = document.getElementById('pizzaGuySound');
+                this.fireKillSound = document.getElementById('fireKillSound');
+                this.partySound = document.getElementById('partySound');
+                this.startButton = document.getElementById('startButton');
+                this.handleInput = document.getElementById('handleInput');
+                this.firePizzaActive = false;
+            }
+            
+            preventMobileIssues() {
+                // Prevent double tap zoom
+                let lastTouchEnd = 0;
+                document.addEventListener('touchend', (e) => {
+                    const now = Date.now();
+                    if (now - lastTouchEnd <= 300) {
+                        e.preventDefault();
+                    }
+                    lastTouchEnd = now;
+                }, false);
+                
+                // Prevent pinch zoom
+                document.addEventListener('gesturestart', (e) => {
+                    e.preventDefault();
+                });
+                
+                // Prevent scroll
+                document.body.addEventListener('touchmove', (e) => {
+                    if (this.gameActive) {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+            }
+            
+            setupEventListeners() {
+                // Start button
+                this.startButton.addEventListener('click', () => this.handleStart());
+                this.handleInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.handleStart();
+                    }
+                });
+                
+                // Mouse/touch movement for bottle
+                const moveBottle = (clientX) => {
+                    if (this.gameActive) {
+                        const bottleWidth = this.honeyBottle.offsetWidth;
+                        this.bottleX = Math.max(bottleWidth/2, Math.min(window.innerWidth - bottleWidth/2, clientX));
+                        this.honeyBottle.style.left = (this.bottleX - bottleWidth/2) + 'px';
+                    }
+                };
+                
+                document.addEventListener('mousemove', (e) => {
+                    moveBottle(e.clientX);
+                });
+                
+                document.addEventListener('touchmove', (e) => {
+                    if (e.touches.length > 0) {
+                        moveBottle(e.touches[0].clientX);
+                    }
+                });
+                
+                // Click/tap to shoot
+                const shoot = (e) => {
+                    if (this.gameActive && !e.target.classList.contains('pizza')) {
+                        this.shootHoney();
+                    }
+                };
+                
+                document.addEventListener('click', shoot);
+                document.addEventListener('touchstart', (e) => {
+                    if (this.gameActive && !e.target.classList.contains('pizza')) {
+                        e.preventDefault();
+                        this.shootHoney();
+                    }
+                });
+            }
+            
+            handleStart() {
+                const handle = this.handleInput.value.trim();
+                if (!handle) {
+                    this.handleInput.style.border = '2px solid red';
+                    setTimeout(() => {
+                        this.handleInput.style.border = '2px solid #0054E3';
+                    }, 500);
+                    return;
+                }
+                
+                this.playerHandle = handle.toUpperCase();
+                this.startCountdown();
+            }
+            
+            startCountdown() {
+                document.getElementById('startScreen').style.display = 'none';
+                
+                // Continue intro music during countdown
+                // Don't pause it yet
+                
+                // Play countdown sound
+                if (this.countdownSound) {
+                    this.countdownSound.volume = 0.5;
+                    this.countdownSound.play().catch(e => console.log('Countdown sound failed'));
+                }
+                
+                // Create countdown overlay
+                const overlay = document.createElement('div');
+                overlay.className = 'countdown-overlay';
+                const countdownNumber = document.createElement('div');
+                countdownNumber.className = 'countdown-number';
+                overlay.appendChild(countdownNumber);
+                this.gameContainer.appendChild(overlay);
+                
+                let count = 3;
+                countdownNumber.textContent = count;
+                
+                const countInterval = setInterval(() => {
+                    count--;
+                    if (count > 0) {
+                        countdownNumber.textContent = count;
+                    } else if (count === 0) {
+                        countdownNumber.textContent = 'SHOOT!';
+                        countdownNumber.style.color = '#00FF00';
+                    } else {
+                        clearInterval(countInterval);
+                        overlay.remove();
+                        // NOW pause intro music
+                        if (this.introMusic) {
+                            this.introMusic.pause();
+                        }
+                        this.startGame();
+                    }
+                }, 1000);
+            }
+            
+            startGame() {
+                this.gameActive = true;
+                this.pizzaCount = 0;
+                this.timeLeft = 15;
+                this.speedMultiplier = 1;
+                this.maxPizzas = 6;
+                this.firePizzaHasAppeared = false; // Track if fire pizza has appeared
+                this.updateScore();
+                
+                // Start background music
+                if (this.bgMusic) {
+                    this.bgMusic.volume = 0.3;
+                    this.bgMusic.currentTime = 0;
+                    this.bgMusic.play().catch(e => console.log('Audio play failed:', e));
+                }
+                
+                // Position bottle and ensure it's visible
+                const bottleWidth = this.honeyBottle.offsetWidth;
+                this.honeyBottle.style.left = (this.bottleX - bottleWidth/2) + 'px';
+                this.honeyBottle.style.display = 'block';
+                this.honeyBottle.style.zIndex = '80';  // Ensure it stays on top
+                
+                // Create initial pizzas
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => this.createPizza(), i * 200);
+                }
+                
+                // Start game loop
+                this.gameInterval = setInterval(() => this.gameLoop(), 50);
+                
+                // Start timer
+                this.timerInterval = setInterval(() => {
+                    this.timeLeft--;
+                    document.getElementById('timerContent').textContent = this.timeLeft;
+                    
+                    // Increase difficulty as time goes on
+                    if (this.timeLeft <= 10) {
+                        this.speedMultiplier = 1.3;
+                        this.maxPizzas = 8;
+                    }
+                    if (this.timeLeft <= 5) {
+                        this.speedMultiplier = 1.6;
+                        this.maxPizzas = 10;
+                        // Force fire pizza if none has appeared yet
+                        if (!this.firePizzaHasAppeared && !this.firePizzaActive) {
+                            this.createFirePizza();
+                        }
+                    }
+                    if (this.timeLeft <= 3) {
+                        this.speedMultiplier = 2;
+                        this.maxPizzas = 12;
+                    }
+                    
+                    if (this.timeLeft <= 0) {
+                        this.endGame();
+                    }
+                }, 1000);
+                
+                // Spawn new pizzas periodically with increasing frequency
+                this.spawnInterval = setInterval(() => {
+                    if (this.pizzas.length < this.maxPizzas) {
+                        this.createPizza();
+                        // Chance for extra pizza spawn as game progresses
+                        if (this.timeLeft <= 8 && Math.random() < 0.3) {
+                            setTimeout(() => this.createPizza(), 500);
+                        }
+                    }
+                }, 1500);
+            }
+            
+            createPizza() {
+                const pizza = document.createElement('div');
+                pizza.className = 'pizza';
+                
+                // 15% chance for fire pizza after 8 seconds, but only one at a time
+                // Or force it if time is running out and none has appeared
+                const shouldSpawnFire = (this.timeLeft <= 10 && Math.random() < 0.15 && !this.firePizzaActive) ||
+                                       (this.timeLeft <= 3 && !this.firePizzaHasAppeared && !this.firePizzaActive);
+                const isFirePizza = shouldSpawnFire;
+                
+                if (isFirePizza) {
+                    pizza.style.backgroundImage = `url('${this.firePizzaImage}')`;
+                    pizza.style.filter = 'drop-shadow(0 0 15px #ff0000) drop-shadow(0 0 30px #ff6600)';
+                    pizza.style.animation = 'float 0.3s ease-in-out infinite alternate, pulse 0.5s ease-in-out infinite';
+                    this.firePizzaActive = true;
+                    this.firePizzaHasAppeared = true;
+                    
+                    // Start party music when fire pizza appears
+                    if (this.partySound) {
+                        this.partySound.volume = 0.4;
+                        this.partySound.play().catch(e => console.log('Party sound failed'));
+                    }
+                    
+                    // Lower main music
+                    if (this.bgMusic) {
+                        this.bgMusic.volume = 0.1;
+                    }
+                } else if (!isFirePizza && this.firePizzaActive) {
+                    // Don't create regular pizza if fire pizza is active, wait
+                    return;
+                } else {
+                    pizza.style.backgroundImage = `url('${this.pizzaImages[Math.floor(Math.random() * this.pizzaImages.length)]}')`;
+                }
+                
+                // Get actual pizza size based on screen
+                const isDesktop = window.innerWidth > 768;
+                const pizzaSize = isFirePizza ? (isDesktop ? 120 : 90) : (isDesktop ? 100 : 75);
+                
+                const pizzaData = {
+                    element: pizza,
+                    x: Math.random() * (window.innerWidth - pizzaSize),
+                    y: Math.random() * (window.innerHeight * 0.6),
+                    vx: isFirePizza ? (Math.random() - 0.5) * 6 * this.speedMultiplier : (Math.random() - 0.5) * 4 * this.speedMultiplier,
+                    vy: isFirePizza ? (Math.random() - 0.5) * 6 * this.speedMultiplier : (Math.random() - 0.5) * 4 * this.speedMultiplier,
+                    hit: false,
+                    size: pizzaSize,
+                    isFirePizza: isFirePizza,
+                    hitCount: 0,
+                    lifespan: isFirePizza ? 10000 : null // Fire pizza stays for 10 seconds
+                };
+                
+                pizza.style.width = pizzaSize + 'px';
+                pizza.style.height = pizzaSize + 'px';
+                pizza.style.left = pizzaData.x + 'px';
+                pizza.style.top = pizzaData.y + 'px';
+                
+                // Pizza click/tap handler
+                const handlePizzaHit = (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                };
+                
+                pizza.addEventListener('click', handlePizzaHit);
+                pizza.addEventListener('touchstart', handlePizzaHit);
+                
+                this.gameContainer.appendChild(pizza);
+                this.pizzas.push(pizzaData);
+                
+                // Auto-remove fire pizza after lifespan
+                if (isFirePizza) {
+                    setTimeout(() => {
+                        if (!pizzaData.hit && pizzaData.element.parentNode) {
+                            this.removeFirePizza(pizzaData);
+                        }
+                    }, pizzaData.lifespan);
+                }
+            }
+            
+            createFirePizza() {
+                // Force create a fire pizza
+                const pizza = document.createElement('div');
+                pizza.className = 'pizza';
+                pizza.style.backgroundImage = `url('${this.firePizzaImage}')`;
+                pizza.style.filter = 'drop-shadow(0 0 15px #ff0000) drop-shadow(0 0 30px #ff6600)';
+                pizza.style.animation = 'float 0.3s ease-in-out infinite alternate, pulse 0.5s ease-in-out infinite';
+                
+                this.firePizzaActive = true;
+                this.firePizzaHasAppeared = true;
+                
+                // Start party music when fire pizza appears
+                if (this.partySound) {
+                    this.partySound.volume = 0.4;
+                    this.partySound.play().catch(e => console.log('Party sound failed'));
+                }
+                
+                // Lower main music
+                if (this.bgMusic) {
+                    this.bgMusic.volume = 0.1;
+                }
+                
+                const isDesktop = window.innerWidth > 768;
+                const pizzaSize = isDesktop ? 120 : 90;
+                
+                const pizzaData = {
+                    element: pizza,
+                    x: Math.random() * (window.innerWidth - pizzaSize),
+                    y: Math.random() * (window.innerHeight * 0.6),
+                    vx: (Math.random() - 0.5) * 6 * this.speedMultiplier,
+                    vy: (Math.random() - 0.5) * 6 * this.speedMultiplier,
+                    hit: false,
+                    size: pizzaSize,
+                    isFirePizza: true,
+                    hitCount: 0,
+                    lifespan: 10000
+                };
+                
+                pizza.style.width = pizzaSize + 'px';
+                pizza.style.height = pizzaSize + 'px';
+                pizza.style.left = pizzaData.x + 'px';
+                pizza.style.top = pizzaData.y + 'px';
+                
+                // Pizza click/tap handler
+                const handlePizzaHit = (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                };
+                
+                pizza.addEventListener('click', handlePizzaHit);
+                pizza.addEventListener('touchstart', handlePizzaHit);
+                
+                this.gameContainer.appendChild(pizza);
+                this.pizzas.push(pizzaData);
+                
+                // Auto-remove fire pizza after lifespan
+                setTimeout(() => {
+                    if (!pizzaData.hit && pizzaData.element.parentNode) {
+                        this.removeFirePizza(pizzaData);
+                    }
+                }, pizzaData.lifespan);
+            }
+            
+            shootHoney() {
+                if (this.shootSound) {
+                    this.shootSound.currentTime = 0;
+                    this.shootSound.volume = 0.5;
+                    this.shootSound.play().catch(e => console.log('Shoot sound failed'));
+                }
+                
+                const shot = document.createElement('div');
+                shot.className = 'honeySplat';
+                
+                const isDesktop = window.innerWidth > 768;
+                const shotSize = isDesktop ? 50 : 35;
+                const bottleHeight = isDesktop ? 120 : 80;
+                
+                const shotData = {
+                    element: shot,
+                    x: this.bottleX - shotSize/2,
+                    y: window.innerHeight - bottleHeight - 40,
+                    vy: -15,
+                    size: shotSize
+                };
+                
+                shot.style.left = shotData.x + 'px';
+                shot.style.top = shotData.y + 'px';
+                
+                this.gameContainer.appendChild(shot);
+                this.honeyShots.push(shotData);
+            }
+            
+            gameLoop() {
+                // Update pizzas
+                this.pizzas.forEach(pizza => {
+                    if (!pizza.hit) {
+                        // Update velocity with current speed multiplier
+                        const currentSpeed = this.speedMultiplier;
+                        pizza.x += pizza.vx;
+                        pizza.y += pizza.vy;
+                        
+                        // Occasionally change direction
+                        if (Math.random() < 0.01) {
+                            pizza.vx = (Math.random() - 0.5) * 4 * currentSpeed;
+                            pizza.vy = (Math.random() - 0.5) * 4 * currentSpeed;
+                        }
+                        
+                        // Bounce off walls
+                        if (pizza.x <= 0 || pizza.x >= window.innerWidth - pizza.size) {
+                            pizza.vx *= -1;
+                        }
+                        if (pizza.y <= 0 || pizza.y >= window.innerHeight * 0.7 - pizza.size) {
+                            pizza.vy *= -1;
+                        }
+                        
+                        pizza.element.style.left = pizza.x + 'px';
+                        pizza.element.style.top = pizza.y + 'px';
+                    }
+                });
+                
+                // Update honey shots
+                this.honeyShots = this.honeyShots.filter(shot => {
+                    shot.y += shot.vy;
+                    shot.element.style.top = shot.y + 'px';
+                    
+                    // Check collisions with pizzas
+                    let hit = false;
+                    this.pizzas.forEach(pizza => {
+                        if (!pizza.hit) {
+                            if (shot.x < pizza.x + pizza.size &&
+                                shot.x + shot.size > pizza.x &&
+                                shot.y < pizza.y + pizza.size &&
+                                shot.y + shot.size > pizza.y) {
+                                
+                                hit = true;
+                                
+                                // Handle fire pizza (needs 3 hits)
+                                if (pizza.isFirePizza) {
+                                    pizza.hitCount++;
+                                    
+                                    if (pizza.hitCount < 3) {
+                                        // Not dead yet, play pizza-guy sound
+                                        if (this.pizzaGuySound) {
+                                            this.pizzaGuySound.currentTime = 0;
+                                            this.pizzaGuySound.volume = 0.7;
+                                            this.pizzaGuySound.play().catch(e => console.log('Pizza guy sound failed'));
+                                        }
+                                        
+                                        // Visual feedback - intense flash
+                                        pizza.element.style.filter = 'drop-shadow(0 0 30px #ff0000) drop-shadow(0 0 50px #ffff00)';
+                                        setTimeout(() => {
+                                            if (pizza.element) {
+                                                pizza.element.style.filter = 'drop-shadow(0 0 15px #ff0000) drop-shadow(0 0 30px #ff6600)';
+                                            }
+                                        }, 200);
+                                        
+                                        // Show hit count
+                                        this.showScorePopup(pizza.x + pizza.size/2, pizza.y, `${pizza.hitCount}/3`);
+                                    } else {
+                                        // Fire pizza defeated!
+                                        pizza.hit = true;
+                                        
+                                        // Show GUY FIERI DOWN message
+                                        this.showBossDefeatMessage();
+                                        
+                                        if (this.fireKillSound) {
+                                            this.fireKillSound.currentTime = 0;
+                                            this.fireKillSound.volume = 0.8;
+                                            this.fireKillSound.play().catch(e => console.log('Fire kill sound failed'));
+                                        }
+                                        
+                                        // Stop party music, resume bg music
+                                        if (this.partySound) {
+                                            this.partySound.pause();
+                                        }
+                                        if (this.bgMusic) {
+                                            this.bgMusic.volume = 0.3;
+                                        }
+                                        
+                                        // Add splat to pizza
+                                        const splat = document.createElement('div');
+                                        splat.className = 'honeySplat splatOnPizza';
+                                        splat.style.position = 'absolute';
+                                        splat.style.left = '50%';
+                                        splat.style.top = '50%';
+                                        splat.style.transform = 'translate(-50%, -50%)';
+                                        pizza.element.appendChild(splat);
+                                        
+                                        // Update score - fire pizza worth 5 points
+                                        this.pizzaCount += 5;
+                                        this.updateScore();
+                                        
+                                        // Show score popup
+                                        this.showScorePopup(pizza.x + pizza.size/2, pizza.y, '+5 FIRE BOSS!');
+                                        
+                                        this.firePizzaActive = false;
+                                        
+                                        // Remove pizza after delay
+                                        setTimeout(() => {
+                                            pizza.element.remove();
+                                            this.pizzas = this.pizzas.filter(p => p !== pizza);
+                                        }, 500);
+                                    }
+                                } else {
+                                    // Regular pizza - one hit kill
+                                    pizza.hit = true;
+                                    
+                                    if (this.hitSound) {
+                                        this.hitSound.currentTime = 0;
+                                        this.hitSound.volume = 0.6;
+                                        this.hitSound.play().catch(e => console.log('Hit sound failed'));
+                                    }
+                                    
+                                    // Add splat to pizza
+                                    const splat = document.createElement('div');
+                                    splat.className = 'honeySplat splatOnPizza';
+                                    splat.style.position = 'absolute';
+                                    splat.style.left = '50%';
+                                    splat.style.top = '50%';
+                                    splat.style.transform = 'translate(-50%, -50%)';
+                                    pizza.element.appendChild(splat);
+                                    
+                                    // Update score
+                                    this.pizzaCount++;
+                                    this.updateScore();
+                                    
+                                    // Show score popup
+                                    this.showScorePopup(pizza.x + pizza.size/2, pizza.y, '+1');
+                                    
+                                    // Remove pizza after delay
+                                    setTimeout(() => {
+                                        pizza.element.remove();
+                                        this.pizzas = this.pizzas.filter(p => p !== pizza);
+                                    }, 500);
+                                }
+                            }
+                        }
+                    });
+                    
+                    if (hit || shot.y < -30) {
+                        shot.element.remove();
+                        return false;
+                    }
+                    return true;
+                });
+            }
+            
+            removeFirePizza(pizzaData) {
+                this.firePizzaActive = false;
+                if (this.partySound) {
+                    this.partySound.pause();
+                }
+                if (this.bgMusic) {
+                    this.bgMusic.volume = 0.3;
+                }
+                pizzaData.element.remove();
+                this.pizzas = this.pizzas.filter(p => p !== pizzaData);
+            }
+            
+            showBossDefeatMessage() {
+                const message = document.createElement('div');
+                message.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: ${window.innerWidth > 768 ? '60px' : '40px'};
+                    color: #ff0000;
+                    font-weight: 900;
+                    text-shadow: 0 0 20px #ffff00, 0 0 40px #ff6600, 3px 3px 0 #000;
+                    z-index: 500;
+                    animation: bossDefeat 2s ease-out forwards;
+                    pointer-events: none;
+                    white-space: nowrap;
+                `;
+                message.textContent = 'GUY FIERI DOWN!';
+                this.gameContainer.appendChild(message);
+                
+                setTimeout(() => message.remove(), 2000);
+            }
+            
+            showScorePopup(x, y, text) {
+                const popup = document.createElement('div');
+                popup.className = 'score-popup';
+                popup.textContent = text;
+                popup.style.left = x + 'px';
+                popup.style.top = y + 'px';
+                this.gameContainer.appendChild(popup);
+                
+                setTimeout(() => popup.remove(), 1000);
+            }
+            
+            updateScore() {
+                document.getElementById('pizzaCount').textContent = this.pizzaCount;
+            }
+            
+            async endGame() {
+                this.gameActive = false;
+                clearInterval(this.gameInterval);
+                clearInterval(this.timerInterval);
+                clearInterval(this.spawnInterval);
+                
+                if (this.bgMusic) this.bgMusic.pause();
+                if (this.countdownSound) this.countdownSound.pause();
+                if (this.partySound) this.partySound.pause();
+                
+                // Clear all pizzas and shots
+                this.pizzas.forEach(p => p.element.remove());
+                this.honeyShots.forEach(s => s.element.remove());
+                this.pizzas = [];
+                this.honeyShots = [];
+                
+                // Save score to Firebase
+                await this.saveScore();
+                
+                // Show results
+                document.getElementById('finalScore').innerHTML = 
+                    `You Paizley'd ${this.pizzaCount} pizza${this.pizzaCount !== 1 ? 's' : ''}!`;
+                
+                // Load leaderboard
+                await this.loadLeaderboard();
+                
+                document.getElementById('gameOver').style.display = 'block';
+                
+                // Play intro music again
+                if (this.introMusic) {
+                    this.introMusic.volume = 0.3;
+                    this.introMusic.currentTime = 0;
+                    this.introMusic.play().catch(e => console.log('Intro music restart failed'));
+                }
+            }
+            
+            async saveScore() {
+                try {
+                    if (window.firebaseDb && window.firebaseCollections) {
+                        const { collection, addDoc } = window.firebaseCollections;
+                        await addDoc(collection(window.firebaseDb, 'pizza-scores'), {
+                            handle: this.playerHandle,
+                            score: this.pizzaCount,
+                            timestamp: Date.now(),
+                            date: new Date().toISOString()
+                        });
+                        console.log('Score saved!');
+                    }
+                } catch (error) {
+                    console.error('Error saving score:', error);
+                }
+            }
+            
+            async loadLeaderboard() {
+                try {
+                    if (window.firebaseDb && window.firebaseCollections) {
+                        const { collection, getDocs, query, orderBy, limit } = window.firebaseCollections;
+                        const q = query(
+                            collection(window.firebaseDb, 'pizza-scores'),
+                            orderBy('score', 'desc'),
+                            limit(10)
+                        );
+                        
+                        const querySnapshot = await getDocs(q);
+                        const scores = [];
+                        querySnapshot.forEach((doc) => {
+                            scores.push(doc.data());
+                        });
+                        
+                        this.displayLeaderboard(scores);
+                    }
+                } catch (error) {
+                    console.error('Error loading leaderboard:', error);
+                    document.getElementById('leaderboardList').innerHTML = 
+                        '<div style="color: #999;">Unable to load leaderboard</div>';
+                }
+            }
+            
+            displayLeaderboard(scores) {
+                const leaderboardList = document.getElementById('leaderboardList');
+                let html = '';
+                
+                scores.forEach((score, index) => {
+                    const isCurrentPlayer = score.handle === this.playerHandle && 
+                                           Math.abs(score.timestamp - Date.now()) < 5000;
+                    const trophy = index === 0 ? '🍕' : index === 1 ? '🧀' : index === 2 ? '🌶️' : '🍽️';
+                    
+                    html += `
+                        <div class="leaderboard-entry ${isCurrentPlayer ? 'current-player' : ''}">
+                            <span>${trophy} ${index + 1}. ${score.handle}</span>
+                            <span>${score.score} pizza${score.score !== 1 ? 's' : ''}</span>
+                        </div>
+                    `;
+                });
+                
+                if (scores.length === 0) {
+                    html = '<div style="text-align: center; color: #999;">No scores yet - be the first!</div>';
+                }
+                
+                leaderboardList.innerHTML = html;
+            }
+        }
+        
+        // Start game when page loads
+        window.addEventListener('load', () => {
+            new PizzaGame();
+        });
+    </script>
+</body>
+</html>
