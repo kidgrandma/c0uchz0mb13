@@ -3,175 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thee B Box</title>
+    <title>ANGEL vs DEMON - Life on the Line</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&family=Creepster&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="blind.css">
 </head>
 <body>
-    <!-- Intro Modal -->
-    <div id="introModal" class="xp-modal active">
-        <div class="xp-window">
-            <div class="xp-window-header">
-                <span>WELCOME_2_THE_B04RD.exe</span>
-                <button class="xp-close-btn" onclick="closeIntro()">×</button>
-            </div>
-            <div class="xp-window-body">
-                <div class="intro-content">
-                    <h2>WELCOME 2 THE B04RD</h2>
-                    <h3>(finally)</h3>
-                    <p class="sponsor-text">tonites game is sponsored by THEEEEE one and only.</p>
-                    <div class="ready-text">Ready???</div>
-                    <button class="xp-button primary" onclick="startExperience()">START →</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Team Selection Modal -->
-    <div id="teamModal" class="xp-modal">
-        <div class="xp-window">
-            <div class="xp-window-header">
-                <span>TEAM_SELECT.exe</span>
+    <div id="teamModal" class="modal active">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>CHOOSE YOUR DESTINY</h1>
+                <div class="subtitle">Angel or Demon?</div>
             </div>
-            <div class="xp-window-body">
-                <h2>First, which team are you?</h2>
-                <div class="team-selection">
-                    <button class="team-btn hot-team" data-team="hot">
-                        <span class="team-icon">🔥</span>
-                        <span>Team Hot</span>
-                    </button>
-                    <button class="team-btn cold-team" data-team="cold">
-                        <span class="team-icon">❄️</span>
-                        <span>Team Cold</span>
-                    </button>
-                </div>
+            <div class="team-selection">
+                <button class="team-btn angel-team" data-team="angelbubu">
+                    <img src="../assets/b04rd/angelbubu.png" alt="Angel Bubu" class="team-avatar">
+                    <span class="team-name">ANGELBUBU</span>
+                    <div class="team-glow angel-glow"></div>
+                </button>
+                <div class="vs-divider">VS</div>
+                <button class="team-btn demon-team" data-team="demonbubu">
+                    <img src="../assets/b04rd/demonbubu.png" alt="Demon Bubu" class="team-avatar">
+                    <span class="team-name">DEMONBUBU</span>
+                    <div class="team-glow demon-glow"></div>
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Main Game Board -->
     <div id="gameBoard" class="game-board hidden">
-        <div class="header">
-            <div class="team-display">
-                <span id="teamName"></span>
+        <!-- Game Status Bar -->
+        <div class="game-status-bar">
+            <div class="status-left">
+                <span class="your-team" id="yourTeam">TEAM: </span>
             </div>
-            <div class="score-display">
-                <span>Score: </span><span id="teamScore">0</span>
-            </div>
-        </div>
-
-        <div class="cans-container">
-            <div class="can-wrapper" data-can="lamby">
-                <div class="can-card">
-                    <div class="can-front">
-                        <img src="../assets/b04rd/lamby.png" alt="Lamby Can">
-                    </div>
-                    <div class="can-back">
-                        <div class="challenge-content">
-                            <h3>Challenge</h3>
-                            <p class="challenge-text">Waiting for challenge...</p>
-                            <button class="complete-btn hidden">Mark Complete</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="points-selector hidden">
-                    <button class="points-btn" data-points="15000">15K</button>
-                    <button class="points-btn" data-points="25000">25K</button>
-                    <button class="points-btn" data-points="50000">50K</button>
+            <div class="status-center">
+                <div class="life-status" id="lifeStatus">
+                    <span class="life-text">WAITING...</span>
                 </div>
             </div>
-
-            <div class="can-wrapper" data-can="flyers">
-                <div class="can-card">
-                    <div class="can-front">
-                        <img src="../assets/b04rd/flyers.png" alt="Flyers Can">
-                    </div>
-                    <div class="can-back">
-                        <div class="challenge-content">
-                            <h3>Challenge</h3>
-                            <p class="challenge-text">Waiting for challenge...</p>
-                            <button class="complete-btn hidden">Mark Complete</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="points-selector hidden">
-                    <button class="points-btn" data-points="15000">15K</button>
-                    <button class="points-btn" data-points="25000">25K</button>
-                    <button class="points-btn" data-points="50000">50K</button>
-                </div>
-            </div>
-
-            <div class="can-wrapper" data-can="mashups">
-                <div class="can-card">
-                    <div class="can-front">
-                        <img src="../assets/b04rd/mashups.png" alt="Mashups Can">
-                    </div>
-                    <div class="can-back">
-                        <div class="challenge-content">
-                            <h3>Challenge</h3>
-                            <p class="challenge-text">Waiting for challenge...</p>
-                            <button class="complete-btn hidden">Mark Complete</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="points-selector hidden">
-                    <button class="points-btn" data-points="15000">15K</button>
-                    <button class="points-btn" data-points="25000">25K</button>
-                    <button class="points-btn" data-points="50000">50K</button>
-                </div>
-            </div>
-
-            <div class="can-wrapper" data-can="twitter">
-                <div class="can-card">
-                    <div class="can-front">
-                        <img src="../assets/b04rd/twitter.png" alt="Twitter Can">
-                    </div>
-                    <div class="can-back">
-                        <div class="challenge-content">
-                            <h3>Challenge</h3>
-                            <p class="challenge-text">Waiting for challenge...</p>
-                            <button class="complete-btn hidden">Mark Complete</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="points-selector hidden">
-                    <button class="points-btn" data-points="15000">15K</button>
-                    <button class="points-btn" data-points="25000">25K</button>
-                    <button class="points-btn" data-points="50000">50K</button>
-                </div>
+            <div class="status-right">
+                <span class="round-num">ROUND <span id="roundNum">1</span></span>
             </div>
         </div>
 
+        <!-- Pizza Selection Area -->
+        <div class="selection-area">
+            <h2 class="selection-title">ASSIGN YOUR FATE TO EACH PIZZA</h2>
+            
+            <div class="pizzas-grid">
+                <div class="pizza-slot" data-pizza="cool">
+                    <img src="../assets/b04rd/pizza-movie.png" alt="Cool Pizza" class="slot-pizza">
+                    <div class="pizza-label">COOL PIZZA</div>
+                    <div class="action-dropdown">
+                        <select class="action-select" id="pizzaCoolSelect">
+                            <option value="">CHOOSE...</option>
+                            <option value="KILL">💀 KILL</option>
+                            <option value="FUCK">🔥 FUCK</option>
+                            <option value="MARRY">💍 MARRY</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="pizza-slot" data-pizza="lame">
+                    <img src="../assets/b04rd/pizza-music.png" alt="Lame Pizza" class="slot-pizza">
+                    <div class="pizza-label">LAME PIZZA</div>
+                    <div class="action-dropdown">
+                        <select class="action-select" id="pizzaLameSelect">
+                            <option value="">CHOOSE...</option>
+                            <option value="KILL">💀 KILL</option>
+                            <option value="FUCK">🔥 FUCK</option>
+                            <option value="MARRY">💍 MARRY</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="pizza-slot" data-pizza="annoying">
+                    <img src="../assets/b04rd/pizza-paizley.png" alt="Annoying Pizza" class="slot-pizza">
+                    <div class="pizza-label">ANNOYING PIZZA</div>
+                    <div class="action-dropdown">
+                        <select class="action-select" id="pizzaAnnoyingSelect">
+                            <option value="">CHOOSE...</option>
+                            <option value="KILL">💀 KILL</option>
+                            <option value="FUCK">🔥 FUCK</option>
+                            <option value="MARRY">💍 MARRY</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="submit-btn" id="submitBtn" onclick="submitChoices()">
+                LOCK IN YOUR FATE
+            </button>
+        </div>
+
+        <!-- Waiting Screen -->
+        <div id="waitingScreen" class="waiting-screen hidden">
+            <div class="waiting-content">
+                <h2>WAITING FOR OTHER TEAM...</h2>
+                <div class="waiting-spinner"></div>
+                <p id="waitingMessage">The other team is making their choice...</p>
+            </div>
+        </div>
+
+        <!-- Battle Mode -->
+        <div id="battleMode" class="battle-mode hidden">
+            <div class="battle-content">
+                <h1 class="battle-title">⚔️ BATTLE MODE ⚔️</h1>
+                <p class="battle-text">YOU MATCHED! Choose your challenge:</p>
+                <div class="challenge-pizzas">
+                    <div class="challenge-option" onclick="selectChallenge('cool')">
+                        <img src="../assets/b04rd/pizza-movie.png" alt="Cool Pizza">
+                        <span>COOL PIZZA</span>
+                    </div>
+                    <div class="challenge-option" onclick="selectChallenge('lame')">
+                        <img src="../assets/b04rd/pizza-music.png" alt="Lame Pizza">
+                        <span>LAME PIZZA</span>
+                    </div>
+                    <div class="challenge-option" onclick="selectChallenge('annoying')">
+                        <img src="../assets/b04rd/pizza-paizley.png" alt="Annoying Pizza">
+                        <span>ANNOYING PIZZA</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Challenge Display (after admin reveals) -->
+        <div id="challengeDisplay" class="challenge-display hidden">
+            <div class="challenge-card">
+                <h2 class="challenge-header">🎯 YOUR CHALLENGE 🎯</h2>
+                <div class="challenge-pizza-display">
+                    <img id="challengePizzaImg" src="" alt="Challenge Pizza">
+                    <h3 id="challengeAction">-</h3>
+                </div>
+                <p id="challengeText" class="challenge-description">Loading challenge...</p>
+                <div class="challenge-footer">
+                    <p>Complete this challenge to win the round!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Messages -->
         <div class="status-message" id="statusMessage"></div>
     </div>
 
     <!-- Background Audio -->
     <audio id="bgMusic" loop>
-        <source src="../assets/b04rd/mike-bg.mp3" type="audio/mpeg">
+        <source src="../assets/b04rd/blind.mp3" type="audio/mpeg">
     </audio>
 
-    <!-- Firebase Scripts -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, doc, setDoc, onSnapshot, query, orderBy, limit, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-        
-        // Make Firebase available globally
-        window.firebaseConfig = {
-            apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO21-40668WNpOdj2w",
-            authDomain: "c0uchz0mb13.firebaseapp.com",
-            projectId: "c0uchz0mb13",
-            storageBucket: "c0uchz0mb13.firebasestorage.app",
-            messagingSenderId: "1051521591004",
-            appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
-            measurementId: "G-6BNDYZQRPE"
-        };
-        
-        window.app = initializeApp(window.firebaseConfig);
-        window.db = getFirestore(window.app);
-        window.firebaseUtils = {
-            collection, doc, setDoc, onSnapshot, query, orderBy, limit, serverTimestamp
-        };
-    </script>
-    
     <script src="blind.js"></script>
 </body>
 </html>

@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blind Box Admin Control - B04RD B0SS</title>
+    <title>BATTLE B0SS - Admin Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&family=Creepster&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,42 +15,17 @@
         }
 
         body {
-            font-family: 'Tahoma', 'Arial', 'Verdana', sans-serif;
-            background: #008080;
+            font-family: 'Metal Mania', cursive;
+            background: #000;
             background-image: 
-                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,.05) 2px, rgba(255,255,255,.05) 4px);
+                radial-gradient(circle at 50% 50%, rgba(255,0,0,0.1), transparent 50%),
+                url('../assets/b04rd/tommy-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #fff;
+            padding: 2rem;
             min-height: 100vh;
-            padding: 1rem;
-        }
-
-        /* Windows XP Window Styling */
-        .xp-window {
-            background: #ece9d8;
-            border: 2px solid;
-            border-top-color: #ffffff;
-            border-left-color: #ffffff;
-            border-right-color: #808080;
-            border-bottom-color: #808080;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
-            margin-bottom: 1rem;
-        }
-
-        .xp-header {
-            background: linear-gradient(180deg, #0a246a 0%, #3a6ea5 100%);
-            color: white;
-            padding: 3px 5px;
-            font-weight: bold;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .xp-body {
-            padding: 10px;
-            background: white;
-            border: 1px solid #808080;
-            margin: 3px;
         }
 
         .admin-container {
@@ -55,25 +33,320 @@
             margin: 0 auto;
         }
 
-        .admin-title {
-            background: linear-gradient(180deg, #0a246a 0%, #3a6ea5 100%);
-            color: white;
-            padding: 10px;
+        .admin-header {
             text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            border: 2px solid;
-            border-top-color: #ffffff;
-            border-left-color: #ffffff;
-            border-right-color: #000000;
-            border-bottom-color: #000000;
+            margin-bottom: 2rem;
+        }
+
+        .admin-title {
+            font-size: 3rem;
+            background: linear-gradient(90deg, #fff, #ff0000, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(255,0,0,0.5);
         }
 
         .admin-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .panel {
+            background: linear-gradient(135deg, rgba(26,0,0,0.95), rgba(0,0,0,0.95));
+            border: 3px solid #ff0000;
+            border-radius: 15px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .panel-header {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #ff0000;
+        }
+
+        /* Battle Alert */
+        .battle-alert {
+            background: linear-gradient(135deg, #ff0000, #660000);
+            border: 3px solid #fff;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            animation: flash 0.5s infinite alternate;
+            display: none;
+        }
+
+        .battle-alert.active {
+            display: block;
+        }
+
+        @keyframes flash {
+            from { box-shadow: 0 0 30px rgba(255,0,0,0.5); }
+            to { box-shadow: 0 0 50px rgba(255,255,255,0.8); }
+        }
+
+        .battle-title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .battle-info {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .arrangement-display {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .pizza-arrangement {
+            text-align: center;
+        }
+
+        .pizza-arrangement img {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 0.5rem;
+        }
+
+        .pizza-action {
+            font-size: 1.2rem;
+            color: #ff0;
+        }
+
+        /* Game Status */
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-item {
+            background: rgba(255,255,255,0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 0.9rem;
+            color: #999;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .team-angel {
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        .team-demon {
+            color: #ff0000;
+            text-shadow: 0 0 10px rgba(255,0,0,0.5);
+        }
+
+        /* Challenge Selection */
+        .challenge-selected {
+            background: rgba(0,255,0,0.1);
+            border: 2px solid #00ff00;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .challenge-selected.active {
+            display: block;
+        }
+
+        .challenge-text {
+            font-size: 1.3rem;
+            text-align: center;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Metal Mania', cursive;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-reset {
+            background: linear-gradient(135deg, #ff0000, #660000);
+            color: #fff;
+        }
+
+        .btn-reset:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255,0,0,0.5);
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #666, #333);
+            color: #fff;
+        }
+
+        /* Activity Log */
+        .activity-log {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .log-entry {
+            padding: 0.5rem 0;
+            border-bottom: 1px dotted #333;
+        }
+
+        .log-entry.recent {
+            color: #ff0;
+        }
+
+        .timestamp {
+            color: #666;
+            margin-right: 10px;
+        }
+
+        /* Live Choices */
+        .live-choices {
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .choice-display {
+            margin-bottom: 1.5rem;
+        }
+
+        .choice-display h3 {
+            font-size: 1.1rem;
+            color: #ff0;
+            margin-bottom: 0.5rem;
+        }
+
+        .arrangement-row {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+
+        /* Challenge Editor */
+        .challenge-editor {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .challenge-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .challenge-input-group label {
+            font-size: 1rem;
+            color: #ff0;
+        }
+
+        .challenge-input {
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid #ff0000;
+            border-radius: 5px;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #00ff00, #006600);
+            color: #fff;
+        }
+
+        .btn-save:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0,255,0,0.5);
+        }
+
+        .pizza-name {
+            font-size: 0.9rem;
+            color: #ff0;
+            margin: 0.5rem 0;
+        }
+
+        /* Challenge Controls */
+        .challenge-controls {
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .btn-reveal {
+            background: linear-gradient(135deg, #ff0, #ff6600);
+            color: #000;
+            font-weight: bold;
+        }
+
+        .btn-reveal:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255,255,0,0.8);
+        }
+
+        /* Winner Controls */
+        .winner-controls {
+            margin-top: 1.5rem;
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+
+        .winner-controls.hidden {
+            display: none;
+        }
+
+        .winner-controls h3 {
+            margin-bottom: 1rem;
+            color: #ff0;
+        }
+
+        .btn-angel {
+            background: linear-gradient(135deg, #fff, #ccc);
+            color: #000;
+            margin-right: 1rem;
+        }
+
+        .btn-demon {
+            background: linear-gradient(135deg, #ff0000, #660000);
+            color: #fff;
         }
 
         @media (max-width: 768px) {
@@ -81,561 +354,337 @@
                 grid-template-columns: 1fr;
             }
         }
-
-        /* Request Items */
-        .request-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .request-item {
-            background: #f0f0f0;
-            border: 1px solid #808080;
-            padding: 8px;
-            margin-bottom: 8px;
-            font-size: 11px;
-        }
-
-        .request-item.hot {
-            border-left: 4px solid #ff6600;
-        }
-
-        .request-item.cold {
-            border-left: 4px solid #0099ff;
-        }
-
-        .request-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-
-        .request-team {
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .request-points {
-            color: #000080;
-            font-weight: bold;
-        }
-
-        .request-actions {
-            display: flex;
-            gap: 5px;
-            margin-top: 5px;
-        }
-
-        /* XP Style Buttons */
-        .xp-btn {
-            padding: 3px 10px;
-            background: #ece9d8;
-            border: 2px solid;
-            border-top-color: #ffffff;
-            border-left-color: #ffffff;
-            border-right-color: #808080;
-            border-bottom-color: #808080;
-            font-size: 11px;
-            cursor: pointer;
-            font-family: 'Tahoma', sans-serif;
-        }
-
-        .xp-btn:active {
-            border-top-color: #808080;
-            border-left-color: #808080;
-            border-right-color: #ffffff;
-            border-bottom-color: #ffffff;
-        }
-
-        .xp-btn.approve {
-            background: #c3f0c3;
-        }
-
-        .xp-btn.deny {
-            background: #f0c3c3;
-        }
-
-        /* Challenge Editor */
-        .challenge-select {
-            width: 100%;
-            padding: 3px;
-            border: 1px solid #808080;
-            background: white;
-            font-family: 'Tahoma', sans-serif;
-            font-size: 11px;
-            margin-bottom: 10px;
-        }
-
-        .challenge-grid {
-            display: grid;
-            gap: 10px;
-        }
-
-        .challenge-level {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .challenge-label {
-            width: 60px;
-            font-size: 11px;
-            font-weight: bold;
-            color: #000080;
-        }
-
-        .challenge-input {
-            flex: 1;
-            padding: 3px;
-            border: 1px solid #808080;
-            font-family: 'Tahoma', sans-serif;
-            font-size: 11px;
-        }
-
-        /* Scoreboard */
-        .score-display {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .team-score {
-            padding: 15px;
-            text-align: center;
-            color: white;
-            font-weight: bold;
-            border: 2px solid;
-            border-top-color: #ffffff;
-            border-left-color: #ffffff;
-            border-right-color: #808080;
-            border-bottom-color: #808080;
-        }
-
-        .team-score.hot {
-            background: #ff6600;
-        }
-
-        .team-score.cold {
-            background: #0099ff;
-        }
-
-        .score-value {
-            font-size: 24px;
-            margin-top: 5px;
-        }
-
-        /* Activity Log */
-        .activity-log {
-            max-height: 200px;
-            overflow-y: auto;
-            background: white;
-            border: 1px solid #808080;
-            padding: 5px;
-            font-family: 'Courier New', monospace;
-            font-size: 10px;
-        }
-
-        .log-entry {
-            padding: 2px 0;
-            border-bottom: 1px dotted #c0c0c0;
-        }
-
-        .log-entry.recent {
-            background: #ffffcc;
-        }
-
-        .timestamp {
-            color: #808080;
-            margin-right: 5px;
-        }
-
-        /* Quick Actions */
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 5px;
-            margin-top: 10px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 20px;
-            color: #808080;
-            font-style: italic;
-            font-size: 11px;
-        }
-
-        /* Status Bar */
-        .status-bar {
-            background: #c0c0c0;
-            border-top: 2px solid #ffffff;
-            padding: 3px 5px;
-            font-size: 10px;
-            display: flex;
-            gap: 20px;
-            margin-top: 20px;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-        }
-
-        .status-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .status-indicator {
-            width: 8px;
-            height: 8px;
-            background: #00ff00;
-            border-radius: 50%;
-            animation: blink 2s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
     </style>
 </head>
 <body>
     <div class="admin-container">
-        <div class="admin-title">
-            🎮 B04RD B0SS - ADMIN CONTROL PANEL
+        <div class="admin-header">
+            <h1 class="admin-title">⚔️ BATTLE B0SS CONTROL ⚔️</h1>
+        </div>
+
+        <!-- Battle Alert -->
+        <div id="battleAlert" class="battle-alert">
+            <h2 class="battle-title">🔥 BATTLE MODE ACTIVATED 🔥</h2>
+            <div class="battle-info">
+                <p>Round: <span id="battleRound">-</span></p>
+                <p>Life on Line: <span id="battleTeam">-</span></p>
+            </div>
+            <div class="arrangement-display">
+                <div class="pizza-arrangement">
+                    <img src="../assets/b04rd/pizza-movie.png" alt="Cool Pizza">
+                    <div class="pizza-name">COOL PIZZA</div>
+                    <div class="pizza-action" id="pizzaCoolAction">-</div>
+                </div>
+                <div class="pizza-arrangement">
+                    <img src="../assets/b04rd/pizza-music.png" alt="Lame Pizza">
+                    <div class="pizza-name">LAME PIZZA</div>
+                    <div class="pizza-action" id="pizzaLameAction">-</div>
+                </div>
+                <div class="pizza-arrangement">
+                    <img src="../assets/b04rd/pizza-paizley.png" alt="Annoying Pizza">
+                    <div class="pizza-name">ANNOYING PIZZA</div>
+                    <div class="pizza-action" id="pizzaAnnoyingAction">-</div>
+                </div>
+            </div>
+            <div id="challengeSelected" class="challenge-selected">
+                <p class="challenge-text">Challenge Selected: <span id="selectedPizza">-</span></p>
+                <div class="challenge-controls">
+                    <button class="btn btn-reveal" onclick="revealChallenge()">REVEAL CHALLENGE</button>
+                </div>
+            </div>
+            <div id="winnerControls" class="winner-controls hidden">
+                <h3>Mark Round Winner:</h3>
+                <button class="btn btn-angel" onclick="markWinner('angelbubu')">ANGELBUBU WINS</button>
+                <button class="btn btn-demon" onclick="markWinner('demonbubu')">DEMONBUBU WINS</button>
+            </div>
         </div>
 
         <div class="admin-grid">
-            <!-- Pending Requests -->
-            <div class="xp-window">
-                <div class="xp-header">
-                    <span>📥 Pending Challenge Requests</span>
-                    <span id="requestCount">0</span>
+            <!-- Game Status -->
+            <div class="panel">
+                <div class="panel-header">📊 Game Status</div>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-label">ROUND</div>
+                        <div class="status-value" id="currentRound">1</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">CURRENT TURN</div>
+                        <div class="status-value" id="currentTurn">-</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">GAME STATUS</div>
+                        <div class="status-value" id="gameStatus">WAITING</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">LIFE ON LINE</div>
+                        <div class="status-value" id="lifeOnLine">-</div>
+                    </div>
                 </div>
-                <div class="xp-body">
-                    <div id="requestList" class="request-list">
-                        <div class="empty-state">No pending requests</div>
+                <div class="controls">
+                    <button class="btn btn-reset" onclick="resetGame()">Reset Game</button>
+                    <button class="btn btn-clear" onclick="clearBattle()">Clear Battle</button>
+                </div>
+            </div>
+
+            <!-- Live Choices Display -->
+            <div class="panel">
+                <div class="panel-header">👁️ Live Player Choices</div>
+                <div id="liveChoices" class="live-choices">
+                    <div class="choice-display">
+                        <h3>Current Arrangement (Life on Line):</h3>
+                        <div id="currentArrangement" class="arrangement-row">-</div>
+                    </div>
+                    <div class="choice-display">
+                        <h3>Last Guess:</h3>
+                        <div id="lastGuess" class="arrangement-row">-</div>
                     </div>
                 </div>
             </div>
 
             <!-- Challenge Editor -->
-            <div class="xp-window">
-                <div class="xp-header">
-                    <span>✏️ Challenge Editor</span>
-                </div>
-                <div class="xp-body">
-                    <select id="canSelect" class="challenge-select">
-                        <option value="">Select a can...</option>
-                        <option value="lamby">Lamby Can</option>
-                        <option value="flyers">Flyers Can</option>
-                        <option value="mashups">Mashups Can</option>
-                        <option value="twitter">Twitter Can</option>
-                    </select>
-                    
-                    <div class="challenge-grid">
-                        <div class="challenge-level">
-                            <span class="challenge-label">15K:</span>
-                            <input type="text" class="challenge-input" id="challenge15k" placeholder="Easy challenge...">
-                        </div>
-                        <div class="challenge-level">
-                            <span class="challenge-label">25K:</span>
-                            <input type="text" class="challenge-input" id="challenge25k" placeholder="Medium challenge...">
-                        </div>
-                        <div class="challenge-level">
-                            <span class="challenge-label">50K:</span>
-                            <input type="text" class="challenge-input" id="challenge50k" placeholder="Hard challenge...">
-                        </div>
+            <div class="panel">
+                <div class="panel-header">✏️ Challenge Editor</div>
+                <div class="challenge-editor">
+                    <div class="challenge-input-group">
+                        <label>KILL Challenge:</label>
+                        <input type="text" id="killChallenge" class="challenge-input" 
+                               placeholder="Enter KILL challenge...">
                     </div>
-                    
-                    <button class="xp-btn" style="width: 100%; margin-top: 10px;" onclick="updateChallenges()">
-                        Update Challenges
-                    </button>
-                </div>
-            </div>
-
-            <!-- Scoreboard -->
-            <div class="xp-window">
-                <div class="xp-header">
-                    <span>🏆 Live Scoreboard</span>
-                </div>
-                <div class="xp-body">
-                    <div class="score-display">
-                        <div class="team-score hot">
-                            <div>TEAM HOT 🔥</div>
-                            <div class="score-value" id="hotScore">0</div>
-                        </div>
-                        <div class="team-score cold">
-                            <div>TEAM COLD ❄️</div>
-                            <div class="score-value" id="coldScore">0</div>
-                        </div>
+                    <div class="challenge-input-group">
+                        <label>FUCK Challenge:</label>
+                        <input type="text" id="fuckChallenge" class="challenge-input" 
+                               placeholder="Enter FUCK challenge...">
                     </div>
-                    
-                    <div class="quick-actions">
-                        <button class="xp-btn" onclick="resetScores()">Reset</button>
-                        <button class="xp-btn" onclick="exportData()">Export</button>
-                        <button class="xp-btn" onclick="pauseGame()">Pause</button>
-                        <button class="xp-btn" onclick="endGame()">End</button>
+                    <div class="challenge-input-group">
+                        <label>MARRY Challenge:</label>
+                        <input type="text" id="marryChallenge" class="challenge-input" 
+                               placeholder="Enter MARRY challenge...">
                     </div>
+                    <button class="btn btn-save" onclick="saveChallenges()">Save Challenges</button>
                 </div>
             </div>
 
             <!-- Activity Log -->
-            <div class="xp-window">
-                <div class="xp-header">
-                    <span>📋 Activity Log</span>
-                </div>
-                <div class="xp-body">
-                    <div id="activityLog" class="activity-log">
-                        <div class="log-entry">
-                            <span class="timestamp">00:00:00</span>
-                            Admin panel initialized
-                        </div>
+            <div class="panel">
+                <div class="panel-header">📋 Activity Log</div>
+                <div id="activityLog" class="activity-log">
+                    <div class="log-entry">
+                        <span class="timestamp">00:00:00</span>
+                        Admin panel initialized
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="status-bar">
-        <div class="status-item">
-            <div class="status-indicator"></div>
-            <span>Connected</span>
-        </div>
-        <div class="status-item">
-            <span id="statusTime">00:00:00</span>
-        </div>
-    </div>
-
-    <!-- Firebase Scripts -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, where, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    <script>
+        // Check for updates every 500ms
+        setInterval(checkForUpdates, 500);
         
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO21-40668WNpOdj2w",
-            authDomain: "c0uchz0mb13.firebaseapp.com",
-            projectId: "c0uchz0mb13",
-            storageBucket: "c0uchz0mb13.firebasestorage.app",
-            messagingSenderId: "1051521591004",
-            appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
-            measurementId: "G-6BNDYZQRPE"
+        let lastBattleTime = 0;
+        let challenges = {
+            KILL: 'Default KILL challenge',
+            FUCK: 'Default FUCK challenge', 
+            MARRY: 'Default MARRY challenge'
         };
         
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        
-        // Admin State
-        const adminState = {
-            requests: new Map(),
-            challenges: {
-                lamby: { 15000: '', 25000: '', 50000: '' },
-                flyers: { 15000: '', 25000: '', 50000: '' },
-                mashups: { 15000: '', 25000: '', 50000: '' },
-                twitter: { 15000: '', 25000: '', 50000: '' }
-            },
-            scores: {
-                hot: 0,
-                cold: 0
+        // Load saved challenges
+        function loadChallenges() {
+            const saved = localStorage.getItem('challenges');
+            if (saved) {
+                challenges = JSON.parse(saved);
+                document.getElementById('killChallenge').value = challenges.KILL;
+                document.getElementById('fuckChallenge').value = challenges.FUCK;
+                document.getElementById('marryChallenge').value = challenges.MARRY;
             }
-        };
-
-        // Listen for requests
-        function listenForRequests() {
-            const q = query(collection(db, 'b04rd_requests'), where('status', '==', 'pending'), orderBy('timestamp', 'desc'));
+        }
+        
+        // Save challenges
+        function saveChallenges() {
+            challenges.KILL = document.getElementById('killChallenge').value || 'Default KILL challenge';
+            challenges.FUCK = document.getElementById('fuckChallenge').value || 'Default FUCK challenge';
+            challenges.MARRY = document.getElementById('marryChallenge').value || 'Default MARRY challenge';
             
-            onSnapshot(q, (snapshot) => {
-                const requestList = document.getElementById('requestList');
+            localStorage.setItem('challenges', JSON.stringify(challenges));
+            localStorage.setItem('challengesUpdated', Date.now());
+            
+            addLog('Challenges saved');
+            alert('Challenges saved!');
+        }
+        
+        function checkForUpdates() {
+            // Check game data
+            const gameData = JSON.parse(localStorage.getItem('gameData') || '{}');
+            
+            // Update status display
+            document.getElementById('currentRound').textContent = gameData.round || 1;
+            document.getElementById('currentTurn').textContent = gameData.currentTurn || '-';
+            document.getElementById('gameStatus').textContent = (gameData.status || 'waiting').toUpperCase();
+            document.getElementById('lifeOnLine').textContent = gameData.setBy || gameData.currentTurn || '-';
+            
+            // Show current arrangement if exists
+            if (gameData.currentArrangement) {
+                const arr = gameData.currentArrangement;
+                document.getElementById('currentArrangement').innerHTML = `
+                    <span>Cool: ${arr.pizzaCool}</span>
+                    <span>Lame: ${arr.pizzaLame}</span>
+                    <span>Annoying: ${arr.pizzaAnnoying}</span>
+                    <span style="color: #ff0;">(Set by ${gameData.setBy})</span>
+                `;
+            } else {
+                document.getElementById('currentArrangement').innerHTML = 'No arrangement set';
+            }
+            
+            // Show last guess if exists
+            const lastGuess = JSON.parse(localStorage.getItem('lastGuess') || '{}');
+            if (lastGuess.choices) {
+                document.getElementById('lastGuess').innerHTML = `
+                    <span>Cool: ${lastGuess.choices.pizzaCool}</span>
+                    <span>Lame: ${lastGuess.choices.pizzaLame}</span>
+                    <span>Annoying: ${lastGuess.choices.pizzaAnnoying}</span>
+                    <span style="color: #0ff;">(By ${lastGuess.team})</span>
+                `;
+            } else {
+                document.getElementById('lastGuess').innerHTML = 'No guess yet';
+            }
+            
+            // Style based on team
+            const turnEl = document.getElementById('currentTurn');
+            const lifeEl = document.getElementById('lifeOnLine');
+            
+            if (gameData.currentTurn === 'angelbubu') {
+                turnEl.className = 'status-value team-angel';
+            } else if (gameData.currentTurn === 'demonbubu') {
+                turnEl.className = 'status-value team-demon';
+            }
+            
+            if (gameData.setBy === 'angelbubu' || gameData.currentTurn === 'angelbubu') {
+                lifeEl.className = 'status-value team-angel';
+            } else if (gameData.setBy === 'demonbubu' || gameData.currentTurn === 'demonbubu') {
+                lifeEl.className = 'status-value team-demon';
+            }
+            
+            // Check for battle alert
+            const battleData = JSON.parse(localStorage.getItem('battleAlert') || '{}');
+            if (battleData.timestamp && battleData.timestamp > lastBattleTime) {
+                lastBattleTime = battleData.timestamp;
+                showBattleAlert(battleData);
+            }
+            
+            // Check for challenge selection
+            const challengeData = JSON.parse(localStorage.getItem('selectedChallenge') || '{}');
+            if (challengeData.pizza) {
+                document.getElementById('challengeSelected').classList.add('active');
+                document.getElementById('selectedPizza').textContent = `${challengeData.pizza.toUpperCase()} PIZZA by ${challengeData.selectedBy}`;
                 
-                if (snapshot.empty) {
-                    requestList.innerHTML = '<div class="empty-state">No pending requests</div>';
-                    document.getElementById('requestCount').textContent = '0';
-                    return;
+                // Show winner controls after reveal
+                const revealData = JSON.parse(localStorage.getItem('challengeReveal') || '{}');
+                if (revealData.timestamp) {
+                    document.getElementById('winnerControls').classList.remove('hidden');
                 }
-                
-                requestList.innerHTML = '';
-                let count = 0;
-                
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    count++;
-                    displayRequest(data);
-                });
-                
-                document.getElementById('requestCount').textContent = count;
-            });
+            }
         }
-
-        // Display request
-        function displayRequest(data) {
-            const requestList = document.getElementById('requestList');
+        
+        function showBattleAlert(battleData) {
+            document.getElementById('battleAlert').classList.add('active');
+            document.getElementById('battleRound').textContent = battleData.round;
+            document.getElementById('battleTeam').textContent = battleData.teamOnLine;
             
-            const requestEl = document.createElement('div');
-            requestEl.className = `request-item ${data.team}`;
-            requestEl.innerHTML = `
-                <div class="request-info">
-                    <span class="request-team">Team ${data.team}</span>
-                    <span class="request-points">${data.points.toLocaleString()} pts</span>
-                </div>
-                <div>Can: ${data.can.toUpperCase()}</div>
-                <div class="request-actions">
-                    <button class="xp-btn approve" onclick="approveRequest('${data.id}', '${data.userId}', '${data.can}', ${data.points})">Approve</button>
-                    <button class="xp-btn deny" onclick="denyRequest('${data.id}', '${data.userId}')">Deny</button>
-                </div>
-            `;
+            if (battleData.arrangement) {
+                document.getElementById('pizzaCoolAction').textContent = battleData.arrangement.pizzaCool;
+                document.getElementById('pizzaLameAction').textContent = battleData.arrangement.pizzaLame;
+                document.getElementById('pizzaAnnoyingAction').textContent = battleData.arrangement.pizzaAnnoying;
+            }
             
-            requestList.appendChild(requestEl);
+            addLog(`BATTLE MODE! Round ${battleData.round} - ${battleData.teamOnLine}'s life on line`);
         }
-
-        // Approve request
-        window.approveRequest = async function(requestId, userId, can, points) {
-            const challenge = adminState.challenges[can][points] || 
-                            `Complete the ${can} challenge for ${points} points!`;
+        
+        // Reveal challenge to players
+        function revealChallenge() {
+            const challengeData = JSON.parse(localStorage.getItem('selectedChallenge') || '{}');
+            const gameData = JSON.parse(localStorage.getItem('gameData') || '{}');
             
-            // Send approval response
-            await setDoc(doc(db, 'b04rd_responses', requestId), {
-                requestId: requestId,
-                userId: userId,
-                approved: true,
-                challenge: challenge,
-                timestamp: serverTimestamp()
-            });
-            
-            // Update request status
-            await setDoc(doc(db, 'b04rd_requests', requestId), {
-                status: 'approved'
-            }, { merge: true });
-            
-            addLog(`Approved ${can} for ${points} points`);
-        }
-
-        // Deny request
-        window.denyRequest = async function(requestId, userId) {
-            // Send denial response
-            await setDoc(doc(db, 'b04rd_responses', requestId), {
-                requestId: requestId,
-                userId: userId,
-                approved: false,
-                timestamp: serverTimestamp()
-            });
-            
-            // Update request status
-            await setDoc(doc(db, 'b04rd_requests', requestId), {
-                status: 'denied'
-            }, { merge: true });
-            
-            addLog(`Denied request`);
-        }
-
-        // Listen for scores
-        function listenForScores() {
-            onSnapshot(collection(db, 'b04rd_players'), (snapshot) => {
-                let hotScore = 0;
-                let coldScore = 0;
-                
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    if (data.team === 'hot') {
-                        hotScore += data.score || 0;
-                    } else if (data.team === 'cold') {
-                        coldScore += data.score || 0;
-                    }
-                });
-                
-                adminState.scores.hot = hotScore;
-                adminState.scores.cold = coldScore;
-                
-                document.getElementById('hotScore').textContent = hotScore.toLocaleString();
-                document.getElementById('coldScore').textContent = coldScore.toLocaleString();
-            });
-        }
-
-        // Update challenges
-        window.updateChallenges = function() {
-            const canSelect = document.getElementById('canSelect');
-            const selectedCan = canSelect.value;
-            
-            if (!selectedCan) {
-                alert('Please select a can first!');
+            if (!challengeData.pizza || !gameData.currentArrangement) {
+                alert('No challenge selected yet!');
                 return;
             }
             
-            adminState.challenges[selectedCan] = {
-                15000: document.getElementById('challenge15k').value,
-                25000: document.getElementById('challenge25k').value,
-                50000: document.getElementById('challenge50k').value
+            // Get the action for the selected pizza
+            const pizzaKey = `pizza${challengeData.pizza.charAt(0).toUpperCase() + challengeData.pizza.slice(1)}`;
+            const action = gameData.currentArrangement[pizzaKey];
+            const challengeText = challenges[action] || 'Complete the challenge!';
+            
+            // Send reveal to players
+            const reveal = {
+                pizza: challengeData.pizza,
+                action: action,
+                challengeText: challengeText,
+                timestamp: Date.now()
             };
             
-            localStorage.setItem('b04rd_challenges', JSON.stringify(adminState.challenges));
-            addLog(`Updated challenges for ${selectedCan}`);
-            alert('Challenges updated!');
-        }
-
-        // Load stored challenges
-        function loadStoredChallenges() {
-            const stored = localStorage.getItem('b04rd_challenges');
-            if (stored) {
-                adminState.challenges = JSON.parse(stored);
-            }
+            localStorage.setItem('challengeReveal', JSON.stringify(reveal));
             
-            document.getElementById('canSelect').addEventListener('change', (e) => {
-                const can = e.target.value;
-                if (can && adminState.challenges[can]) {
-                    document.getElementById('challenge15k').value = adminState.challenges[can][15000] || '';
-                    document.getElementById('challenge25k').value = adminState.challenges[can][25000] || '';
-                    document.getElementById('challenge50k').value = adminState.challenges[can][50000] || '';
-                }
-            });
+            // Show winner controls
+            document.getElementById('winnerControls').classList.remove('hidden');
+            
+            addLog(`Challenge revealed: ${challengeData.pizza.toUpperCase()} PIZZA - ${action} - ${challengeText}`);
+            alert('Challenge revealed to players!');
         }
-
-        // Quick actions
-        window.resetScores = async function() {
-            if (confirm('Reset all scores?')) {
-                // Reset all player scores in Firebase
-                const snapshot = await collection(db, 'b04rd_players').get();
-                snapshot.forEach(async (doc) => {
-                    await setDoc(doc.ref, { score: 0 }, { merge: true });
-                });
-                addLog('Scores reset');
-            }
-        }
-
-        window.exportData = function() {
-            const data = {
-                scores: adminState.scores,
-                challenges: adminState.challenges,
-                timestamp: new Date().toISOString()
+        
+        // Mark round winner
+        function markWinner(team) {
+            const winnerData = {
+                winner: team,
+                round: JSON.parse(localStorage.getItem('gameData') || '{}').round || 1,
+                timestamp: Date.now()
             };
             
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `b04rd-data-${Date.now()}.json`;
-            a.click();
+            localStorage.setItem('roundWinner', JSON.stringify(winnerData));
             
-            addLog('Data exported');
+            // Hide controls
+            document.getElementById('winnerControls').classList.add('hidden');
+            document.getElementById('battleAlert').classList.remove('active');
+            document.getElementById('challengeSelected').classList.remove('active');
+            
+            addLog(`Round winner: ${team.toUpperCase()}`);
+            
+            // Clear for next round
+            setTimeout(() => {
+                clearBattle();
+            }, 2000);
         }
-
-        window.pauseGame = function() {
-            alert('Game paused!');
-            addLog('Game paused');
-        }
-
-        window.endGame = function() {
-            if (confirm('End the game?')) {
-                const winner = adminState.scores.hot > adminState.scores.cold ? 'Hot' : 
-                              adminState.scores.cold > adminState.scores.hot ? 'Cold' : 'Tie';
-                alert(`Game Over!\nWinner: Team ${winner}\n\nTeam Hot: ${adminState.scores.hot}\nTeam Cold: ${adminState.scores.cold}`);
-                addLog(`Game ended. Winner: ${winner}`);
+        
+        function resetGame() {
+            if (confirm('Reset the entire game?')) {
+                localStorage.removeItem('gameData');
+                localStorage.removeItem('battleAlert');
+                localStorage.removeItem('selectedChallenge');
+                localStorage.removeItem('lastGuess');
+                
+                // Set initial state
+                const initialGame = {
+                    currentTurn: 'angelbubu',
+                    round: 1,
+                    status: 'waiting'
+                };
+                localStorage.setItem('gameData', JSON.stringify(initialGame));
+                
+                document.getElementById('battleAlert').classList.remove('active');
+                document.getElementById('challengeSelected').classList.remove('active');
+                
+                addLog('Game reset - AngelBubu goes first');
             }
         }
-
-        // Activity log
+        
+        function clearBattle() {
+            document.getElementById('battleAlert').classList.remove('active');
+            document.getElementById('challengeSelected').classList.remove('active');
+            localStorage.removeItem('battleAlert');
+            localStorage.removeItem('selectedChallenge');
+            addLog('Battle alert cleared');
+        }
+        
         function addLog(message) {
             const logEl = document.getElementById('activityLog');
             const entry = document.createElement('div');
@@ -655,19 +704,10 @@
                 logEl.removeChild(logEl.lastChild);
             }
         }
-
-        // Update clock
-        setInterval(() => {
-            document.getElementById('statusTime').textContent = new Date().toLocaleTimeString();
-        }, 1000);
-
+        
         // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            loadStoredChallenges();
-            listenForRequests();
-            listenForScores();
-            addLog('Admin panel initialized');
-        });
+        loadChallenges();
+        addLog('Admin panel ready');
     </script>
 </body>
 </html>
