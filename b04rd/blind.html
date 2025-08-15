@@ -155,6 +155,35 @@
         <source src="../assets/b04rd/blind.mp3" type="audio/mpeg">
     </audio>
 
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, doc, setDoc, onSnapshot, query, where, orderBy, serverTimestamp, updateDoc, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO2l-40668WNpOdj2w",
+            authDomain: "c0uchz0mb13.firebaseapp.com",
+            projectId: "c0uchz0mb13",
+            storageBucket: "c0uchz0mb13.firebasestorage.app",
+            messagingSenderId: "1051521591004",
+            appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
+            measurementId: "G-6BNDYZQRPE"
+        };
+        
+        // Initialize Firebase
+        window.app = initializeApp(firebaseConfig);
+        window.db = getFirestore(window.app);
+        
+        // Make Firestore functions available globally
+        window.firebaseUtils = {
+            collection, doc, setDoc, onSnapshot, query, where, orderBy, 
+            serverTimestamp, updateDoc, getDoc, deleteDoc
+        };
+        
+        console.log('Firebase initialized');
+    </script>
+    
     <script src="blind.js"></script>
 </body>
 </html>

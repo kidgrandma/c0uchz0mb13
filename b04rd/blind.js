@@ -1,17 +1,20 @@
-// blind.js - Life on the Line Game Logic
+// blind.js - Life on the Line Game with Firebase
 
 // Game State
 const gameState = {
     team: null,
+    userId: 'user_' + Math.random().toString(36).substr(2, 9),
     round: 1,
     isLifeOnLine: false,
     currentChoices: {},
-    waitingForMatch: false
+    waitingForMatch: false,
+    lastRevealTime: 0,
+    lastWinnerTime: 0
 };
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Life on the Line - Initializing...');
+    console.log('Life on the Line - Initializing with Firebase...');
     
     // Start music on first click
     document.addEventListener('click', startMusic, { once: true });
@@ -19,8 +22,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup team selection
     setupTeamSelection();
     
-    // Check for updates every 500ms
-    setInterval(checkGameState, 500);
+    // Wait for Firebase to be ready
+    setTimeout(() => {
+        if (window.db) {
+            console.log('Firebase ready, initializing listeners');
+            initializeFirebaseListeners();
+        } else {
+            console.error('Firebase not initialized');
+        }
+    }, 1000);
 });
 
 // Start background music
@@ -37,14 +47,14 @@ function setupTeamSelection() {
     const teamButtons = document.querySelectorAll('.team-btn');
     
     teamButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             gameState.team = btn.dataset.team;
-            selectTeam();
+            await selectTeam();
         });
     });
 }
 
-function selectTeam() {
+async function selectTeam() {
     // Hide modal & show game
     document.getElementById('teamModal').classList.remove('active');
     document.getElementById('gameBoard').classList.remove('hidden');
@@ -52,23 +62,39 @@ function selectTeam() {
     // Set team display
     document.getElementById('yourTeam').textContent = `TEAM: ${gameState.team.toUpperCase()}`;
     
-    // Check who goes first
+    // Register player in Firebase
+    if (window.db) {
+        const { doc, setDoc, serverTimestamp } = window.firebaseUtils;
+        await setDoc(doc(window.db, 'players', gameState.userId), {
+            team: gameState.team,
+            joinedAt: serverTimestamp()
+        });
+    }
+    
+    // Check game state
     checkTurnOrder();
 }
 
 // Check turn order
-function checkTurnOrder() {
-    const gameData = JSON.parse(localStorage.getItem('gameData') || '{}');
+async function checkTurnOrder() {
+    if (!window.db) return;
     
-    // If no game started, angel goes first (life on line)
-    if (!gameData.currentTurn) {
-        gameData.currentTurn = 'angelbubu';
-        gameData.round = 1;
-        gameData.status = 'waiting';
-        localStorage.setItem('gameData', JSON.stringify(gameData));
+    const { doc, getDoc, setDoc, serverTimestamp } = window.firebaseUtils;
+    const gameDoc = await getDoc(doc(window.db, 'gameState', 'current'));
+    
+    if (!gameDoc.exists()) {
+        // Initialize game if doesn't exist
+        await setDoc(doc(window.db, 'gameState', 'current'), {
+            currentTurn: 'angelbubu',
+            round: 1,
+            status: 'waiting',
+            timestamp: serverTimestamp()
+        });
+        updateLifeStatus('angelbubu');
+    } else {
+        const gameData = gameDoc.data();
+        updateLifeStatus(gameData.currentTurn);
     }
-    
-    updateLifeStatus(gameData.currentTurn);
 }
 
 // Update life status display
@@ -89,12 +115,12 @@ function updateLifeStatus(turnTeam) {
 }
 
 // Submit choices
-window.submitChoices = function() {
+window.submitChoices = async function() {
     const pizzaCool = document.getElementById('pizzaCoolSelect').value;
     const pizzaLame = document.getElementById('pizzaLameSelect').value;
     const pizzaAnnoying = document.getElementById('pizzaAnnoyingSelect').value;
     
-    // Validate all selected and unique
+    // Validate
     if (!pizzaCool || !pizzaLame || !pizzaAnnoying) {
         showStatus('Select an action for each pizza!');
         return;
@@ -107,94 +133,119 @@ window.submitChoices = function() {
         return;
     }
     
-    // Store choices
-    gameState.currentChoices = { 
-        pizzaCool: pizzaCool, 
-        pizzaLame: pizzaLame, 
-        pizzaAnnoying: pizzaAnnoying 
-    };
+    gameState.currentChoices = { pizzaCool, pizzaLame, pizzaAnnoying };
     
-    // Get game data
-    const gameData = JSON.parse(localStorage.getItem('gameData') || '{}');
+    if (!window.db) {
+        showStatus('Firebase not connected!');
+        return;
+    }
     
-    if (gameState.isLifeOnLine) {
-        // Setting the arrangement
-        gameData.currentArrangement = gameState.currentChoices;
-        gameData.setBy = gameState.team;
-        gameData.status = 'waiting_for_guess';
-        localStorage.setItem('gameData', JSON.stringify(gameData));
-        
-        // Show waiting screen
-        showWaitingScreen('Waiting for other team to guess...');
-    } else {
-        // Making a guess
-        // Store the guess for admin to see
-        localStorage.setItem('lastGuess', JSON.stringify({
-            team: gameState.team,
-            choices: gameState.currentChoices,
-            timestamp: Date.now()
-        }));
-        
-        checkForMatch(gameState.currentChoices, gameData.currentArrangement);
+    const { doc, setDoc, getDoc, updateDoc, serverTimestamp } = window.firebaseUtils;
+    
+    try {
+        if (gameState.isLifeOnLine) {
+            // Setting the arrangement
+            await setDoc(doc(window.db, 'currentArrangement', 'active'), {
+                arrangement: gameState.currentChoices,
+                setBy: gameState.team,
+                timestamp: serverTimestamp()
+            });
+            
+            await updateDoc(doc(window.db, 'gameState', 'current'), {
+                status: 'waiting_for_guess',
+                setBy: gameState.team,
+                arrangementSet: true
+            });
+            
+            showWaitingScreen('Waiting for other team to guess...');
+            showStatus('Arrangement set! Waiting for other team...');
+            
+        } else {
+            // Making a guess - first check game state
+            const gameDoc = await getDoc(doc(window.db, 'gameState', 'current'));
+            const gameData = gameDoc.data();
+            
+            if (!gameData.arrangementSet || gameData.status !== 'waiting_for_guess') {
+                showStatus('Waiting for other team to set their arrangement...');
+                return;
+            }
+            
+            // Get the arrangement
+            const arrangementDoc = await getDoc(doc(window.db, 'currentArrangement', 'active'));
+            
+            if (!arrangementDoc.exists()) {
+                showStatus('Arrangement not found. Please wait and try again.');
+                return;
+            }
+            
+            const arrangement = arrangementDoc.data().arrangement;
+            
+            // Log the guess
+            await setDoc(doc(window.db, 'lastGuess', 'current'), {
+                choices: gameState.currentChoices,
+                team: gameState.team,
+                timestamp: serverTimestamp()
+            });
+            
+            // Check for match
+            checkForMatch(gameState.currentChoices, arrangement);
+        }
+    } catch (error) {
+        console.error('Error submitting choices:', error);
+        showStatus('Error submitting. Please try again.');
     }
 }
 
 // Check if arrangements match
-function checkForMatch(guess, arrangement) {
-    if (!arrangement || !arrangement.pizzaCool) {
-        showStatus('Error: No arrangement set yet!');
-        return;
-    }
-    
+async function checkForMatch(guess, arrangement) {
     const match = guess.pizzaCool === arrangement.pizzaCool && 
                   guess.pizzaLame === arrangement.pizzaLame && 
                   guess.pizzaAnnoying === arrangement.pizzaAnnoying;
     
-    const gameData = JSON.parse(localStorage.getItem('gameData') || '{}');
+    const { doc, setDoc, updateDoc, getDoc, deleteDoc, serverTimestamp } = window.firebaseUtils;
+    const gameDoc = await getDoc(doc(window.db, 'gameState', 'current'));
+    const gameData = gameDoc.data();
     
     if (match) {
         // BATTLE MODE!
-        gameData.status = 'battle';
-        gameData.battleTeam = gameData.setBy; // Team whose life was on line chooses
-        localStorage.setItem('gameData', JSON.stringify(gameData));
+        await updateDoc(doc(window.db, 'gameState', 'current'), {
+            status: 'battle',
+            battleTeam: gameData.setBy
+        });
         
-        // Notify admin
-        const battleAlert = {
-            type: 'BATTLE',
+        // Create battle alert
+        await setDoc(doc(window.db, 'battleAlert', 'current'), {
             round: gameData.round,
             teamOnLine: gameData.setBy,
             arrangement: arrangement,
-            timestamp: Date.now()
-        };
-        localStorage.setItem('battleAlert', JSON.stringify(battleAlert));
+            timestamp: serverTimestamp()
+        });
         
-        // Show battle mode
-        if (gameData.battleTeam === gameState.team) {
+        if (gameData.setBy === gameState.team) {
             showBattleMode(true);
         } else {
             showWaitingScreen('BATTLE MODE! Other team is choosing challenge...');
         }
     } else {
         // No match - swap turns
-        gameData.currentTurn = gameData.currentTurn === 'angelbubu' ? 'demonbubu' : 'angelbubu';
-        gameData.round++;
-        gameData.status = 'waiting';
-        gameData.currentArrangement = null;
-        gameData.setBy = null;
-        localStorage.setItem('gameData', JSON.stringify(gameData));
+        const newTurn = gameData.currentTurn === 'angelbubu' ? 'demonbubu' : 'angelbubu';
         
-        // Update round
-        document.getElementById('roundNum').textContent = gameData.round;
+        await updateDoc(doc(window.db, 'gameState', 'current'), {
+            currentTurn: newTurn,
+            round: gameData.round + 1,
+            status: 'waiting',
+            setBy: null
+        });
         
-        // Show result
-        showStatus(`NO MATCH! Turns swap - Round ${gameData.round}`);
+        // Clear arrangement
+        await deleteDoc(doc(window.db, 'currentArrangement', 'active'));
         
-        // Reset form
+        document.getElementById('roundNum').textContent = gameData.round + 1;
+        showStatus(`NO MATCH! Turns swap - Round ${gameData.round + 1}`);
+        
         resetForm();
-        
-        // Update life status
         setTimeout(() => {
-            updateLifeStatus(gameData.currentTurn);
+            updateLifeStatus(newTurn);
         }, 2000);
     }
 }
@@ -224,66 +275,29 @@ function showBattleMode(canChoose) {
 }
 
 // Select challenge
-window.selectChallenge = function(pizzaType) {
-    const gameData = JSON.parse(localStorage.getItem('gameData') || '{}');
+window.selectChallenge = async function(pizzaType) {
+    if (!window.db) return;
+    
+    const { doc, setDoc, getDoc, updateDoc, serverTimestamp } = window.firebaseUtils;
+    const gameDoc = await getDoc(doc(window.db, 'gameState', 'current'));
+    const gameData = gameDoc.data();
     
     // Store challenge selection
-    const challenge = {
+    await setDoc(doc(window.db, 'selectedChallenge', 'current'), {
         pizza: pizzaType,
         selectedBy: gameState.team,
         round: gameData.round,
-        timestamp: Date.now()
-    };
+        timestamp: serverTimestamp()
+    });
     
-    localStorage.setItem('selectedChallenge', JSON.stringify(challenge));
-    
-    // Update game status
-    gameData.status = 'challenge_selected';
-    localStorage.setItem('gameData', JSON.stringify(gameData));
+    await updateDoc(doc(window.db, 'gameState', 'current'), {
+        status: 'challenge_selected'
+    });
     
     showStatus(`${pizzaType.toUpperCase()} PIZZA challenge selected! Waiting for admin...`);
     
-    // Hide battle mode
     document.getElementById('battleMode').classList.add('hidden');
     showWaitingScreen('Challenge selected! Waiting for admin to reveal...');
-}
-
-// Check game state (runs every 500ms)
-function checkGameState() {
-    const gameData = JSON.parse(localStorage.getItem('gameData') || '{}');
-    
-    // Update round display
-    if (gameData.round) {
-        document.getElementById('roundNum').textContent = gameData.round;
-    }
-    
-    // Check for battle mode
-    if (gameData.status === 'battle' && document.getElementById('battleMode').classList.contains('hidden')) {
-        if (gameData.battleTeam === gameState.team) {
-            showBattleMode(true);
-        } else {
-            showWaitingScreen('BATTLE MODE! Other team is choosing challenge...');
-        }
-    }
-    
-    // Check if other team has set arrangement
-    if (gameData.status === 'waiting_for_guess' && !gameState.isLifeOnLine && gameData.setBy !== gameState.team) {
-        hideWaitingScreen();
-    }
-    
-    // Check for challenge reveal from admin
-    const challengeReveal = JSON.parse(localStorage.getItem('challengeReveal') || '{}');
-    if (challengeReveal.timestamp && challengeReveal.timestamp > gameState.lastRevealTime) {
-        gameState.lastRevealTime = challengeReveal.timestamp;
-        showChallengeCard(challengeReveal);
-    }
-    
-    // Check for winner announcement
-    const winnerData = JSON.parse(localStorage.getItem('roundWinner') || '{}');
-    if (winnerData.timestamp && winnerData.timestamp > gameState.lastWinnerTime) {
-        gameState.lastWinnerTime = winnerData.timestamp;
-        announceWinner(winnerData);
-    }
 }
 
 // Show challenge card
@@ -294,7 +308,6 @@ function showChallengeCard(challengeData) {
     const challengeDisplay = document.getElementById('challengeDisplay');
     challengeDisplay.classList.remove('hidden');
     
-    // Set pizza image
     const pizzaImages = {
         'cool': '../assets/b04rd/pizza-movie.png',
         'lame': '../assets/b04rd/pizza-music.png',
@@ -309,7 +322,7 @@ function showChallengeCard(challengeData) {
 }
 
 // Announce winner
-function announceWinner(winnerData) {
+async function announceWinner(winnerData) {
     document.getElementById('challengeDisplay').classList.add('hidden');
     
     const message = winnerData.winner === gameState.team ? 
@@ -325,24 +338,31 @@ function announceWinner(winnerData) {
 }
 
 // Reset for next round
-function resetForNextRound() {
-    const gameData = JSON.parse(localStorage.getItem('gameData') || '{}');
+async function resetForNextRound() {
+    if (!window.db) return;
     
-    // Alternate turns
-    gameData.currentTurn = gameData.currentTurn === 'angelbubu' ? 'demonbubu' : 'angelbubu';
-    gameData.round++;
-    gameData.status = 'waiting';
-    gameData.currentArrangement = null;
-    gameData.setBy = null;
-    gameData.battleTeam = null;
+    const { doc, getDoc, updateDoc, deleteDoc } = window.firebaseUtils;
+    const gameDoc = await getDoc(doc(window.db, 'gameState', 'current'));
+    const gameData = gameDoc.data();
     
-    localStorage.setItem('gameData', JSON.stringify(gameData));
+    const newTurn = gameData.currentTurn === 'angelbubu' ? 'demonbubu' : 'angelbubu';
     
-    // Clear battle/challenge data
-    localStorage.removeItem('battleAlert');
-    localStorage.removeItem('selectedChallenge');
-    localStorage.removeItem('challengeReveal');
-    localStorage.removeItem('roundWinner');
+    await updateDoc(doc(window.db, 'gameState', 'current'), {
+        currentTurn: newTurn,
+        round: gameData.round + 1,
+        status: 'waiting',
+        setBy: null,
+        battleTeam: null,
+        arrangementSet: false  // Reset this flag
+    });
+    
+    // Clear all temporary data
+    await deleteDoc(doc(window.db, 'battleAlert', 'current'));
+    await deleteDoc(doc(window.db, 'selectedChallenge', 'current'));
+    await deleteDoc(doc(window.db, 'challengeReveal', 'current'));
+    await deleteDoc(doc(window.db, 'roundWinner', 'current'));
+    await deleteDoc(doc(window.db, 'currentArrangement', 'active'));
+    await deleteDoc(doc(window.db, 'lastGuess', 'current'));
     
     // Reset UI
     document.getElementById('battleMode').classList.add('hidden');
@@ -350,8 +370,77 @@ function resetForNextRound() {
     hideWaitingScreen();
     resetForm();
     
-    // Update turn
-    updateLifeStatus(gameData.currentTurn);
+    updateLifeStatus(newTurn);
+}
+
+// Initialize Firebase listeners
+function initializeFirebaseListeners() {
+    if (!window.db) return;
+    
+    const { onSnapshot, doc } = window.firebaseUtils;
+    
+    // Listen for game state changes
+    onSnapshot(doc(window.db, 'gameState', 'current'), (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.data();
+            document.getElementById('roundNum').textContent = data.round;
+            
+            // Update turn status
+            if (data.currentTurn) {
+                updateLifeStatus(data.currentTurn);
+            }
+            
+            // Check for battle mode
+            if (data.status === 'battle' && document.getElementById('battleMode').classList.contains('hidden')) {
+                if (data.battleTeam === gameState.team) {
+                    showBattleMode(true);
+                } else {
+                    showWaitingScreen('BATTLE MODE! Other team is choosing challenge...');
+                }
+            }
+            
+            // Check if waiting for guess - show message for guessing team
+            if (data.status === 'waiting_for_guess' && !gameState.isLifeOnLine && data.setBy !== gameState.team) {
+                hideWaitingScreen();
+                showStatus('Other team has set their arrangement. Make your guess!');
+            }
+            
+            // Update game state locally
+            gameState.currentGameStatus = data.status;
+            gameState.arrangementSetBy = data.setBy;
+        }
+    });
+    
+    // Listen for arrangement changes (for debugging)
+    onSnapshot(doc(window.db, 'currentArrangement', 'active'), (snapshot) => {
+        if (snapshot.exists()) {
+            console.log('Arrangement exists:', snapshot.data());
+        } else {
+            console.log('No arrangement set');
+        }
+    });
+    
+    // Listen for challenge reveal
+    onSnapshot(doc(window.db, 'challengeReveal', 'current'), (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.data();
+            if (data.timestamp && data.timestamp.toMillis() > gameState.lastRevealTime) {
+                gameState.lastRevealTime = data.timestamp.toMillis();
+                showChallengeCard(data);
+            }
+        }
+    });
+    
+    // Listen for winner announcement
+    onSnapshot(doc(window.db, 'roundWinner', 'current'), (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.data();
+            if (data.timestamp && data.timestamp.toMillis() > gameState.lastWinnerTime) {
+                gameState.lastWinnerTime = data.timestamp.toMillis();
+                announceWinner(data);
+            }
+        }
+    });
 }
 
 // Reset form
@@ -359,37 +448,6 @@ function resetForm() {
     document.getElementById('pizzaCoolSelect').value = '';
     document.getElementById('pizzaLameSelect').value = '';
     document.getElementById('pizzaAnnoyingSelect').value = '';
-}
-
-// Add to game state
-gameState.lastRevealTime = 0;
-gameState.lastWinnerTime = 0;
-
-// Reset game
-function resetGame() {
-    const gameData = JSON.parse(localStorage.getItem('gameData') || '{}');
-    
-    // Keep alternating turns
-    gameData.currentTurn = gameData.currentTurn === 'angelbubu' ? 'demonbubu' : 'angelbubu';
-    gameData.round++;
-    gameData.status = 'waiting';
-    gameData.currentArrangement = null;
-    gameData.setBy = null;
-    gameData.battleTeam = null;
-    
-    localStorage.setItem('gameData', JSON.stringify(gameData));
-    
-    // Clear battle alert
-    localStorage.removeItem('battleAlert');
-    localStorage.removeItem('selectedChallenge');
-    
-    // Reset UI
-    document.getElementById('battleMode').classList.add('hidden');
-    hideWaitingScreen();
-    resetForm();
-    
-    // Update turn
-    updateLifeStatus(gameData.currentTurn);
 }
 
 // Show status message
