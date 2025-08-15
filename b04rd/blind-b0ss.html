@@ -17,19 +17,16 @@
         body {
             font-family: 'Metal Mania', cursive;
             background: #000;
-            background-image: 
-                radial-gradient(circle at 50% 50%, rgba(255,0,0,0.1), transparent 50%),
-                url('../assets/b04rd/tommy-bg.jpg');
+            background-image: url('../assets/b04rd/tommy-bg.jpg');
             background-size: cover;
             background-position: center;
-            background-attachment: fixed;
             color: #fff;
             padding: 2rem;
             min-height: 100vh;
         }
 
         .admin-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -40,20 +37,19 @@
 
         .admin-title {
             font-size: 3rem;
-            background: linear-gradient(90deg, #fff, #ff0000, #fff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #ff0000;
             text-shadow: 0 0 30px rgba(255,0,0,0.5);
+            margin-bottom: 0.5rem;
         }
 
         .admin-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 2rem;
         }
 
         .panel {
-            background: linear-gradient(135deg, rgba(26,0,0,0.95), rgba(0,0,0,0.95));
+            background: rgba(26,0,0,0.95);
             border: 3px solid #ff0000;
             border-radius: 15px;
             padding: 1.5rem;
@@ -76,6 +72,7 @@
             text-align: center;
             animation: flash 0.5s infinite alternate;
             display: none;
+            margin-bottom: 2rem;
         }
 
         .battle-alert.active {
@@ -112,6 +109,12 @@
             width: 100px;
             height: 100px;
             margin-bottom: 0.5rem;
+        }
+
+        .pizza-name {
+            font-size: 0.9rem;
+            color: #ff0;
+            margin: 0.5rem 0;
         }
 
         .pizza-action {
@@ -153,85 +156,6 @@
         .team-demon {
             color: #ff0000;
             text-shadow: 0 0 10px rgba(255,0,0,0.5);
-        }
-
-        /* Challenge Selection */
-        .challenge-selected {
-            background: rgba(0,255,0,0.1);
-            border: 2px solid #00ff00;
-            padding: 1rem;
-            border-radius: 10px;
-            margin-top: 1rem;
-            display: none;
-        }
-
-        .challenge-selected.active {
-            display: block;
-        }
-
-        .challenge-text {
-            font-size: 1.3rem;
-            text-align: center;
-        }
-
-        /* Controls */
-        .controls {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 1rem;
-        }
-
-        .btn {
-            padding: 10px 25px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-family: 'Metal Mania', cursive;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-        }
-
-        .btn-reset {
-            background: linear-gradient(135deg, #ff0000, #660000);
-            color: #fff;
-        }
-
-        .btn-reset:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 20px rgba(255,0,0,0.5);
-        }
-
-        .btn-clear {
-            background: linear-gradient(135deg, #666, #333);
-            color: #fff;
-        }
-
-        /* Activity Log */
-        .activity-log {
-            max-height: 300px;
-            overflow-y: auto;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 1rem;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-        }
-
-        .log-entry {
-            padding: 0.5rem 0;
-            border-bottom: 1px dotted #333;
-        }
-
-        .log-entry.recent {
-            color: #ff0;
-        }
-
-        .timestamp {
-            color: #666;
-            margin-right: 10px;
         }
 
         /* Live Choices */
@@ -287,37 +211,28 @@
             font-family: Arial, sans-serif;
         }
 
-        .btn-save {
-            background: linear-gradient(135deg, #00ff00, #006600);
-            color: #fff;
-        }
-
-        .btn-save:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 20px rgba(0,255,0,0.5);
-        }
-
-        .pizza-name {
-            font-size: 0.9rem;
-            color: #ff0;
-            margin: 0.5rem 0;
-        }
-
         /* Challenge Controls */
         .challenge-controls {
             margin-top: 1rem;
             text-align: center;
         }
 
-        .btn-reveal {
-            background: linear-gradient(135deg, #ff0, #ff6600);
-            color: #000;
-            font-weight: bold;
+        .challenge-selected {
+            background: rgba(0,255,0,0.1);
+            border: 2px solid #00ff00;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            display: none;
         }
 
-        .btn-reveal:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 30px rgba(255,255,0,0.8);
+        .challenge-selected.active {
+            display: block;
+        }
+
+        .challenge-text {
+            font-size: 1.3rem;
+            text-align: center;
         }
 
         /* Winner Controls */
@@ -338,10 +253,43 @@
             color: #ff0;
         }
 
+        /* Buttons */
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Metal Mania', cursive;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            margin: 0.5rem;
+        }
+
+        .btn-reset {
+            background: linear-gradient(135deg, #ff0000, #660000);
+            color: #fff;
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #666, #333);
+            color: #fff;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #00ff00, #006600);
+            color: #fff;
+        }
+
+        .btn-reveal {
+            background: linear-gradient(135deg, #ff0, #ff6600);
+            color: #000;
+            font-weight: bold;
+        }
+
         .btn-angel {
             background: linear-gradient(135deg, #fff, #ccc);
             color: #000;
-            margin-right: 1rem;
         }
 
         .btn-demon {
@@ -349,9 +297,59 @@
             color: #fff;
         }
 
+        .btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+        }
+
+        /* Activity Log */
+        .activity-log {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .log-entry {
+            padding: 0.5rem 0;
+            border-bottom: 1px dotted #333;
+        }
+
+        .log-entry.recent {
+            color: #ff0;
+        }
+
+        .timestamp {
+            color: #666;
+            margin-right: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            font-style: italic;
+        }
+
         @media (max-width: 768px) {
             .admin-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .arrangement-display {
+                flex-direction: column;
+                gap: 1rem;
             }
         }
     </style>
@@ -360,6 +358,7 @@
     <div class="admin-container">
         <div class="admin-header">
             <h1 class="admin-title">⚔️ BATTLE B0SS CONTROL ⚔️</h1>
+            <div class="admin-subtitle">Angel vs Demon Admin Panel</div>
         </div>
 
         <!-- Battle Alert -->
@@ -478,18 +477,37 @@
         </div>
     </div>
 
-    <script>
-        // Check for updates every 500ms
-        setInterval(checkForUpdates, 500);
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, doc, setDoc, onSnapshot, query, where, orderBy, serverTimestamp, updateDoc, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         
-        let lastBattleTime = 0;
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO2l-40668WNpOdj2w",
+            authDomain: "c0uchz0mb13.firebaseapp.com",
+            projectId: "c0uchz0mb13",
+            storageBucket: "c0uchz0mb13.firebasestorage.app",
+            messagingSenderId: "1051521591004",
+            appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
+            measurementId: "G-6BNDYZQRPE"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Admin State
         let challenges = {
             KILL: 'Default KILL challenge',
             FUCK: 'Default FUCK challenge', 
             MARRY: 'Default MARRY challenge'
         };
         
-        // Load saved challenges
+        let currentArrangement = null;
+        let selectedChallenge = null;
+        
+        // Load saved challenges from localStorage
         function loadChallenges() {
             const saved = localStorage.getItem('challenges');
             if (saved) {
@@ -501,89 +519,158 @@
         }
         
         // Save challenges
-        function saveChallenges() {
+        window.saveChallenges = function() {
             challenges.KILL = document.getElementById('killChallenge').value || 'Default KILL challenge';
             challenges.FUCK = document.getElementById('fuckChallenge').value || 'Default FUCK challenge';
             challenges.MARRY = document.getElementById('marryChallenge').value || 'Default MARRY challenge';
             
             localStorage.setItem('challenges', JSON.stringify(challenges));
-            localStorage.setItem('challengesUpdated', Date.now());
-            
             addLog('Challenges saved');
             alert('Challenges saved!');
         }
         
-        function checkForUpdates() {
-            // Check game data
-            const gameData = JSON.parse(localStorage.getItem('gameData') || '{}');
+        // Initialize Firebase listeners
+        function initializeListeners() {
+            console.log('Initializing admin listeners...');
             
-            // Update status display
-            document.getElementById('currentRound').textContent = gameData.round || 1;
-            document.getElementById('currentTurn').textContent = gameData.currentTurn || '-';
-            document.getElementById('gameStatus').textContent = (gameData.status || 'waiting').toUpperCase();
-            document.getElementById('lifeOnLine').textContent = gameData.setBy || gameData.currentTurn || '-';
-            
-            // Show current arrangement if exists
-            if (gameData.currentArrangement) {
-                const arr = gameData.currentArrangement;
-                document.getElementById('currentArrangement').innerHTML = `
-                    <span>Cool: ${arr.pizzaCool}</span>
-                    <span>Lame: ${arr.pizzaLame}</span>
-                    <span>Annoying: ${arr.pizzaAnnoying}</span>
-                    <span style="color: #ff0;">(Set by ${gameData.setBy})</span>
-                `;
-            } else {
-                document.getElementById('currentArrangement').innerHTML = 'No arrangement set';
-            }
-            
-            // Show last guess if exists
-            const lastGuess = JSON.parse(localStorage.getItem('lastGuess') || '{}');
-            if (lastGuess.choices) {
-                document.getElementById('lastGuess').innerHTML = `
-                    <span>Cool: ${lastGuess.choices.pizzaCool}</span>
-                    <span>Lame: ${lastGuess.choices.pizzaLame}</span>
-                    <span>Annoying: ${lastGuess.choices.pizzaAnnoying}</span>
-                    <span style="color: #0ff;">(By ${lastGuess.team})</span>
-                `;
-            } else {
-                document.getElementById('lastGuess').innerHTML = 'No guess yet';
-            }
-            
-            // Style based on team
-            const turnEl = document.getElementById('currentTurn');
-            const lifeEl = document.getElementById('lifeOnLine');
-            
-            if (gameData.currentTurn === 'angelbubu') {
-                turnEl.className = 'status-value team-angel';
-            } else if (gameData.currentTurn === 'demonbubu') {
-                turnEl.className = 'status-value team-demon';
-            }
-            
-            if (gameData.setBy === 'angelbubu' || gameData.currentTurn === 'angelbubu') {
-                lifeEl.className = 'status-value team-angel';
-            } else if (gameData.setBy === 'demonbubu' || gameData.currentTurn === 'demonbubu') {
-                lifeEl.className = 'status-value team-demon';
-            }
-            
-            // Check for battle alert
-            const battleData = JSON.parse(localStorage.getItem('battleAlert') || '{}');
-            if (battleData.timestamp && battleData.timestamp > lastBattleTime) {
-                lastBattleTime = battleData.timestamp;
-                showBattleAlert(battleData);
-            }
-            
-            // Check for challenge selection
-            const challengeData = JSON.parse(localStorage.getItem('selectedChallenge') || '{}');
-            if (challengeData.pizza) {
-                document.getElementById('challengeSelected').classList.add('active');
-                document.getElementById('selectedPizza').textContent = `${challengeData.pizza.toUpperCase()} PIZZA by ${challengeData.selectedBy}`;
+            // Listen for game state
+            onSnapshot(doc(db, 'gameState', 'current'), (snapshot) => {
+                console.log('Game state update:', snapshot.exists() ? snapshot.data() : 'No game state');
                 
-                // Show winner controls after reveal
-                const revealData = JSON.parse(localStorage.getItem('challengeReveal') || '{}');
-                if (revealData.timestamp) {
-                    document.getElementById('winnerControls').classList.remove('hidden');
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    document.getElementById('currentRound').textContent = data.round || 1;
+                    document.getElementById('currentTurn').textContent = data.currentTurn || '-';
+                    document.getElementById('gameStatus').textContent = (data.status || 'waiting').toUpperCase();
+                    document.getElementById('lifeOnLine').textContent = data.setBy || data.currentTurn || '-';
+                    
+                    // Style teams
+                    const turnEl = document.getElementById('currentTurn');
+                    const lifeEl = document.getElementById('lifeOnLine');
+                    
+                    if (data.currentTurn === 'angelbubu') {
+                        turnEl.className = 'status-value team-angel';
+                    } else if (data.currentTurn === 'demonbubu') {
+                        turnEl.className = 'status-value team-demon';
+                    }
+                    
+                    if (data.setBy === 'angelbubu') {
+                        lifeEl.className = 'status-value team-angel';
+                    } else if (data.setBy === 'demonbubu') {
+                        lifeEl.className = 'status-value team-demon';
+                    }
+                } else {
+                    // No game state exists, create it
+                    console.log('No game state found, creating initial state...');
+                    setDoc(doc(db, 'gameState', 'current'), {
+                        currentTurn: 'angelbubu',
+                        round: 1,
+                        status: 'waiting',
+                        arrangementSet: false,
+                        timestamp: serverTimestamp()
+                    }).then(() => {
+                        console.log('Initial game state created');
+                        addLog('Initial game state created');
+                    }).catch(err => {
+                        console.error('Error creating game state:', err);
+                    });
                 }
-            }
+            }, (error) => {
+                console.error('Error listening to game state:', error);
+                addLog('Error: ' + error.message);
+            });
+            
+            // Listen for current arrangement
+            onSnapshot(doc(db, 'currentArrangement', 'active'), (snapshot) => {
+                console.log('Arrangement update:', snapshot.exists() ? snapshot.data() : 'No arrangement');
+                
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    currentArrangement = data.arrangement;
+                    
+                    document.getElementById('currentArrangement').innerHTML = `
+                        <span>Cool: ${data.arrangement.pizzaCool}</span>
+                        <span>Lame: ${data.arrangement.pizzaLame}</span>
+                        <span>Annoying: ${data.arrangement.pizzaAnnoying}</span>
+                        <span style="color: #ff0;">(Set by ${data.setBy})</span>
+                    `;
+                    
+                    addLog(`Arrangement set by ${data.setBy}`);
+                } else {
+                    currentArrangement = null;
+                    document.getElementById('currentArrangement').innerHTML = 'No arrangement set';
+                }
+            }, (error) => {
+                console.error('Error listening to arrangement:', error);
+            });
+            
+            // Listen for last guess
+            onSnapshot(doc(db, 'lastGuess', 'current'), (snapshot) => {
+                console.log('Last guess update:', snapshot.exists() ? snapshot.data() : 'No guess');
+                
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    document.getElementById('lastGuess').innerHTML = `
+                        <span>Cool: ${data.choices.pizzaCool}</span>
+                        <span>Lame: ${data.choices.pizzaLame}</span>
+                        <span>Annoying: ${data.choices.pizzaAnnoying}</span>
+                        <span style="color: #0ff;">(By ${data.team})</span>
+                    `;
+                    
+                    addLog(`Guess made by ${data.team}`);
+                } else {
+                    document.getElementById('lastGuess').innerHTML = 'No guess yet';
+                }
+            }, (error) => {
+                console.error('Error listening to last guess:', error);
+            });
+            
+            // Listen for battle alert
+            onSnapshot(doc(db, 'battleAlert', 'current'), (snapshot) => {
+                console.log('Battle alert update:', snapshot.exists() ? snapshot.data() : 'No battle');
+                
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    showBattleAlert(data);
+                } else {
+                    document.getElementById('battleAlert').classList.remove('active');
+                }
+            }, (error) => {
+                console.error('Error listening to battle alert:', error);
+            });
+            
+            // Listen for challenge selection
+            onSnapshot(doc(db, 'selectedChallenge', 'current'), (snapshot) => {
+                console.log('Challenge selection update:', snapshot.exists() ? snapshot.data() : 'No selection');
+                
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    selectedChallenge = data;
+                    
+                    document.getElementById('challengeSelected').classList.add('active');
+                    document.getElementById('selectedPizza').textContent = 
+                        `${data.pizza.toUpperCase()} PIZZA by ${data.selectedBy}`;
+                    
+                    addLog(`Challenge selected: ${data.pizza} by ${data.selectedBy}`);
+                } else {
+                    document.getElementById('challengeSelected').classList.remove('active');
+                    selectedChallenge = null;
+                }
+            }, (error) => {
+                console.error('Error listening to challenge selection:', error);
+            });
+            
+            // Check for reveal status
+            onSnapshot(doc(db, 'challengeReveal', 'current'), (snapshot) => {
+                if (snapshot.exists()) {
+                    document.getElementById('winnerControls').classList.remove('hidden');
+                } else {
+                    document.getElementById('winnerControls').classList.add('hidden');
+                }
+            });
+            
+            console.log('All listeners initialized');
+            addLog('All listeners initialized');
         }
         
         function showBattleAlert(battleData) {
@@ -601,46 +688,42 @@
         }
         
         // Reveal challenge to players
-        function revealChallenge() {
-            const challengeData = JSON.parse(localStorage.getItem('selectedChallenge') || '{}');
-            const gameData = JSON.parse(localStorage.getItem('gameData') || '{}');
-            
-            if (!challengeData.pizza || !gameData.currentArrangement) {
+        window.revealChallenge = async function() {
+            if (!selectedChallenge || !currentArrangement) {
                 alert('No challenge selected yet!');
                 return;
             }
             
             // Get the action for the selected pizza
-            const pizzaKey = `pizza${challengeData.pizza.charAt(0).toUpperCase() + challengeData.pizza.slice(1)}`;
-            const action = gameData.currentArrangement[pizzaKey];
+            const pizzaKey = `pizza${selectedChallenge.pizza.charAt(0).toUpperCase() + selectedChallenge.pizza.slice(1)}`;
+            const action = currentArrangement[pizzaKey];
             const challengeText = challenges[action] || 'Complete the challenge!';
             
             // Send reveal to players
-            const reveal = {
-                pizza: challengeData.pizza,
+            await setDoc(doc(db, 'challengeReveal', 'current'), {
+                pizza: selectedChallenge.pizza,
                 action: action,
                 challengeText: challengeText,
-                timestamp: Date.now()
-            };
-            
-            localStorage.setItem('challengeReveal', JSON.stringify(reveal));
+                timestamp: serverTimestamp()
+            });
             
             // Show winner controls
             document.getElementById('winnerControls').classList.remove('hidden');
             
-            addLog(`Challenge revealed: ${challengeData.pizza.toUpperCase()} PIZZA - ${action} - ${challengeText}`);
+            addLog(`Challenge revealed: ${selectedChallenge.pizza.toUpperCase()} PIZZA - ${action} - ${challengeText}`);
             alert('Challenge revealed to players!');
         }
         
         // Mark round winner
-        function markWinner(team) {
-            const winnerData = {
-                winner: team,
-                round: JSON.parse(localStorage.getItem('gameData') || '{}').round || 1,
-                timestamp: Date.now()
-            };
+        window.markWinner = async function(team) {
+            const gameDoc = await getDoc(doc(db, 'gameState', 'current'));
+            const gameData = gameDoc.data();
             
-            localStorage.setItem('roundWinner', JSON.stringify(winnerData));
+            await setDoc(doc(db, 'roundWinner', 'current'), {
+                winner: team,
+                round: gameData.round,
+                timestamp: serverTimestamp()
+            });
             
             // Hide controls
             document.getElementById('winnerControls').classList.add('hidden');
@@ -649,39 +732,49 @@
             
             addLog(`Round winner: ${team.toUpperCase()}`);
             
-            // Clear for next round
-            setTimeout(() => {
-                clearBattle();
-            }, 2000);
+            // Clear will happen automatically when players reset
         }
         
-        function resetGame() {
+        window.resetGame = async function() {
             if (confirm('Reset the entire game?')) {
-                localStorage.removeItem('gameData');
-                localStorage.removeItem('battleAlert');
-                localStorage.removeItem('selectedChallenge');
-                localStorage.removeItem('lastGuess');
-                
-                // Set initial state
-                const initialGame = {
+                // Reset game state
+                await setDoc(doc(db, 'gameState', 'current'), {
                     currentTurn: 'angelbubu',
                     round: 1,
-                    status: 'waiting'
-                };
-                localStorage.setItem('gameData', JSON.stringify(initialGame));
+                    status: 'waiting',
+                    arrangementSet: false,
+                    timestamp: serverTimestamp()
+                });
+                
+                // Clear all documents
+                try {
+                    await deleteDoc(doc(db, 'battleAlert', 'current'));
+                    await deleteDoc(doc(db, 'selectedChallenge', 'current'));
+                    await deleteDoc(doc(db, 'challengeReveal', 'current'));
+                    await deleteDoc(doc(db, 'roundWinner', 'current'));
+                    await deleteDoc(doc(db, 'currentArrangement', 'active'));
+                    await deleteDoc(doc(db, 'lastGuess', 'current'));
+                } catch (e) {
+                    console.log('Some docs did not exist to delete');
+                }
                 
                 document.getElementById('battleAlert').classList.remove('active');
                 document.getElementById('challengeSelected').classList.remove('active');
+                document.getElementById('winnerControls').classList.add('hidden');
                 
                 addLog('Game reset - AngelBubu goes first');
             }
         }
         
-        function clearBattle() {
+        window.clearBattle = async function() {
+            await deleteDoc(doc(db, 'battleAlert', 'current'));
+            await deleteDoc(doc(db, 'selectedChallenge', 'current'));
+            await deleteDoc(doc(db, 'challengeReveal', 'current'));
+            
             document.getElementById('battleAlert').classList.remove('active');
             document.getElementById('challengeSelected').classList.remove('active');
-            localStorage.removeItem('battleAlert');
-            localStorage.removeItem('selectedChallenge');
+            document.getElementById('winnerControls').classList.add('hidden');
+            
             addLog('Battle alert cleared');
         }
         
@@ -705,9 +798,34 @@
             }
         }
         
+        // Test Firebase connection
+        async function testConnection() {
+            try {
+                const testDoc = await getDoc(doc(db, 'gameState', 'current'));
+                if (testDoc.exists()) {
+                    console.log('Firebase connected! Game state:', testDoc.data());
+                    addLog('Firebase connected successfully');
+                } else {
+                    console.log('Firebase connected but no game state found');
+                    addLog('Firebase connected - no game state');
+                }
+            } catch (error) {
+                console.error('Firebase connection error:', error);
+                addLog('Firebase error: ' + error.message);
+            }
+        }
+        
         // Initialize
+        console.log('Starting admin panel initialization...');
         loadChallenges();
-        addLog('Admin panel ready');
+        
+        // Wait a bit for Firebase to be ready
+        setTimeout(() => {
+            console.log('Firebase db object:', db);
+            testConnection();
+            initializeListeners();
+            addLog('Admin panel ready with Firebase');
+        }, 1000);
     </script>
 </body>
 </html>
