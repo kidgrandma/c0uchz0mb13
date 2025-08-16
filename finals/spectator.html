@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INTERNET OLYMPICS 2 - Spectator Mode</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #000;
+            color: #0f0;
+            min-height: 100vh;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Header */
+        .header {
+            border: 1px solid #0f0;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        .game-code {
+            font-size: 24px;
+            letter-spacing: 3px;
+            margin: 10px 0;
+        }
+
+        /* Main container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+
+        /* Game view */
+        .game-view {
+            border: 1px solid #0f0;
+            padding: 20px;
+            min-height: 600px;
+        }
+
+        /* Player info */
+        .players {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .player {
+            flex: 1;
+            border: 1px solid #0f0;
+            padding: 15px;
+            text-align: center;
+            opacity: 0.5;
+            transition: all 0.3s;
+        }
+
+        .player.connected {
+            opacity: 1;
+            box-shadow: 0 0 20px #0f0;
+        }
+
+        .player.current-turn {
+            background: rgba(0, 255, 0, 0.1);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 20px #0f0; }
+            50% { box-shadow: 0 0 40px #0f0; }
+        }
+
+        .player img {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 10px;
+            filter: brightness(0) saturate(100%) invert(68%) sepia(97%) saturate(7498%) hue-rotate(86deg) brightness(118%) contrast(119%);
+        }
+
+        .player-name {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .player-status {
+            font-size: 12px;
+            color: #090;
+        }
+
+        /* Folder grid */
+        .folder-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .folder-space {
+            aspect-ratio: 1;
+            border: 1px dashed #050;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .folder {
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: default;
+            transition: all 0.3s;
+        }
+
+        .folder img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            filter: brightness(0) saturate(100%) invert(68%) sepia(97%) saturate(7498%) hue-rotate(86deg) brightness(118%) contrast(119%);
+        }
+
+        .folder.hidden {
+            opacity: 0;
+            transform: scale(0);
+        }
+
+        /* Action log */
+        .action-log {
+            border: 1px solid #0f0;
+            padding: 15px;
+            height: 600px;
+            overflow-y: auto;
+        }
+
+        .action-log h2 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #0f0;
+        }
+
+        .log-entry {
+            font-size: 12px;
+            margin-bottom: 8px;
+            padding: 5px;
+            border-left: 2px solid #0f0;
+            padding-left: 10px;
+        }
+
+        .log-entry.virus {
+            color: #f00;
+            border-color: #f00;
+        }
+
+        .log-entry.bomb {
+            color: #ff0;
+            border-color: #ff0;
+            font-weight: bold;
+        }
+
+        .log-entry.safe {
+            color: #0f0;
+        }
+
+        /* Game status */
+        .game-status {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+        }
+
+        .game-status.waiting {
+            color: #ff0;
+        }
+
+        .game-status.finished {
+            color: #f00;
+            font-size: 24px;
+            animation: blink 0.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            color: #0f0;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        /* Loading */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .loading.hidden {
+            display: none;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-log {
+                height: 300px;
+            }
+            
+            .folder-grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div>CONNECTING TO GAME...</div>
+        <div style="margin-top: 10px;">⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏</div>
+    </div>
+
+    <div class="header">
+        <h1>INTERNET OLYMPICS 2 - SPECTATOR MODE</h1>
+        <div class="game-code" id="gameCode">------</div>
+        <div class="game-status" id="gameStatus">WAITING FOR PLAYERS...</div>
+    </div>
+
+    <div class="container">
+        <div class="game-view">
+            <div class="players">
+                <div class="player" id="player1">
+                    <img src="../assets/finals/angelbubu-1.png" alt="Player 1">
+                    <div class="player-name">WAITING...</div>
+                    <div class="player-status">DISCONNECTED</div>
+                </div>
+                <div class="player" id="player2">
+                    <img src="../assets/finals/angelbubu-2.png" alt="Player 2">
+                    <div class="player-name">WAITING...</div>
+                    <div class="player-status">DISCONNECTED</div>
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat">
+                    <div>FOLDERS REMAINING</div>
+                    <div class="stat-value" id="folderCount">60</div>
+                </div>
+                <div class="stat">
+                    <div>SPECTATORS</div>
+                    <div class="stat-value" id="spectatorCount">0</div>
+                </div>
+            </div>
+
+            <div class="folder-grid" id="folderGrid">
+                <!-- Folders will be generated here -->
+            </div>
+        </div>
+
+        <div class="action-log">
+            <h2>ACTION LOG</h2>
+            <div id="logEntries"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getFirestore, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+        import { GameManager } from './firebase-config.js';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameId = urlParams.get('game');
+        
+        if (!gameId) {
+            alert('No game ID provided');
+            window.location.href = './index.html';
+        }
+
+        // UI Elements
+        const elements = {
+            loading: document.getElementById('loading'),
+            gameCode: document.getElementById('gameCode'),
+            gameStatus: document.getElementById('gameStatus'),
+            player1: document.getElementById('player1'),
+            player2: document.getElementById('player2'),
+            folderGrid: document.getElementById('folderGrid'),
+            folderCount: document.getElementById('folderCount'),
+            spectatorCount: document.getElementById('spectatorCount'),
+            logEntries: document.getElementById('logEntries')
+        };
+
+        // Initialize grid
+        function initializeGrid() {
+            elements.folderGrid.innerHTML = '';
+            for (let i = 0; i < 64; i++) {
+                const space = document.createElement('div');
+                space.className = 'folder-space';
+                space.dataset.index = i;
+                elements.folderGrid.appendChild(space);
+            }
+        }
+
+        // Update game display
+        function updateGame(gameData) {
+            elements.gameCode.textContent = gameId;
+            
+            // Update status
+            if (gameData.status === 'waiting') {
+                elements.gameStatus.textContent = 'WAITING FOR PLAYERS...';
+                elements.gameStatus.className = 'game-status waiting';
+            } else if (gameData.status === 'playing') {
+                elements.gameStatus.textContent = `PLAYER ${gameData.currentTurn}'S TURN`;
+                elements.gameStatus.className = 'game-status playing';
+            } else if (gameData.status === 'finished') {
+                const winner = gameData.winner === 1 ? gameData.players.player1 : gameData.players.player2;
+                elements.gameStatus.textContent = `GAME OVER - ${winner.name} WINS!`;
+                elements.gameStatus.className = 'game-status finished';
+            }
+            
+            // Update players
+            updatePlayer(elements.player1, gameData.players.player1, 1, gameData.currentTurn === 1);
+            updatePlayer(elements.player2, gameData.players.player2, 2, gameData.currentTurn === 2);
+            
+            // Update folders
+            gameData.folders.forEach((folder, index) => {
+                const space = elements.folderGrid.querySelector(`[data-index="${index}"]`);
+                if (space) {
+                    if (folder && folder.visible) {
+                        if (!space.querySelector('.folder')) {
+                            const folderEl = document.createElement('div');
+                            folderEl.className = 'folder';
+                            folderEl.innerHTML = `<img src="../assets/finals/${folder.icon}" alt="Folder">`;
+                            space.appendChild(folderEl);
+                        }
+                    } else {
+                        const folderEl = space.querySelector('.folder');
+                        if (folderEl) {
+                            folderEl.classList.add('hidden');
+                            setTimeout(() => folderEl.remove(), 300);
+                        }
+                    }
+                }
+            });
+            
+            // Update counts
+            elements.folderCount.textContent = gameData.folderCount || 60;
+            elements.spectatorCount.textContent = gameData.spectators || 0;
+            
+            // Update action log
+            if (gameData.lastAction) {
+                addLogEntry(gameData.lastAction, gameData.players);
+            }
+        }
+
+        function updatePlayer(element, playerData, playerNum, isCurrentTurn) {
+            if (playerData) {
+                element.classList.add('connected');
+                element.querySelector('.player-name').textContent = playerData.name;
+                element.querySelector('.player-status').textContent = 'CONNECTED';
+                
+                if (isCurrentTurn) {
+                    element.classList.add('current-turn');
+                } else {
+                    element.classList.remove('current-turn');
+                }
+            } else {
+                element.classList.remove('connected', 'current-turn');
+                element.querySelector('.player-name').textContent = 'WAITING...';
+                element.querySelector('.player-status').textContent = 'DISCONNECTED';
+            }
+        }
+
+        function addLogEntry(action, players) {
+            const entry = document.createElement('div');
+            const playerName = action.player === 1 ? players.player1?.name : players.player2?.name;
+            const time = new Date(action.timestamp).toLocaleTimeString();
+            
+            if (action.type === 'bomb') {
+                entry.className = 'log-entry bomb';
+                entry.textContent = `[${time}] ${playerName} HIT THE BOMB! GAME OVER!`;
+            } else if (action.type === 'virus') {
+                entry.className = 'log-entry virus';
+                entry.textContent = `[${time}] ${playerName} triggered a virus! ${action.virusAte?.length || 0} folders eaten`;
+            } else {
+                entry.className = 'log-entry safe';
+                entry.textContent = `[${time}] ${playerName} clicked safely`;
+            }
+            
+            elements.logEntries.insertBefore(entry, elements.logEntries.firstChild);
+            
+            // Keep only last 50 entries
+            while (elements.logEntries.children.length > 50) {
+                elements.logEntries.removeChild(elements.logEntries.lastChild);
+            }
+        }
+
+        // Initialize
+        initializeGrid();
+        
+        // Add spectator and subscribe to game
+        GameManager.addSpectator(gameId).then(() => {
+            const unsubscribe = GameManager.subscribeToGame(gameId, (gameData) => {
+                elements.loading.classList.add('hidden');
+                updateGame(gameData);
+            });
+            
+            window.addEventListener('beforeunload', () => {
+                if (unsubscribe) unsubscribe();
+            });
+        });
+    </script>
+</body>
+</html>

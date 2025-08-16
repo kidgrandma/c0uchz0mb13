@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INTERNET OLYMPICS 2 - Finals Lobby</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #008080 url('../assets/finals/desktop-bg.jpg') center/cover;
+            color: #000;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .lobby-window {
+            background: #c0c0c0;
+            border: 2px solid #dfdfdf;
+            border-bottom: 2px solid #000;
+            border-right: 2px solid #000;
+            padding: 0;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+        }
+
+        .window-header {
+            background: linear-gradient(to right, #000080, #1084d0);
+            color: white;
+            padding: 2px 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .window-title {
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 2px;
+        }
+
+        .window-btn {
+            width: 16px;
+            height: 16px;
+            background: #c0c0c0;
+            border: 1px solid #dfdfdf;
+            border-bottom: 1px solid #000;
+            border-right: 1px solid #000;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .window-content {
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 4px;
+            border: 2px solid #000;
+            background: #fff;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            background: #c0c0c0;
+            border: 2px solid #dfdfdf;
+            border-bottom: 2px solid #000;
+            border-right: 2px solid #000;
+            padding: 8px 16px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.1s;
+        }
+
+        button:hover {
+            background: #dfdfdf;
+        }
+
+        button:active {
+            border: 2px solid #000;
+            border-bottom: 2px solid #dfdfdf;
+            border-right: 2px solid #dfdfdf;
+        }
+
+        .or-divider {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .role-select {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .role-select.active {
+            display: block;
+        }
+
+        .role-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .spectator-btn {
+            grid-column: 1 / -1;
+        }
+
+        .error-msg {
+            background: #ff0000;
+            color: #fff;
+            padding: 5px;
+            margin-top: 10px;
+            font-size: 12px;
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            display: none;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .loading::after {
+            content: '_';
+            animation: blink 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="lobby-window">
+        <div class="window-header">
+            <span class="window-title">💿 FINALS LOBBY</span>
+            <div class="window-controls">
+                <button class="window-btn">_</button>
+                <button class="window-btn">□</button>
+                <button class="window-btn">×</button>
+            </div>
+        </div>
+        
+        <div class="window-content">
+            <h1>INTERNET OLYMPICS 2</h1>
+            <p class="subtitle">folder clicking championship 🐰</p>
+            
+            <div class="input-group">
+                <label for="playerName">YOUR NAME:</label>
+                <input type="text" id="playerName" placeholder="xX_coolname_Xx" maxlength="20">
+            </div>
+
+            <div class="input-group">
+                <label for="gameCode">GAME CODE:</label>
+                <input type="text" id="gameCode" placeholder="ABC123" maxlength="6" style="text-transform: uppercase;">
+            </div>
+
+            <div class="button-group">
+                <button onclick="joinGame()">JOIN GAME 📟</button>
+                <div class="or-divider">— or —</div>
+                <button onclick="createGame()">CREATE NEW GAME 💽</button>
+            </div>
+
+            <div class="role-select" id="roleSelect">
+                <label>SELECT YOUR ROLE:</label>
+                <div class="role-buttons">
+                    <button onclick="selectRole('player1')">PLAYER 1</button>
+                    <button onclick="selectRole('player2')">PLAYER 2</button>
+                    <button class="spectator-btn" onclick="selectRole('spectator')">SPECTATOR 👁️</button>
+                </div>
+            </div>
+
+            <div class="error-msg" id="errorMsg"></div>
+            <div class="loading" id="loading">connecting</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { GameManager, generateGameCode } from './firebase-config.js';
+        
+        window.currentGameCode = null;
+        
+        window.createGame = async function() {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) {
+                showError('enter a name first dummy');
+                return;
+            }
+            
+            showLoading(true);
+            try {
+                const gameCode = generateGameCode();
+                await GameManager.createGame(gameCode);
+                
+                window.currentGameCode = gameCode;
+                document.getElementById('gameCode').value = gameCode;
+                
+                showError(`game created! code: ${gameCode}`, false);
+                document.getElementById('roleSelect').classList.add('active');
+            } catch (error) {
+                showError('failed to create game. try again?');
+            }
+            showLoading(false);
+        };
+        
+        window.joinGame = async function() {
+            const name = document.getElementById('playerName').value.trim();
+            const code = document.getElementById('gameCode').value.trim().toUpperCase();
+            
+            if (!name) {
+                showError('need a name bro');
+                return;
+            }
+            
+            if (!code) {
+                showError('need a game code');
+                return;
+            }
+            
+            window.currentGameCode = code;
+            document.getElementById('roleSelect').classList.add('active');
+        };
+        
+        window.selectRole = async function(role) {
+            const name = document.getElementById('playerName').value.trim();
+            const code = window.currentGameCode;
+            
+            showLoading(true);
+            
+            try {
+                if (role === 'spectator') {
+                    await GameManager.addSpectator(code);
+                    localStorage.setItem('gameRole', 'spectator');
+                    localStorage.setItem('gameCode', code);
+                    window.location.href = 'spectator.html';
+                } else {
+                    const playerNum = role === 'player1' ? 1 : 2;
+                    const avatar = `angelbubu-${playerNum}`;
+                    
+                    await GameManager.joinGame(code, playerNum, name, avatar);
+                    
+                    localStorage.setItem('gameRole', role);
+                    localStorage.setItem('gameCode', code);
+                    localStorage.setItem('playerName', name);
+                    localStorage.setItem('playerNum', playerNum);
+                    
+                    window.location.href = 'game.html';
+                }
+            } catch (error) {
+                showError(error.message || 'connection failed');
+                showLoading(false);
+            }
+        };
+        
+        function showError(msg, isError = true) {
+            const errorEl = document.getElementById('errorMsg');
+            errorEl.textContent = msg;
+            errorEl.style.display = 'block';
+            errorEl.style.background = isError ? '#ff0000' : '#008000';
+        }
+        
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('active', show);
+        }
+    </script>
+</body>
+</html>
