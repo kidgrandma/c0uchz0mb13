@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INTERNET OLYMPICS 2 - Initialize Tournament</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #008080;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .init-container {
+            background: #fff;
+            border: 2px solid #000;
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 5px 5px 0 rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #000080;
+        }
+
+        .player-list {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .player-item {
+            padding: 5px;
+            margin: 2px 0;
+            background: #fff;
+            border: 1px solid #ddd;
+        }
+
+        .btn {
+            background: #ece9d8;
+            border: 2px solid #c0c0c0;
+            border-bottom: 2px solid #808080;
+            border-right: 2px solid #808080;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            background: #e0e0e0;
+        }
+
+        .btn.primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn.danger {
+            background: #ff6666;
+            color: white;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .status.success {
+            background: #90ee90;
+            color: #006400;
+            display: block;
+        }
+
+        .status.error {
+            background: #ffcccb;
+            color: #8b0000;
+            display: block;
+        }
+
+        .status.info {
+            background: #e0e0ff;
+            color: #000080;
+            display: block;
+        }
+
+        .navigation {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ccc;
+        }
+
+        a {
+            color: #0066cc;
+            text-decoration: none;
+            margin-right: 15px;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="init-container">
+        <h1>🏆 INTERNET OLYMPICS 2 - Tournament Setup</h1>
+        
+        <p style="margin-bottom: 15px;">Initialize or reset the tournament bracket with these 14 finalists:</p>
+        
+        <div class="player-list">
+            <div id="playerList"></div>
+        </div>
+        
+        <div>
+            <button class="btn primary" onclick="initializeTournament()">Initialize Tournament</button>
+            <button class="btn danger" onclick="resetTournament()">Reset Everything</button>
+            <button class="btn" onclick="checkStatus()">Check Status</button>
+        </div>
+        
+        <div id="status" class="status"></div>
+        
+        <div class="navigation">
+            <a href="bracket.html">View Bracket →</a>
+            <a href="tournament-admin.html">Tournament Admin →</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc,
+            setDoc,
+            deleteDoc
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO2l-40668WNpQdj2w",
+            authDomain: "c0uchz0mb13.firebaseapp.com",
+            projectId: "c0uchz0mb13",
+            storageBucket: "c0uchz0mb13.firebasestorage.app",
+            messagingSenderId: "1051521591004",
+            appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
+            measurementId: "G-6BNDYZQRPE"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Finalist list
+        const finalists = [
+            'duckgirl808',
+            'edouardstone',
+            'hauntyourownhouse',
+            'michaelmelwani',
+            'littleurbanachiever',
+            'minibearbeats',
+            'nataliesomekh',
+            'normalmiette',
+            'pintallica',
+            'plascu',
+            'pretzelness',
+            'tempe',
+            'thecornii',
+            'whoiskaybrown'
+        ];
+
+        // Display player list
+        const playerListEl = document.getElementById('playerList');
+        finalists.forEach((player, index) => {
+            playerListEl.innerHTML += `<div class="player-item">${index + 1}. @${player}</div>`;
+        });
+
+        // Status display
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        // Initialize tournament
+        window.initializeTournament = async function() {
+            try {
+                showStatus('Initializing tournament...', 'info');
+                
+                const tournamentRef = doc(db, 'tournament', 'finals2025');
+                
+                // Shuffle players for random seeding
+                const shuffled = [...finalists].sort(() => Math.random() - 0.5);
+                
+                // Create round 1 matchups (7 matches)
+                const round1 = [];
+                for (let i = 0; i < 14; i += 2) {
+                    round1.push({
+                        id: `r1m${i/2 + 1}`,
+                        player1: shuffled[i],
+                        player2: shuffled[i + 1],
+                        winner: null,
+                        gameId: null,
+                        status: 'pending'
+                    });
+                }
+                
+                // Create empty later rounds
+                const round2 = [
+                    { id: 'r2m1', player1: null, player2: null, winner: null, gameId: null, status: 'pending' },
+                    { id: 'r2m2', player1: null, player2: null, winner: null, gameId: null, status: 'pending' },
+                    { id: 'r2m3', player1: null, player2: null, winner: null, gameId: null, status: 'pending' },
+                    { id: 'r2m4', player1: null, player2: null, winner: null, gameId: null, status: 'pending' }
+                ];
+                
+                const semifinals = [
+                    { id: 'sfm1', player1: null, player2: null, winner: null, gameId: null, status: 'pending' },
+                    { id: 'sfm2', player1: null, player2: null, winner: null, gameId: null, status: 'pending' }
+                ];
+                
+                const finals = {
+                    id: 'final',
+                    player1: null,
+                    player2: null,
+                    winner: null,
+                    gameId: null,
+                    status: 'pending'
+                };
+                
+                const tournamentData = {
+                    round1,
+                    round2,
+                    semifinals,
+                    finals,
+                    champion: null,
+                    createdAt: new Date().toISOString()
+                };
+                
+                await setDoc(tournamentRef, tournamentData);
+                
+                showStatus('Tournament initialized successfully! Round 1 matchups have been randomized.', 'success');
+                
+                // Display round 1 matchups
+                let matchupText = '\n\nRound 1 Matchups:\n';
+                round1.forEach((match, i) => {
+                    matchupText += `Match ${i+1}: @${match.player1} vs @${match.player2}\n`;
+                });
+                document.getElementById('status').textContent += matchupText;
+                
+            } catch (error) {
+                console.error('Error initializing tournament:', error);
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        };
+
+        // Reset tournament
+        window.resetTournament = async function() {
+            if (!confirm('This will delete all tournament data. Are you sure?')) return;
+            
+            try {
+                showStatus('Resetting tournament...', 'info');
+                
+                const tournamentRef = doc(db, 'tournament', 'finals2025');
+                
+                // Force overwrite with empty data first, then delete
+                await setDoc(tournamentRef, { deleted: true }, { merge: false });
+                await deleteDoc(tournamentRef);
+                
+                showStatus('Tournament data deleted. Click "Initialize Tournament" to start fresh.', 'success');
+            } catch (error) {
+                console.error('Error resetting tournament:', error);
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        };
+
+        // Check tournament status
+        window.checkStatus = async function() {
+            try {
+                showStatus('Checking tournament status...', 'info');
+                
+                const tournamentRef = doc(db, 'tournament', 'finals2025');
+                const tournamentDoc = await getDoc(tournamentRef);
+                
+                if (tournamentDoc.exists()) {
+                    const data = tournamentDoc.data();
+                    let statusText = 'Tournament exists!\n\n';
+                    
+                    // Check if data is properly structured
+                    if (!data.round1 || !Array.isArray(data.round1)) {
+                        showStatus('Tournament data is corrupted. Please reset and initialize again.', 'error');
+                        return;
+                    }
+                    
+                    // Count matches per round
+                    statusText += `Round 1: ${data.round1.length} matches\n`;
+                    statusText += `Round 2: ${data.round2.length} matches\n`;
+                    statusText += `Semifinals: ${data.semifinals.length} matches\n`;
+                    statusText += `Finals: ${data.finals ? '1 match' : 'No finals data'}\n`;
+                    statusText += `Champion: ${data.champion || 'None yet'}\n\n`;
+                    
+                    // Show active matches
+                    const activeMatches = [];
+                    data.round1.forEach((m, i) => m.status === 'active' && activeMatches.push(`Round 1 Match ${i+1}`));
+                    data.round2.forEach((m, i) => m.status === 'active' && activeMatches.push(`Round 2 Match ${i+1}`));
+                    data.semifinals.forEach((m, i) => m.status === 'active' && activeMatches.push(`Semifinal ${i+1}`));
+                    if (data.finals.status === 'active') activeMatches.push('Finals');
+                    
+                    if (activeMatches.length > 0) {
+                        statusText += `Active matches: ${activeMatches.join(', ')}`;
+                    } else {
+                        statusText += 'No active matches';
+                    }
+                    
+                    showStatus(statusText, 'success');
+                } else {
+                    showStatus('No tournament data found. Click "Initialize Tournament" to create one.', 'error');
+                }
+            } catch (error) {
+                console.error('Error checking status:', error);
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        };
+
+        // Check status on load
+        checkStatus();
+    </script>
+</body>
+</html>
