@@ -95,6 +95,7 @@
             max-width: 1400px;
             margin-left: auto;
             margin-right: auto;
+            box-shadow: 3px 3px 10px rgba(0,0,0,0.5);
         }
 
         .bracket-title {
@@ -108,12 +109,10 @@
             opacity: 0.9;
         }
 
-        /* Bracket container */
+        /* Bracket container - NO BACKGROUND */
         .bracket-container {
             max-width: 1400px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border: 3px solid #000;
             padding: 30px;
             overflow-x: auto;
         }
@@ -145,33 +144,35 @@
             font-size: 14px;
             border: 2px solid #000;
             margin-bottom: 10px;
+            box-shadow: 3px 3px 10px rgba(0,0,0,0.5);
         }
 
         /* Matchup */
         .matchup {
-            background: #f0f0f0;
+            background: rgba(240, 240, 240, 0.95);
             border: 2px solid #c0c0c0;
             border-bottom: 2px solid #808080;
             border-right: 2px solid #808080;
             padding: 0;
             position: relative;
             min-width: 200px;
+            box-shadow: 3px 3px 10px rgba(0,0,0,0.5);
         }
 
         .matchup.active {
             border-color: #ff0;
-            box-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
+            box-shadow: 0 0 20px rgba(255, 255, 0, 0.8);
         }
 
         .matchup.completed {
-            opacity: 0.8;
+            opacity: 0.9;
         }
 
         .player-slot {
             display: flex;
             align-items: center;
             padding: 10px;
-            background: #fff;
+            background: rgba(255, 255, 255, 0.95);
             border-bottom: 1px solid #ccc;
             transition: all 0.2s;
             min-height: 50px;
@@ -182,17 +183,17 @@
         }
 
         .player-slot.winner {
-            background: #90ee90;
+            background: rgba(144, 238, 144, 0.95);
             font-weight: bold;
         }
 
         .player-slot.loser {
-            background: #ffcccb;
-            opacity: 0.6;
+            background: rgba(255, 204, 203, 0.95);
+            opacity: 0.7;
         }
 
         .player-slot.empty {
-            background: #f5f5f5;
+            background: rgba(245, 245, 245, 0.95);
             color: #999;
             font-style: italic;
         }
@@ -209,6 +210,7 @@
         .player-name {
             flex: 1;
             font-size: 12px;
+            font-weight: bold;
         }
 
         .vs-divider {
@@ -218,23 +220,6 @@
             padding: 5px;
             font-size: 11px;
             font-weight: bold;
-        }
-
-        /* Game link */
-        .game-link {
-            display: block;
-            text-align: center;
-            padding: 5px;
-            font-size: 10px;
-            color: #0066cc;
-            text-decoration: none;
-            background: #f9f9f9;
-            border-top: 1px solid #ccc;
-        }
-
-        .game-link:hover {
-            text-decoration: underline;
-            background: #f0f0f0;
         }
 
         /* Round specific spacing */
@@ -264,17 +249,19 @@
 
         .finals .matchup {
             border: 3px solid #ffd700;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            background: rgba(255, 255, 255, 0.98);
         }
 
         /* Champion */
         .champion-container {
-            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.95), rgba(255, 237, 78, 0.95));
             border: 3px solid #000;
             padding: 20px;
             text-align: center;
             min-width: 200px;
             flex-shrink: 0;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
         }
 
         .champion-title {
@@ -301,7 +288,7 @@
         }
 
         .champion-empty {
-            opacity: 0.5;
+            opacity: 0.7;
             min-height: 180px;
             display: flex;
             align-items: center;
@@ -310,10 +297,16 @@
         }
 
         /* Back button */
-        .back-btn {
+        .nav-buttons {
             position: fixed;
             top: 20px;
             left: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
             background: #fff;
             border: 2px solid #000;
             padding: 10px 15px;
@@ -322,10 +315,9 @@
             font-weight: bold;
             font-size: 12px;
             box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
-            z-index: 100;
         }
 
-        .back-btn:hover {
+        .nav-btn:hover {
             background: #f0f0f0;
         }
 
@@ -334,7 +326,8 @@
             text-align: center;
             padding: 50px;
             font-size: 18px;
-            color: #666;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
         }
 
         /* Mobile */
@@ -358,6 +351,11 @@
             .champion-container {
                 margin-top: 20px;
             }
+
+            .nav-buttons {
+                flex-direction: column;
+                gap: 5px;
+            }
         }
     </style>
 </head>
@@ -375,7 +373,9 @@
         </div>
     </div>
 
-    <a href="index.html" class="back-btn">← BACK TO LOBBY</a>
+    <div class="nav-buttons">
+        <a href="index.html" class="nav-btn">← BACK TO LOBBY</a>
+    </div>
 
     <div class="bracket-header">
         <div class="bracket-title">INTERNET OLYMPICS 2 - CHAMPIONSHIP BRACKET</div>
@@ -391,8 +391,6 @@
         import { 
             getFirestore, 
             doc, 
-            getDoc,
-            setDoc,
             onSnapshot
         } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
@@ -410,96 +408,31 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Finalist list (14 players) - FIXED pretzelness spelling
-        const finalists = [
-            'duckgirl808',
-            'edouardstone',
-            'hauntyourownhouse',
-            'michaelmelwani',
-            'littleurbanachiever',
-            'minibearbeats',
-            'nataliesomekh',
-            'normalmiette',
-            'pintallica',
-            'plascu',
-            'pretzelness',  // Fixed spelling
-            'tempe',
-            'thecornii',
-            'whoiskaybrown'
-        ];
+        // Use the same reference as the simple bracket manager
+        const tournamentRef = doc(db, 'simple_tournament', 'io2_2025');
         
         // Play background music
         const bracketMusic = document.getElementById('bracketMusic');
         bracketMusic.volume = 0.3;
         bracketMusic.play().catch(e => console.log('Autoplay blocked'));
 
-        // Initialize tournament structure if it doesn't exist
-        async function initializeTournament() {
-            const tournamentRef = doc(db, 'tournament', 'finals2025');
-            const tournamentDoc = await getDoc(tournamentRef);
-            
-            if (!tournamentDoc.exists()) {
-                // Shuffle players for random seeding
-                const shuffled = [...finalists].sort(() => Math.random() - 0.5);
-                
-                // Create round 1 matchups (7 matches)
-                const round1 = [];
-                for (let i = 0; i < 14; i += 2) {
-                    round1.push({
-                        id: `r1m${i/2 + 1}`,
-                        player1: shuffled[i],
-                        player2: shuffled[i + 1],
-                        winner: null,
-                        gameId: null,
-                        status: 'pending'
-                    });
-                }
-                
-                // Create empty later rounds
-                const round2 = [
-                    { id: 'r2m1', player1: null, player2: null, winner: null, gameId: null, status: 'pending' },
-                    { id: 'r2m2', player1: null, player2: null, winner: null, gameId: null, status: 'pending' },
-                    { id: 'r2m3', player1: null, player2: null, winner: null, gameId: null, status: 'pending' },
-                    { id: 'r2m4', player1: null, player2: null, winner: null, gameId: null, status: 'pending' }
-                ];
-                
-                const semifinals = [
-                    { id: 'sfm1', player1: null, player2: null, winner: null, gameId: null, status: 'pending' },
-                    { id: 'sfm2', player1: null, player2: null, winner: null, gameId: null, status: 'pending' }
-                ];
-                
-                const finals = {
-                    id: 'final',
-                    player1: null,
-                    player2: null,
-                    winner: null,
-                    gameId: null,
-                    status: 'pending'
-                };
-                
-                const tournamentData = {
-                    round1,
-                    round2,
-                    semifinals,
-                    finals,
-                    champion: null,
-                    createdAt: new Date().toISOString()
-                };
-                
-                await setDoc(tournamentRef, tournamentData);
-                return tournamentData;
-            }
-            
-            return tournamentDoc.data();
-        }
-
         // Render bracket
-        function renderBracket(tournament) {
+        function renderBracket(data) {
+            if (!data || !data.matches) {
+                document.getElementById('bracketDisplay').innerHTML = `
+                    <div style="text-align: center; padding: 50px;">
+                        <p>No tournament data found.</p>
+                        <a href="simple-bracket.html" style="color: #0066cc;">Go to Tournament Manager to initialize</a>
+                    </div>
+                `;
+                return;
+            }
+
             const bracketDisplay = document.getElementById('bracketDisplay');
             
             // Check if we have a champion
-            if (tournament.champion) {
-                showChampion(tournament.champion);
+            if (data.champion) {
+                showChampion(data.champion);
             }
             
             bracketDisplay.innerHTML = `
@@ -507,33 +440,35 @@
                     <!-- Round 1 -->
                     <div class="round round-1">
                         <div class="round-title">ROUND 1</div>
-                        ${tournament.round1.map(match => renderMatchup(match, 'round1')).join('')}
+                        ${data.matches.round1.map(match => renderMatchup(match)).join('')}
                     </div>
                     
                     <!-- Round 2 -->
                     <div class="round round-2">
                         <div class="round-title">ROUND 2</div>
-                        ${tournament.round2.map(match => renderMatchup(match, 'round2')).join('')}
+                        ${data.matches.round2.map(match => renderMatchup(match)).join('')}
                     </div>
                     
                     <!-- Semifinals -->
                     <div class="round semifinals">
                         <div class="round-title">SEMIFINALS</div>
-                        ${tournament.semifinals.map(match => renderMatchup(match, 'semifinals')).join('')}
+                        ${data.matches.semifinals.map(match => renderMatchup(match)).join('')}
                     </div>
                     
                     <!-- Finals -->
                     <div class="round finals">
                         <div class="round-title">FINALS</div>
-                        ${renderMatchup(tournament.finals, 'finals')}
+                        ${renderMatchup(data.matches.finals)}
                     </div>
                     
                     <!-- Champion -->
                     <div class="champion-container">
                         <div class="champion-title">🏆 Champion 🏆</div>
-                        ${tournament.champion ? `
-                            <img class="champion-avatar" src="../assets/finals/finalists/${tournament.champion}.png" alt="${tournament.champion}">
-                            <div class="champion-name">@${tournament.champion}</div>
+                        ${data.champion ? `
+                            <img class="champion-avatar" src="../assets/finals/finalists/${data.champion}.png" 
+                                 alt="${data.champion}"
+                                 onerror="this.src='../assets/finals/angelbubu-1.png'">
+                            <div class="champion-name">@${data.champion}</div>
                         ` : `
                             <div class="champion-empty">
                                 <div style="font-size: 48px;">👑</div>
@@ -546,16 +481,17 @@
         }
 
         // Render individual matchup
-        function renderMatchup(match, round) {
-            const isActive = match.status === 'active';
-            const isCompleted = match.status === 'completed';
+        function renderMatchup(match) {
+            if (!match) return '';
+            
+            const hasPlayers = match.player1 && match.player2;
+            const hasWinner = match.winner !== null;
             
             return `
-                <div class="matchup ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}">
-                    ${renderPlayerSlot(match.player1, match.player1 === match.winner, !match.player1)}
+                <div class="matchup ${hasPlayers && !hasWinner ? 'active' : ''} ${hasWinner ? 'completed' : ''}">
+                    ${renderPlayerSlot(match.player1, match.winner === match.player1, !match.player1)}
                     <div class="vs-divider">VS</div>
-                    ${renderPlayerSlot(match.player2, match.player2 === match.winner, !match.player2)}
-                    ${match.gameId ? `<a href="spectator.html?game=${match.gameId}" class="game-link">Watch Game →</a>` : ''}
+                    ${renderPlayerSlot(match.player2, match.winner === match.player2, !match.player2)}
                 </div>
             `;
         }
@@ -570,11 +506,18 @@
                 `;
             }
             
-            const slotClass = isWinner ? 'winner' : (isWinner === false ? 'loser' : '');
+            let slotClass = '';
+            if (isWinner === true) {
+                slotClass = 'winner';
+            } else if (isWinner === false) {
+                slotClass = 'loser';
+            }
             
             return `
                 <div class="player-slot ${slotClass}">
-                    <img class="player-avatar" src="../assets/finals/finalists/${username}.png" alt="${username}" onerror="this.src='../assets/finals/angelbubu-1.png'">
+                    <img class="player-avatar" src="../assets/finals/finalists/${username}.png" 
+                         alt="${username}" 
+                         onerror="this.src='../assets/finals/angelbubu-1.png'">
                     <div class="player-name">@${username}</div>
                 </div>
             `;
@@ -592,22 +535,19 @@
             bracketMusic.pause();
         }
         
-        // Initialize and subscribe to updates
-        initializeTournament().then(tournamentData => {
-            renderBracket(tournamentData);
-            
-            // Subscribe to real-time updates
-            const tournamentRef = doc(db, 'tournament', 'finals2025');
-            const unsubscribe = onSnapshot(tournamentRef, (doc) => {
-                if (doc.exists()) {
-                    renderBracket(doc.data());
-                }
-            });
-            
-            // Cleanup
-            window.addEventListener('beforeunload', () => {
-                if (unsubscribe) unsubscribe();
-            });
+        // Subscribe to real-time updates from the simple tournament
+        const unsubscribe = onSnapshot(tournamentRef, (doc) => {
+            if (doc.exists()) {
+                const data = doc.data();
+                renderBracket(data);
+            } else {
+                renderBracket(null);
+            }
+        });
+        
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (unsubscribe) unsubscribe();
         });
     </script>
 </body>
