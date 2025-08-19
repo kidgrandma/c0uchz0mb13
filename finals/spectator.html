@@ -488,6 +488,16 @@
             text-transform: uppercase;
         }
 
+        .winner-avatar-display {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            background: #f0f0f0;
+            border: 3px solid #000;
+            margin: 20px auto;
+            display: block;
+        }
+
         .winner-message {
             font-size: 24px;
             margin-bottom: 30px;
@@ -657,6 +667,7 @@
         <video class="winner-video" src="../assets/finals/cast-bg.mp4" autoplay loop muted></video>
         <div class="winner-content">
             <div class="winner-title">BASED BASED BASED</div>
+            <img class="winner-avatar-display" id="winnerAvatar" src="" alt="">
             <div class="winner-message">
                 Congrats 2 <span id="winnerNameDisplay"></span><br>
                 for making it thru!
@@ -688,6 +699,9 @@
         // Set room code
         document.getElementById('roomCode').textContent = gameId;
         
+        // Generate unique spectator ID
+        const spectatorId = 'spec_' + Math.random().toString(36).substr(2, 9);
+        
         // Audio
         const introMusic = document.getElementById('introMusic');
         const winSound = document.getElementById('winSound');
@@ -701,6 +715,7 @@
 
         // Game state
         let currentGameState = null;
+        let lastReactionTime = 0;
 
         // Subscribe to game updates
         const unsubscribe = GameManager.subscribeToGame(gameId, (gameData) => {
@@ -713,6 +728,17 @@
             document.getElementById('loading').classList.add('hidden');
             currentGameState = gameData;
             updateUI(gameData);
+            
+            // Show reactions from other spectators
+            if (gameData.reactions) {
+                const now = Date.now();
+                Object.entries(gameData.reactions).forEach(([reactionId, reaction]) => {
+                    // Show reactions from the last 3 seconds that aren't from us
+                    if (reaction.timestamp > now - 3000 && reaction.spectatorId !== spectatorId) {
+                        showReaction(reaction.emoji, reaction.x);
+                    }
+                });
+            }
         });
         
         // Update UI based on game state
@@ -755,10 +781,11 @@
                 document.getElementById('loserName').textContent = loser.name.toUpperCase();
                 document.getElementById('bsod').classList.add('active');
                 
-                // After BSOD, show winner screen
+                // After BSOD, show winner screen with avatar
                 setTimeout(() => {
                     document.getElementById('bsod').classList.remove('active');
                     document.getElementById('winnerNameDisplay').textContent = winner.name.toUpperCase();
+                    document.getElementById('winnerAvatar').src = `../assets/finals/${winner.avatar}.png`;
                     document.getElementById('winnerScreen').classList.add('active');
                     winSound.play();
                 }, 5000);
@@ -895,15 +922,15 @@
             }
         }
         
-        // Reaction system
-        window.sendReaction = function(emoji) {
+        // Show reaction animation
+        function showReaction(emoji, x) {
             const reaction = document.createElement('div');
             reaction.className = 'floating-reaction';
             reaction.textContent = emoji;
             
-            // Random position across screen width
-            const x = Math.random() * window.innerWidth;
-            reaction.style.left = x + 'px';
+            // Use provided x position or random
+            const xPos = x || Math.random() * window.innerWidth;
+            reaction.style.left = xPos + 'px';
             reaction.style.bottom = '50px';
             
             document.body.appendChild(reaction);
@@ -912,7 +939,49 @@
             setTimeout(() => {
                 reaction.remove();
             }, 3000);
+        }
+        
+        // Send reaction to Firebase
+        window.sendReaction = async function(emoji) {
+            // Rate limit reactions
+            const now = Date.now();
+            if (now - lastReactionTime < 500) return; // Max 2 reactions per second
+            lastReactionTime = now;
+            
+            // Show reaction locally immediately
+            const x = Math.random() * window.innerWidth;
+            showReaction(emoji, x);
+            
+            // Send to Firebase
+            try {
+                await GameManager.sendSpectatorReaction(gameId, {
+                    emoji: emoji,
+                    x: x,
+                    timestamp: now,
+                    spectatorId: spectatorId
+                });
+            } catch (error) {
+                console.error('Failed to send reaction:', error);
+            }
         };
+        
+        // Clean up reactions older than 3 seconds periodically
+        setInterval(async () => {
+            if (currentGameState && currentGameState.reactions) {
+                const now = Date.now();
+                const reactionsToDelete = [];
+                
+                Object.entries(currentGameState.reactions).forEach(([id, reaction]) => {
+                    if (reaction.timestamp < now - 3000) {
+                        reactionsToDelete.push(id);
+                    }
+                });
+                
+                if (reactionsToDelete.length > 0) {
+                    await GameManager.cleanupOldReactions(gameId, reactionsToDelete);
+                }
+            }
+        }, 5000); // Clean up every 5 seconds
         
         // Clean up on page unload
         window.addEventListener('beforeunload', () => {

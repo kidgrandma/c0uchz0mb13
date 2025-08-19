@@ -120,6 +120,7 @@ export const GameManager = {
       },
       virusActive: false,
       spectators: 0,
+      reactions: {}, // Initialize reactions object
       createdAt: serverTimestamp(),
       winner: null,
       gameEvents: [],
@@ -384,6 +385,31 @@ export const GameManager = {
     await updateDoc(gameRef, {
       spectators: increment(-1)
     });
+  },
+  
+  // Send a spectator reaction
+  async sendSpectatorReaction(gameId, reactionData) {
+    const gameRef = doc(db, 'games', gameId);
+    const reactionId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Add reaction to the reactions object
+    const updates = {};
+    updates[`reactions.${reactionId}`] = reactionData;
+    
+    await updateDoc(gameRef, updates);
+  },
+  
+  // Clean up old reactions
+  async cleanupOldReactions(gameId, reactionIds) {
+    const gameRef = doc(db, 'games', gameId);
+    const updates = {};
+    
+    // Set each old reaction to null to delete it
+    reactionIds.forEach(id => {
+      updates[`reactions.${id}`] = null;
+    });
+    
+    await updateDoc(gameRef, updates);
   },
   
   // Listen to game changes
