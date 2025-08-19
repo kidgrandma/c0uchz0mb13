@@ -20,36 +20,7 @@
             padding: 20px;
         }
 
-        /* Turn Banner - NOW A POPUP OVERLAY */
-        .turn-banner {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            background: #ffff00;
-            color: #000;
-            padding: 30px 60px;
-            font-size: 32px;
-            font-weight: bold;
-            text-align: center;
-            border: 5px solid #000;
-            box-shadow: 0 0 50px rgba(255, 255, 0, 0.8);
-            z-index: 4000;
-            opacity: 0;
-            transition: all 0.5s ease;
-        }
-
-        .turn-banner.active {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
-            animation: turnPulse 2s ease-out;
-        }
-
-        @keyframes turnPulse {
-            0% { transform: translate(-50%, -50%) scale(1.5); }
-            50% { transform: translate(-50%, -50%) scale(1.1); }
-            100% { transform: translate(-50%, -50%) scale(1); }
-        }
+        /* Turn Banner - REMOVED */
 
         /* Result Display */
         .result-display {
@@ -549,10 +520,14 @@
             line-height: 1.4;
         }
 
-        .winner-note {
-            font-size: 16px;
-            color: #666;
-            font-style: italic;
+        .winner-avatar-display {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            background: #f0f0f0;
+            border: 3px solid #000;
+            margin: 20px auto;
+            display: block;
         }
 
         /* Rules modal */
@@ -884,8 +859,7 @@
     </style>
 </head>
 <body>
-    <!-- Turn Banner - NOW A POPUP -->
-    <div class="turn-banner" id="turnBanner">YOUR TURN - CHOOSE WISELY</div>
+    <!-- Turn Banner removed -->
 
     <!-- Result Display -->
     <div class="result-display" id="resultDisplay">
@@ -1056,6 +1030,7 @@
         <video class="winner-video" src="../assets/finals/cast-bg.mp4" autoplay loop muted></video>
         <div class="winner-content">
             <div class="winner-title">BASED BASED BASED</div>
+            <img class="winner-avatar-display" id="winnerAvatar" src="" alt="">
             <div class="winner-message">
                 Congrats 2 <span id="winnerNameDisplay"></span><br>
                 for making it thru!
@@ -1302,14 +1277,11 @@
             // Handle turn changes
             if (myTurn && !wasMyTurn && gameData.status === 'playing') {
                 startTurnTimer();
-                showTurnIndicator(gameData);
+                // Turn banner removed - no need to show it
             } else if (!myTurn && wasMyTurn) {
                 stopTurnTimer();
                 document.getElementById('submitBtn').classList.remove('active');
                 selectedFolderId = null;
-                document.getElementById('turnBanner').classList.remove('active');
-            } else if (!myTurn) {
-                document.getElementById('turnBanner').classList.remove('active');
             }
             
             document.getElementById(`player${gameData.currentTurn}Info`).classList.add('active');
@@ -1411,26 +1383,7 @@
             });
         }
         
-        function showTurnIndicator(gameData) {
-            const banner = document.getElementById('turnBanner');
-            let bannerText = 'YOUR TURN';
-            
-            if (gameData.folderCount < 30) {
-                bannerText = 'YOUR TURN - GETTING SPICY';
-            }
-            
-            if (gameData.folderCount < 15) {
-                bannerText = 'YOUR TURN - RUH ROH';
-            }
-            
-            banner.textContent = bannerText;
-            banner.classList.add('active');
-            
-            // Auto-hide after 3 seconds
-            setTimeout(() => {
-                banner.classList.remove('active');
-            }, 3000);
-        }
+        // Removed showTurnIndicator function since turn banner is gone
         
         function showVirusAlert(lastAction) {
             const alert = document.getElementById('virusAlert');
@@ -1555,8 +1508,9 @@
             Object.values(audio).forEach(sound => sound.pause());
             
             if (winnerId === playerNum) {
-                // You won - show winner screen immediately
+                // You won - show winner screen with avatar
                 document.getElementById('winnerNameDisplay').textContent = winner.name.toUpperCase();
+                document.getElementById('winnerAvatar').src = `../assets/finals/${winner.avatar}.png`;
                 document.getElementById('winnerScreen').classList.add('active');
                 audio.win.play();
             } else {
