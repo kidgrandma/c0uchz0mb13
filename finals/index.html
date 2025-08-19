@@ -28,7 +28,7 @@
             border-bottom: 2px solid #000;
             border-right: 2px solid #000;
             padding: 0;
-            max-width: 400px;
+            max-width: 600px;
             width: 100%;
             box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
         }
@@ -77,7 +77,98 @@
             text-align: center;
             font-size: 12px;
             color: #666;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+        }
+
+        /* Avatar selection */
+        .avatar-section {
+            margin-bottom: 20px;
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .avatar-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            background: #fff;
+            border: 2px solid #808080;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .avatar-option {
+            background: #f0f0f0;
+            border: 2px solid #c0c0c0;
+            padding: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .avatar-option:hover {
+            background: #e0e0e0;
+            border-color: #000080;
+        }
+
+        .avatar-option.selected {
+            background: #000080;
+            border-color: #000080;
+        }
+
+        .avatar-option.selected .avatar-name {
+            color: #fff;
+        }
+
+        .avatar-img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            margin-bottom: 5px;
+            background: #fff;
+        }
+
+        .avatar-name {
+            font-size: 10px;
+            word-break: break-all;
+        }
+
+        /* Selected player display */
+        .selected-player {
+            background: #f0f0f0;
+            border: 2px solid #808080;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .selected-player.active {
+            display: flex;
+        }
+
+        .selected-avatar {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border: 2px solid #000;
+        }
+
+        .selected-info h3 {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .selected-info p {
+            font-size: 11px;
+            color: #666;
         }
 
         .input-group {
@@ -127,6 +218,11 @@
             border: 2px solid #000;
             border-bottom: 2px solid #dfdfdf;
             border-right: 2px solid #dfdfdf;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .or-divider {
@@ -183,12 +279,34 @@
             content: '_';
             animation: blink 1s infinite;
         }
+
+        /* View bracket link */
+        .bracket-link {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #fff;
+            border: 2px solid #000;
+            padding: 10px 15px;
+            text-decoration: none;
+            color: #000;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+        }
+
+        .bracket-link:hover {
+            background: #f0f0f0;
+        }
     </style>
 </head>
 <body>
+    <!-- Audio -->
+    <audio id="introMusic" src="../assets/finals/game-intro.mp3" loop></audio>
+
     <div class="lobby-window">
         <div class="window-header">
-            <span class="window-title">💿 FINALS LOBBY</span>
+            <span class="window-title">💿 FINALS LOBBY - TOURNAMENT EDITION</span>
             <div class="window-controls">
                 <button class="window-btn">_</button>
                 <button class="window-btn">□</button>
@@ -198,11 +316,21 @@
         
         <div class="window-content">
             <h1>INTERNET OLYMPICS 2</h1>
-            <p class="subtitle">folder clicking championship 🐰</p>
+            <p class="subtitle">championship tournament 🏆</p>
             
-            <div class="input-group">
-                <label for="playerName">YOUR NAME:</label>
-                <input type="text" id="playerName" placeholder="xX_coolname_Xx" maxlength="20">
+            <div class="avatar-section">
+                <label class="section-label">SELECT YOUR FIGHTER:</label>
+                <div class="avatar-grid" id="avatarGrid">
+                    <!-- Avatars will be populated here -->
+                </div>
+            </div>
+
+            <div class="selected-player" id="selectedPlayer">
+                <img class="selected-avatar" id="selectedAvatar" src="" alt="">
+                <div class="selected-info">
+                    <h3 id="selectedName">No player selected</h3>
+                    <p>Ready to compete</p>
+                </div>
             </div>
 
             <div class="input-group">
@@ -211,7 +339,7 @@
             </div>
 
             <div class="button-group">
-                <button onclick="joinGame()">JOIN GAME 📟</button>
+                <button id="joinBtn" onclick="joinGame()" disabled>JOIN GAME 📟</button>
                 <div class="or-divider">— or —</div>
                 <button onclick="createGame()">CREATE NEW GAME 💽</button>
             </div>
@@ -230,21 +358,84 @@
         </div>
     </div>
 
+    <a href="bracket.html" class="bracket-link">VIEW TOURNAMENT BRACKET 🏆</a>
+
     <script type="module">
-        import { GameManager, generateGameCode } from './firebase-config.js';
+        import { GameManager } from './firebase-config.js';
         
+        // Finalist data
+        const finalists = [
+            'duckgirl808',
+            'edouardstone',
+            'hauntyourownhouse',
+            'michaelmelwani',
+            'littleurbanachiever',
+            'minibearbeats',
+            'nataliesomekh',
+            'normalmiette',
+            'pintallica',
+            'plascu',
+            'kurt',
+            'tempe',
+            'thecornii',
+            'whoiskaybrown'
+        ];
+        
+        // Play intro music
+        const introMusic = document.getElementById('introMusic');
+        introMusic.volume = 0.3;
+        introMusic.play().catch(e => console.log('Autoplay blocked'));
+        
+        // Click anywhere to ensure audio plays
+        document.addEventListener('click', () => {
+            introMusic.play().catch(e => console.log('Audio play failed'));
+        }, { once: true });
+        
+        // Populate avatar grid
+        const avatarGrid = document.getElementById('avatarGrid');
+        finalists.forEach(username => {
+            const avatarOption = document.createElement('div');
+            avatarOption.className = 'avatar-option';
+            avatarOption.dataset.username = username;
+            avatarOption.innerHTML = `
+                <img class="avatar-img" src="../assets/finals/finalists/${username}.png" alt="${username}" onerror="this.src='../assets/finals/angelbubu-1.png'">
+            `;
+            avatarOption.onclick = () => selectAvatar(username);
+            avatarGrid.appendChild(avatarOption);
+        });
+        
+        let selectedUsername = null;
         window.currentGameCode = null;
         
+        function selectAvatar(username) {
+            // Update selection
+            document.querySelectorAll('.avatar-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.querySelector(`[data-username="${username}"]`).classList.add('selected');
+            
+            // Update selected display
+            selectedUsername = username;
+            document.getElementById('selectedPlayer').classList.add('active');
+            document.getElementById('selectedAvatar').src = `../assets/finals/finalists/${username}.png`;
+            document.getElementById('selectedName').textContent = `@${username}`;
+            
+            // Enable join button
+            document.getElementById('joinBtn').disabled = false;
+            
+            // Store selection
+            localStorage.setItem('selectedUsername', username);
+        }
+        
         window.createGame = async function() {
-            const name = document.getElementById('playerName').value.trim();
-            if (!name) {
-                showError('enter a name first dummy');
+            if (!selectedUsername) {
+                showError('select your fighter first!');
                 return;
             }
             
             showLoading(true);
             try {
-                const gameCode = generateGameCode();
+                const gameCode = GameManager.generateGameCode();
                 await GameManager.createGame(gameCode);
                 
                 window.currentGameCode = gameCode;
@@ -254,18 +445,18 @@
                 document.getElementById('roleSelect').classList.add('active');
             } catch (error) {
                 showError('failed to create game. try again?');
+                console.error(error);
             }
             showLoading(false);
         };
         
         window.joinGame = async function() {
-            const name = document.getElementById('playerName').value.trim();
-            const code = document.getElementById('gameCode').value.trim().toUpperCase();
-            
-            if (!name) {
-                showError('need a name bro');
+            if (!selectedUsername) {
+                showError('select your fighter first!');
                 return;
             }
+            
+            const code = document.getElementById('gameCode').value.trim().toUpperCase();
             
             if (!code) {
                 showError('need a game code');
@@ -277,29 +468,29 @@
         };
         
         window.selectRole = async function(role) {
-            const name = document.getElementById('playerName').value.trim();
             const code = window.currentGameCode;
             
             showLoading(true);
             
             try {
                 if (role === 'spectator') {
+                    // Navigate to spectator with game code
                     await GameManager.addSpectator(code);
-                    localStorage.setItem('gameRole', 'spectator');
-                    localStorage.setItem('gameCode', code);
-                    window.location.href = 'spectator.html';
+                    window.location.href = `spectator.html?game=${code}`;
                 } else {
+                    // Join as player
                     const playerNum = role === 'player1' ? 1 : 2;
-                    const avatar = `angelbubu-${playerNum}`;
+                    const avatar = `finalists/${selectedUsername}`;
                     
-                    await GameManager.joinGame(code, playerNum, name, avatar);
+                    await GameManager.joinGame(code, playerNum, selectedUsername, avatar);
                     
                     localStorage.setItem('gameRole', role);
                     localStorage.setItem('gameCode', code);
-                    localStorage.setItem('playerName', name);
+                    localStorage.setItem('playerName', selectedUsername);
                     localStorage.setItem('playerNum', playerNum);
+                    localStorage.setItem('playerAvatar', avatar);
                     
-                    window.location.href = 'game.html';
+                    window.location.href = `game.html?game=${code}`;
                 }
             } catch (error) {
                 showError(error.message || 'connection failed');
@@ -316,6 +507,12 @@
         
         function showLoading(show) {
             document.getElementById('loading').classList.toggle('active', show);
+        }
+        
+        // Check if previously selected
+        const previousSelection = localStorage.getItem('selectedUsername');
+        if (previousSelection && finalists.includes(previousSelection)) {
+            selectAvatar(previousSelection);
         }
     </script>
 </body>

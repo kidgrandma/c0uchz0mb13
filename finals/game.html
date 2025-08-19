@@ -20,6 +20,60 @@
             padding: 20px;
         }
 
+        /* Intro Modal */
+        .intro-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+        }
+
+        .intro-modal.hidden {
+            display: none;
+        }
+
+        .intro-content {
+            background: #c0c0c0;
+            border: 3px solid #000;
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .intro-content h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .intro-content h2 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
+
+        .intro-body {
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #999;
+        }
+
+        .intro-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
         /* Game header */
         .game-header {
             background: linear-gradient(to right, #000080, #1084d0);
@@ -56,29 +110,46 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #ffff00;
-            border: 3px solid #000;
-            padding: 30px 60px;
-            font-size: 36px;
-            font-weight: bold;
+            background: #ece9d8;
+            border: 2px solid #0054e3;
+            padding: 30px;
+            font-size: 18px;
             z-index: 1000;
             display: none;
-            animation: slideIn 0.5s ease-out;
+            text-align: center;
+            min-width: 400px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
         }
 
         .turn-indicator.active {
             display: block;
         }
 
-        @keyframes slideIn {
-            from {
-                transform: translate(-150%, -50%) rotate(-20deg);
-                opacity: 0;
-            }
-            to {
-                transform: translate(-50%, -50%) rotate(0deg);
-                opacity: 1;
-            }
+        .turn-main {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #000080;
+        }
+
+        .turn-stats {
+            background: #fff;
+            border: 1px solid #999;
+            padding: 15px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.8;
+            white-space: pre-line;
+        }
+
+        .turn-stats.danger {
+            background: #fffacd;
+            border-color: #daa520;
+        }
+
+        .turn-stats.critical {
+            background: #ffcccb;
+            border-color: #dc143c;
         }
 
         /* Player info bars */
@@ -116,6 +187,8 @@
             width: 50px;
             height: 50px;
             object-fit: contain;
+            background: #f0f0f0;
+            border: 1px solid #999;
         }
 
         .player-details h3 {
@@ -132,6 +205,12 @@
             color: #008000;
         }
 
+        .player-immunity {
+            font-size: 11px;
+            color: #0066cc;
+            font-weight: bold;
+        }
+
         /* Game board */
         .game-board {
             background: rgba(192, 192, 192, 0.95);
@@ -139,7 +218,6 @@
             padding: 20px;
             max-width: 1200px;
             margin: 0 auto;
-            perspective: 1000px;
         }
 
         .folder-count {
@@ -150,63 +228,55 @@
             font-family: monospace;
             font-size: 18px;
             margin-bottom: 20px;
-            animation: flicker 3s infinite;
         }
 
-        @keyframes flicker {
-            0%, 100% { opacity: 1; }
-            92% { opacity: 0.8; }
-            93% { opacity: 1; }
-        }
-
-        /* Folder grid */
+        /* Folder grid - 10x6 for 60 folders */
         .folder-grid {
             display: grid;
-            grid-template-columns: repeat(14, 1fr);
+            grid-template-columns: repeat(10, 1fr);
             gap: 8px;
-            transform: rotateX(5deg);
-            transform-style: preserve-3d;
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         .folder {
             width: 100%;
             aspect-ratio: 1;
-            border: none;
-            background: transparent;
+            border: 2px solid #808080;
+            background: #c0c0c0;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             position: relative;
-            animation: float 4s ease-in-out infinite;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .folder:nth-child(odd) {
-            animation-delay: 0.5s;
-        }
-
-        .folder:nth-child(even) {
-            animation-delay: 1s;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
+        .folder:hover:not(.disabled):not(.immune) {
+            transform: scale(1.1);
+            border-color: #000;
+            z-index: 10;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
         }
 
         .folder img {
             width: 100%;
             height: 100%;
             object-fit: contain;
-            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3));
-        }
-
-        .folder:hover {
-            transform: scale(1.15) rotate(5deg);
-            z-index: 10;
+            image-rendering: pixelated;
         }
 
         .folder.disabled {
             cursor: not-allowed;
             opacity: 0.5;
+        }
+
+        .folder.immune {
+            cursor: not-allowed;
+            opacity: 0.7;
+            background: #ccccff;
+            border-color: #0000ff;
         }
 
         .folder.vanishing {
@@ -220,19 +290,18 @@
         @keyframes vanish {
             to {
                 opacity: 0;
-                transform: scale(0.5) rotate(180deg);
-                filter: blur(5px);
+                transform: scale(0.5);
             }
         }
 
         @keyframes virusEat {
-            0% { transform: scale(1) rotate(0deg); }
-            25% { transform: scale(1.3) rotate(-10deg); filter: hue-rotate(90deg); }
-            50% { transform: scale(1.5) rotate(10deg); filter: hue-rotate(180deg); }
+            0% { transform: scale(1); }
+            25% { transform: scale(1.3); background: #ff9999; }
+            50% { transform: scale(1.5); background: #ff6666; }
             100% { 
                 opacity: 0;
-                transform: scale(0) rotate(360deg);
-                filter: hue-rotate(360deg) blur(10px);
+                transform: scale(0);
+                background: #ff0000;
             }
         }
 
@@ -242,42 +311,289 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #ff0000;
-            border: 5px solid #000;
+            background: #ece9d8;
+            border: 2px solid #dc143c;
             padding: 30px;
             text-align: center;
             z-index: 2000;
             display: none;
-            animation: virusShake 0.5s infinite;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
         }
 
         .virus-alert.active {
             display: block;
         }
 
-        @keyframes virusShake {
-            0%, 100% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
-            25% { transform: translate(-48%, -52%) rotate(-5deg) scale(1.05); }
-            75% { transform: translate(-52%, -48%) rotate(5deg) scale(0.95); }
-        }
-
         .virus-alert img {
             width: 120px;
             height: 120px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            background: #fff;
+            border: 1px solid #999;
         }
 
         .virus-text {
-            color: #fff;
-            font-size: 24px;
+            color: #dc143c;
+            font-size: 18px;
             font-weight: bold;
             margin-top: 10px;
             text-transform: uppercase;
+        }
+
+        .virus-count {
+            font-size: 14px;
+            margin-top: 5px;
+            color: #666;
+        }
+
+        /* BSOD */
+        .bsod {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0000aa;
+            color: #fff;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 6000;
+            font-family: 'Lucida Console', monospace;
+            padding: 20px;
+        }
+
+        .bsod.active {
+            display: flex;
+        }
+
+        .bsod-content {
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .bsod-header {
+            background: #aaa;
+            color: #0000aa;
+            padding: 5px 20px;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .bsod-title {
+            font-size: 18px;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+
+        .bsod-error {
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .bsod-winner {
+            font-size: 24px;
+            margin-top: 30px;
+            animation: blink 1s infinite;
+        }
+
+        /* Winner screen */
+        .winner-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 7000;
+            overflow: hidden;
+        }
+
+        .winner-screen.active {
+            display: flex;
+        }
+
+        .winner-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+
+        .winner-content {
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #000;
+            padding: 40px;
+            text-align: center;
+            max-width: 600px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .winner-title {
+            font-size: 48px;
+            font-weight: bold;
+            color: #000080;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .winner-message {
+            font-size: 24px;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+
+        .winner-note {
+            font-size: 16px;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Rules modal */
+        .rules-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 8000;
+        }
+
+        .rules-modal.hidden {
+            display: none;
+        }
+
+        .rules-content {
+            background: #c0c0c0;
+            border: 3px solid #000;
+            padding: 30px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .rules-title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #000080;
+        }
+
+        .rules-body {
+            background: #fff;
+            border: 1px solid #999;
+            padding: 20px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .rules-body h3 {
+            color: #000080;
+            margin: 15px 0 10px 0;
+        }
+
+        .rules-body ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .rules-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .rules-checkbox input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .rules-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .rules-button.enabled {
+            opacity: 1;
+            cursor: pointer;
+        }
+
+        .rules-button.enabled:hover {
+            background: #45a049;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* BSOD Relocation Animation */
+        @keyframes folderShake {
+            0%, 100% { transform: translateX(0); }
+            10% { transform: translateX(-5px) rotate(-1deg); }
+            20% { transform: translateX(5px) rotate(1deg); }
+            30% { transform: translateX(-5px) rotate(-1deg); }
+            40% { transform: translateX(5px) rotate(1deg); }
+            50% { transform: translateX(-3px) rotate(-0.5deg); }
+            60% { transform: translateX(3px) rotate(0.5deg); }
+            70% { transform: translateX(-2px); }
+            80% { transform: translateX(2px); }
+            90% { transform: translateX(-1px); }
+        }
+
+        @keyframes folderGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(255, 0, 0, 1), 0 0 40px rgba(255, 0, 0, 0.5); }
+        }
+
+        .folder.relocating {
+            animation: folderShake 0.5s infinite, folderGlow 0.5s infinite;
+            border-color: #ff0000 !important;
+            z-index: 100;
+        }
+
+        .bsod-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ff0000;
+            color: #fff;
+            padding: 30px;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 5000;
+            display: none;
+            border: 3px solid #fff;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.8);
+            animation: blink 0.3s infinite;
+        }
+
+        .bsod-alert.active {
+            display: block;
         }
 
         /* Waiting screen */
@@ -320,46 +636,134 @@
             margin: 0 auto;
         }
 
-        /* Game over */
-        .game-over {
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Turn timer */
+        .turn-timer {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #0000ff;
-            color: #fff;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 4000;
-        }
-
-        .game-over.active {
-            display: flex;
-        }
-
-        .game-over-content {
-            text-align: center;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000;
+            color: #0f0;
+            padding: 10px 20px;
             font-family: monospace;
+            font-size: 24px;
+            border: 2px solid #0f0;
+            display: none;
+            z-index: 100;
         }
 
-        .game-over h1 {
-            font-size: 48px;
-            margin-bottom: 20px;
+        .turn-timer.warning {
+            color: #ff0;
+            border-color: #ff0;
+            animation: blink 0.5s infinite;
         }
 
-        .winner-display img {
-            width: 200px;
-            height: 200px;
-            object-fit: contain;
-            margin: 20px 0;
+        .turn-timer.danger {
+            color: #f00;
+            border-color: #f00;
+            animation: blink 0.2s infinite;
+        }
+
+        /* Folder selection */
+        .folder.selected {
+            border: 3px solid #ff0;
+            background: #ffff99;
+            transform: scale(1.15);
+        }
+
+        /* Folder reveal animation */
+        @keyframes folderSpin {
+            0% { transform: rotateY(0deg) scale(1); }
+            50% { transform: rotateY(180deg) scale(1.2); }
+            100% { transform: rotateY(360deg) scale(1); }
+        }
+
+        .folder.revealing {
+            animation: folderSpin 1.5s ease-in-out;
+            pointer-events: none;
+            border-color: #ff0 !important;
+            box-shadow: 0 0 20px rgba(255, 255, 0, 0.5);
+        }
+
+        /* Randomizer selector */
+        .randomizer-selector {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid #ff0000;
+            background: rgba(255, 0, 0, 0.2);
+            pointer-events: none;
+            display: none;
+            z-index: 100;
+            animation: randomizerGlow 0.5s infinite;
+        }
+
+        @keyframes randomizerGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 0, 0, 0.8); }
+            50% { box-shadow: 0 0 30px rgba(255, 0, 0, 1); }
+        }
+
+        .randomizer-active .folder {
+            pointer-events: none !important;
+            opacity: 0.7;
+        }
+
+        .randomizer-prompt {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ff0000;
+            color: #fff;
+            padding: 30px;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 5000;
+            display: none;
+            border: 3px solid #fff;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.8);
+        }
+
+        .randomizer-prompt.active {
+            display: block;
+        }
+
+        /* Submit button */
+        .submit-turn {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .submit-turn.active {
+            display: block;
+        }
+
+        .submit-turn:hover {
+            background: #45a049;
         }
 
         /* Mobile adjustments */
         @media (max-width: 768px) {
             .folder-grid {
-                grid-template-columns: repeat(10, 1fr);
+                grid-template-columns: repeat(6, 1fr);
                 gap: 5px;
             }
             
@@ -368,52 +772,203 @@
             }
             
             .turn-indicator {
-                font-size: 24px;
-                padding: 20px 40px;
+                font-size: 16px;
+                padding: 20px;
+                min-width: 300px;
+            }
+            
+            .turn-main {
+                font-size: 20px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Turn Banner -->
+    <div class="turn-banner" id="turnBanner">YOUR TURN - CHOOSE WISELY</div>
+
+    <!-- Result Display -->
+    <div class="result-display" id="resultDisplay">
+        <img class="result-avatar" id="resultAvatar" src="" alt="">
+        <div class="result-text" id="resultText">SAFE</div>
+    </div>
+
+    <!-- Audio elements -->
+    <audio id="introMusic" src="../assets/finals/game-intro.mp3" loop></audio>
+    <audio id="bgMusic" src="../assets/finals/game-bg-1.mp3" loop></audio>
+    <audio id="selectedSound" src="../assets/finals/selected-sound.mp3"></audio>
+    <audio id="submittedSound" src="../assets/finals/submitted-sound.mp3"></audio>
+    <audio id="timeEndSound" src="../assets/finals/time-end.mp3"></audio>
+    <audio id="virus1Sound" src="../assets/finals/virus-ed-1.mp3"></audio>
+    <audio id="virus2Sound" src="../assets/finals/virus-ed-2.mp3"></audio>
+    <audio id="virus3Sound" src="../assets/finals/virus-ed-3.mp3"></audio>
+    <audio id="virusMileySound" src="../assets/finals/virus-miley-1.mp3"></audio>
+    <audio id="deathSound" src="../assets/finals/game-end-death.mp3"></audio>
+    <audio id="winSound" src="../assets/finals/game-winner-reveal.mp3"></audio>
+    <audio id="lossSound" src="../assets/finals/game-loss-reveal.mp3"></audio>
+    <audio id="safeSound" src="../assets/finals/safe-sound.mp3"></audio>
+
+    <!-- Turn timer -->
+    <div class="turn-timer" id="turnTimer">30</div>
+
+    <!-- Submit button -->
+    <button class="submit-turn" id="submitBtn" onclick="submitSelection()">SUBMIT SELECTION</button>
+
+    <!-- Rules Modal (shows first) -->
+    <div class="rules-modal" id="rulesModal">
+        <div class="rules-content">
+            <div class="rules-title">INTERNET OLYMPICS 2 - GAME RULES</div>
+            <div class="rules-body">
+                <h3>🎯 OBJECTIVE</h3>
+                <p>Survive. Don't click the Blue Screen of Death.</p>
+
+                <h3>📁 THE FOLDERS</h3>
+                <ul>
+                    <li><strong>60 Folders Total</strong> - Most are safe</li>
+                    <li><strong>1 Blue Screen of Death</strong> - Click it and you lose instantly</li>
+                    <li><strong>8-10 Viruses</strong> - Each virus eats 3-6 other folders</li>
+                    <li><strong>1-2 Antivirus</strong> - Grants 1 immunity click</li>
+                </ul>
+
+                <h3>⚡ GAMEPLAY</h3>
+                <ul>
+                    <li>Players take turns clicking folders</li>
+                    <li>You have 30 seconds per turn</li>
+                    <li>If time runs out, a random folder is selected</li>
+                    <li>Select a folder, then click SUBMIT SELECTION</li>
+                </ul>
+
+                <h3>🛡️ IMMUNITY</h3>
+                <ul>
+                    <li>Protects you from ANY folder (even BSOD)</li>
+                    <li>If you click BSOD with immunity, it relocates to another folder</li>
+                    <li>You lose immunity after using it</li>
+                </ul>
+
+                <h3>🏆 WINNING</h3>
+                <p>The last player standing wins. Your opponent must click the BSOD.</p>
+
+                <h3>⚠️ REMEMBER</h3>
+                <p style="font-weight: bold; color: #ff0000;">Every click could be your last. Choose wisely.</p>
+            </div>
+            
+            <div class="rules-checkbox">
+                <input type="checkbox" id="rulesCheck" onchange="checkRules()">
+                <label for="rulesCheck">I've read and understand the rules</label>
+            </div>
+            
+            <button class="rules-button" id="rulesButton" onclick="acceptRules()" disabled>
+                LET'S GO 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- Intro Modal -->
+    <div class="intro-modal hidden" id="introModal">
+        <div class="intro-content">
+            <h1>WELCOME TO THE FINALS</h1>
+            <h2>Based Screen o' Death</h2>
+            <div class="intro-body">
+                60 folders. Most are safe.<br><br>
+                Some contain viruses that will delete 3-6 others.<br>
+                One contains the Based Screen of Death.<br><br>
+                Take turns. Choose carefully.<br><br>
+                First to trigger the BSOD dies Bc Death.<br><br>
+                Remember: we still love the internet.
+            </div>
+            <div class="intro-buttons">
+                <button onclick="startGame()">START GAME</button>
+                <button onclick="showOdds()">READ THE ODDS</button>
+            </div>
+        </div>
+    </div>
+
     <div class="game-header">
-        <h1 class="game-title">INTERNET OLYMPICS 2 💿 FINALS</h1>
+        <h1 class="game-title">INTERNET OLYMPICS 2 - FINALS</h1>
         <div class="game-code">ROOM: <span id="roomCode">------</span></div>
     </div>
 
     <div class="players-bar">
         <div class="player-info" id="player1Info">
-            <img class="player-avatar" src="../assets/finals/angelbubu-1.png" alt="Player 1">
+            <img class="player-avatar" id="player1Avatar" src="../assets/finals/angelbubu-1.png" alt="Player 1">
             <div class="player-details">
                 <h3 id="player1Name">waiting...</h3>
                 <div class="player-status" id="player1Status">disconnected</div>
+                <div class="player-immunity" id="player1Immunity" style="display: none;">🛡️ IMMUNE: 0 clicks</div>
             </div>
         </div>
         <div class="player-info" id="player2Info">
-            <img class="player-avatar" src="../assets/finals/angelbubu-2.png" alt="Player 2">
+            <img class="player-avatar" id="player2Avatar" src="../assets/finals/angelbubu-2.png" alt="Player 2">
             <div class="player-details">
                 <h3 id="player2Name">waiting...</h3>
                 <div class="player-status" id="player2Status">disconnected</div>
+                <div class="player-immunity" id="player2Immunity" style="display: none;">🛡️ IMMUNE: 0 clicks</div>
             </div>
         </div>
     </div>
 
     <div class="game-board">
         <div class="folder-count">
-            FOLDERS REMAINING: <span id="folderCount">200</span> | SPECTATORS: <span id="spectatorCount">0</span>
+            FOLDERS REMAINING: <span id="folderCount">60</span> | SPECTATORS: <span id="spectatorCount">0</span>
         </div>
         <div class="folder-grid" id="folderGrid"></div>
     </div>
 
     <!-- Turn indicator -->
     <div class="turn-indicator" id="turnIndicator">
-        <div id="turnText">YOUR TURN!</div>
+        <div class="turn-main" id="turnText">YOUR TURN</div>
+        <div class="turn-stats" id="turnStats">
+            Folders: 60 | Viruses: Unknown | BSOD: Hidden
+        </div>
     </div>
 
     <!-- Virus alert -->
     <div class="virus-alert" id="virusAlert">
         <img src="../assets/finals/demonbubu.png" alt="VIRUS">
         <div class="virus-text">VIRUS DETECTED!</div>
-        <div class="virus-text">EATING 3 FOLDERS...</div>
+        <div class="virus-count" id="virusCount">EATING 3 FOLDERS...</div>
+    </div>
+
+    <!-- BSOD -->
+    <div class="bsod" id="bsod">
+        <div class="bsod-content">
+            <div class="bsod-header">Windows</div>
+            <div class="bsod-title">
+                A fatal exception 0E has occurred at 0028:C0011E36 in VXD VMM(01) +<br>
+                00010E36. The current application will be terminated.
+            </div>
+            <div class="bsod-error">
+                * Press any key to terminate the current application.<br>
+                * Press CTRL+ALT+DEL again to restart your computer. You will<br>
+                &nbsp;&nbsp;lose any unsaved information in all applications.<br><br>
+                Error: FOLDER_NOT_FOUND
+            </div>
+            <div class="bsod-winner">
+                <div style="font-size: 48px; margin-bottom: 20px;">BIG BIG BIG RIP 4 EVER AND EVER</div>
+                <div style="font-size: 32px; margin-bottom: 20px;">2 <span id="loserName"></span></div>
+                <div style="font-size: 24px; margin-bottom: 30px;">U DID GOOD KID</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Winner screen -->
+    <div class="winner-screen" id="winnerScreen">
+        <video class="winner-video" src="../assets/finals/cast-bg.mp4" autoplay loop muted></video>
+        <div class="winner-content">
+            <div class="winner-title">BASED BASED BASED</div>
+            <div class="winner-message">
+                Congrats 2 <span id="winnerNameDisplay"></span><br>
+                for making it thru!
+            </div>
+            <div class="winner-note">Stay tuned for the next round.</div>
+        </div>
+    </div>
+
+    <!-- BSOD Alert -->
+    <div class="bsod-alert" id="bsodAlert">
+        BASED SCREEN OF DEATH DISCOVERED<br>
+        ANTI-VIRUS ACTIVATED<br>
+        MOVING MOVING MOVING
     </div>
 
     <!-- Waiting screen -->
@@ -424,23 +979,20 @@
         </div>
     </div>
 
-    <!-- Game over -->
-    <div class="game-over" id="gameOver">
-        <div class="game-over-content">
-            <h1>💀 SYSTEM FAILURE 💀</h1>
-            <div class="winner-display">
-                <p id="winnerText">WINNER:</p>
-                <img id="winnerAvatar" src="">
-                <p id="winnerName"></p>
-            </div>
-        </div>
+    <!-- Randomizer Prompt -->
+    <div class="randomizer-prompt" id="randomizerPrompt">
+        RANDOMIZER ACTIVATED!<br>
+        PRESS SPACEBAR TO STOP
     </div>
+
+    <!-- Randomizer Selector (inside folder grid) -->
 
     <script type="module">
         import { GameManager } from './firebase-config.js';
         
-        // Get game info from localStorage
-        const gameCode = localStorage.getItem('gameCode');
+        // Get game info from URL and localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameCode = urlParams.get('game') || localStorage.getItem('gameCode');
         const playerNum = parseInt(localStorage.getItem('playerNum'));
         const playerName = localStorage.getItem('playerName');
         
@@ -454,9 +1006,180 @@
         // Game state
         let currentGameState = null;
         let myTurn = false;
+        let immunityClicks = 0;
+        let selectedFolderId = null;
+        let turnTimer = null;
+        let timeLeft = 30;
+        let virusCount = 0;
+        
+        // Audio elements
+        const audio = {
+            intro: document.getElementById('introMusic'),
+            bg: document.getElementById('bgMusic'),
+            selected: document.getElementById('selectedSound'),
+            submitted: document.getElementById('submittedSound'),
+            timeEnd: document.getElementById('timeEndSound'),
+            virus1: document.getElementById('virus1Sound'),
+            virus2: document.getElementById('virus2Sound'),
+            virus3: document.getElementById('virus3Sound'),
+            virusMiley: document.getElementById('virusMileySound'),
+            death: document.getElementById('deathSound'),
+            win: document.getElementById('winSound'),
+            loss: document.getElementById('lossSound'),
+            safe: document.getElementById('safeSound')
+        };
+        
+        // Set volumes
+        Object.values(audio).forEach(sound => {
+            if (sound) sound.volume = 0.3;
+        });
+        
+        // Start intro music
+        audio.intro.play().catch(e => console.log('Autoplay blocked'));
+        
+        // Show rules modal first
+        if (!sessionStorage.getItem('rulesAccepted')) {
+            document.getElementById('rulesModal').classList.remove('hidden');
+        } else if (!sessionStorage.getItem('seenIntro')) {
+            document.getElementById('introModal').classList.remove('hidden');
+        }
+        
+        window.checkRules = function() {
+            const checkbox = document.getElementById('rulesCheck');
+            const button = document.getElementById('rulesButton');
+            
+            if (checkbox.checked) {
+                button.disabled = false;
+                button.classList.add('enabled');
+            } else {
+                button.disabled = true;
+                button.classList.remove('enabled');
+            }
+        };
+        
+        window.acceptRules = function() {
+            sessionStorage.setItem('rulesAccepted', 'true');
+            document.getElementById('rulesModal').classList.add('hidden');
+            
+            // Show intro modal if not seen
+            if (!sessionStorage.getItem('seenIntro')) {
+                document.getElementById('introModal').classList.remove('hidden');
+            }
+        };
+        
+        window.startGame = function() {
+            sessionStorage.setItem('seenIntro', 'true');
+            document.getElementById('introModal').classList.add('hidden');
+        };
+        
+        window.showOdds = function() {
+            alert('ODDS:\n\nBSOD: 1 in 60 (1.67%)\nVirus: ~9 in 60 (15%)\nSafe: ~50 in 60 (83.33%)\n\nViruses eat 3-6 folders each.\nGood luck.');
+        };
+        
+        // Turn timer functions
+        function startTurnTimer() {
+            timeLeft = 30;
+            const timerEl = document.getElementById('turnTimer');
+            timerEl.style.display = 'block';
+            timerEl.className = 'turn-timer';
+            
+            if (turnTimer) clearInterval(turnTimer);
+            
+            turnTimer = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+                
+                if (timeLeft <= 10) {
+                    timerEl.classList.add('warning');
+                }
+                
+                if (timeLeft <= 5) {
+                    timerEl.classList.remove('warning');
+                    timerEl.classList.add('danger');
+                    if (timeLeft === 5) {
+                        audio.timeEnd.play();
+                    }
+                }
+                
+                if (timeLeft <= 0) {
+                    clearInterval(turnTimer);
+                    autoSelectFolder();
+                }
+            }, 1000);
+        }
+        
+        function stopTurnTimer() {
+            if (turnTimer) {
+                clearInterval(turnTimer);
+                turnTimer = null;
+            }
+            document.getElementById('turnTimer').style.display = 'none';
+        }
+        
+        // Auto select random folder if time runs out
+        async function autoSelectFolder() {
+            const visibleFolders = [];
+            currentGameState.folders.forEach((folder, index) => {
+                if (folder.visible) visibleFolders.push(index);
+            });
+            
+            if (visibleFolders.length > 0) {
+                const randomIndex = visibleFolders[Math.floor(Math.random() * visibleFolders.length)];
+                await GameManager.clickFolder(gameCode, randomIndex, playerNum);
+            }
+        }
+        
+        // Folder selection
+        window.selectFolder = function(folderId) {
+            if (!myTurn || currentGameState.status !== 'playing') return;
+            
+            // Clear previous selection
+            document.querySelectorAll('.folder.selected').forEach(f => f.classList.remove('selected'));
+            
+            // Select new folder
+            selectedFolderId = folderId;
+            const folderEls = document.querySelectorAll('.folder');
+            folderEls[folderId].classList.add('selected');
+            
+            // Play sound and show submit button
+            audio.selected.play();
+            document.getElementById('submitBtn').classList.add('active');
+        };
+        
+        // Submit selection with slow reveal
+        window.submitSelection = async function() {
+            if (selectedFolderId === null) return;
+            
+            stopTurnTimer();
+            document.getElementById('submitBtn').classList.remove('active');
+            
+            // Play submitted sound
+            audio.submitted.play();
+            
+            // Add revealing animation
+            const folderEls = document.querySelectorAll('.folder');
+            folderEls[selectedFolderId].classList.add('revealing');
+            
+            // Wait for dramatic reveal
+            setTimeout(async () => {
+                try {
+                    await GameManager.clickFolder(gameCode, selectedFolderId, playerNum);
+                    selectedFolderId = null;
+                } catch (error) {
+                    console.error('Click failed:', error);
+                    startTurnTimer(); // Restart timer on error
+                }
+            }, 1500); // 1.5 second delay for suspense
+        };
         
         // Subscribe to game updates
         const unsubscribe = GameManager.subscribeToGame(gameCode, (gameData) => {
+            if (!gameData) {
+                // Game was deleted
+                alert('Game has been deleted by admin');
+                window.location.href = './';
+                return;
+            }
             currentGameState = gameData;
             updateUI(gameData);
         });
@@ -467,51 +1190,91 @@
             updatePlayerInfo(1, gameData.players.player1);
             updatePlayerInfo(2, gameData.players.player2);
             
+            // Update immunity for current player
+            if (gameData.players[`player${playerNum}`]) {
+                immunityClicks = gameData.players[`player${playerNum}`].immunityClicks || 0;
+            }
+            
             // Update turn indicator
+            const wasMyTurn = myTurn;
             myTurn = gameData.currentTurn === playerNum;
+            
+            // Handle turn changes
+            if (myTurn && !wasMyTurn && gameData.status === 'playing') {
+                startTurnTimer();
+                showTurnIndicator(gameData);
+            } else if (!myTurn && wasMyTurn) {
+                stopTurnTimer();
+                document.getElementById('submitBtn').classList.remove('active');
+                selectedFolderId = null;
+                document.getElementById('turnBanner').classList.remove('active');
+            } else if (!myTurn) {
+                document.getElementById('turnBanner').classList.remove('active');
+            }
+            
             document.getElementById(`player${gameData.currentTurn}Info`).classList.add('active');
             document.getElementById(`player${3 - gameData.currentTurn}Info`).classList.remove('active');
-            
-            // Show turn indicator for current player
-            if (myTurn && gameData.status === 'playing') {
-                showTurnIndicator();
-            }
             
             // Update folder count and spectators
             document.getElementById('folderCount').textContent = gameData.folderCount;
             document.getElementById('spectatorCount').textContent = gameData.spectators || 0;
             
-            // Update waiting screen
+            // Update waiting screen and music
             if (gameData.status === 'waiting') {
                 document.getElementById('waitingScreen').classList.remove('hidden');
             } else {
                 document.getElementById('waitingScreen').classList.add('hidden');
+                // Switch to game music when playing
+                if (gameData.status === 'playing' && audio.intro.played) {
+                    audio.intro.pause();
+                    audio.bg.play().catch(e => console.log('BG music failed'));
+                }
             }
             
             // Render folders
             renderFolders(gameData.folders);
             
-            // Handle last action animations
+            // Handle last action animations and sounds
             if (gameData.lastAction && gameData.lastAction.timestamp) {
                 handleLastAction(gameData.lastAction);
             }
             
             // Handle virus animation
             if (gameData.virusActive) {
-                showVirusAlert();
+                showVirusAlert(gameData.lastAction);
+            }
+            
+            // Handle BSOD relocation animation
+            if (gameData.bsodRelocating) {
+                showBSODRelocation();
             }
             
             // Handle game over
             if (gameData.status === 'finished' && gameData.winner) {
+                stopTurnTimer();
                 showGameOver(gameData.winner, gameData.players);
             }
         }
         
         function updatePlayerInfo(num, playerData) {
-            document.getElementById(`player${num}Name`).textContent = playerData.name || 'waiting...';
+            document.getElementById(`player${num}Name`).textContent = playerData.name ? `@${playerData.name}` : 'waiting...';
             const statusEl = document.getElementById(`player${num}Status`);
             statusEl.textContent = playerData.connected ? 'connected' : 'disconnected';
             statusEl.classList.toggle('connected', playerData.connected);
+            
+            // Update avatar
+            if (playerData.avatar) {
+                document.getElementById(`player${num}Avatar`).src = `../assets/finals/${playerData.avatar}.png`;
+            }
+            
+            // Show immunity if active
+            const immunityEl = document.getElementById(`player${num}Immunity`);
+            if (playerData.immunityClicks > 0) {
+                immunityEl.style.display = 'block';
+                immunityEl.textContent = `🛡️ IMMUNE: ${playerData.immunityClicks} clicks`;
+            } else {
+                immunityEl.style.display = 'none';
+            }
         }
         
         function renderFolders(folders) {
@@ -523,15 +1286,23 @@
                 folderEl.className = 'folder';
                 
                 if (folder.visible) {
-                    folderEl.innerHTML = `<img src="../assets/finals/${folder.icon}.png" alt="Folder">`;
-                    folderEl.onclick = () => clickFolder(index);
+                    // Show folder icon with proper path
+                    const iconPath = `../assets/finals/${folder.icon}.png`;
+                    folderEl.innerHTML = `
+                        <img src="${iconPath}" alt="Folder" onerror="this.parentElement.innerHTML='📁'">
+                        <div class="randomizer-selector" id="selector-${index}"></div>
+                    `;
+                    folderEl.onclick = () => window.selectFolder(index);
                     
                     if (!myTurn || currentGameState.status !== 'playing') {
                         folderEl.classList.add('disabled');
+                    } else if (immunityClicks > 0) {
+                        folderEl.classList.add('immune');
                     }
                     
-                    // Add animation delay for floating effect
-                    folderEl.style.animationDelay = `${(index % 10) * 0.1}s`;
+                    if (selectedFolderId === index) {
+                        folderEl.classList.add('selected');
+                    }
                 } else {
                     folderEl.style.visibility = 'hidden';
                 }
@@ -540,26 +1311,30 @@
             });
         }
         
-        async function clickFolder(folderId) {
-            if (!myTurn || currentGameState.status !== 'playing') return;
+        function showTurnIndicator(gameData) {
+            const banner = document.getElementById('turnBanner');
+            let bannerText = 'YOUR TURN';
             
-            try {
-                await GameManager.clickFolder(gameCode, folderId, playerNum);
-            } catch (error) {
-                console.error('Click failed:', error);
+            if (gameData.folderCount < 30) {
+                bannerText = 'YOUR TURN - GETTING SPICY';
             }
+            
+            if (gameData.folderCount < 15) {
+                bannerText = 'YOUR TURN - RUH ROH';
+            }
+            
+            banner.textContent = bannerText;
+            banner.classList.add('active');
         }
         
-        function showTurnIndicator() {
-            const indicator = document.getElementById('turnIndicator');
-            indicator.classList.add('active');
-            setTimeout(() => {
-                indicator.classList.remove('active');
-            }, 2000);
-        }
-        
-        function showVirusAlert() {
+        function showVirusAlert(lastAction) {
             const alert = document.getElementById('virusAlert');
+            const countEl = document.getElementById('virusCount');
+            
+            if (lastAction && lastAction.virusAte) {
+                countEl.textContent = `EATING ${lastAction.virusAte.length} FOLDERS...`;
+            }
+            
             alert.classList.add('active');
             setTimeout(() => {
                 alert.classList.remove('active');
@@ -567,30 +1342,130 @@
         }
         
         function handleLastAction(action) {
-            // Animate based on last action
-            if (action.result === 'virus' && action.virusAte) {
-                // Animate virus eating folders
-                action.virusAte.forEach((folderId, i) => {
+            // Show avatar result display
+            if (action.player && currentGameState.players[`player${action.player}`]) {
+                const player = currentGameState.players[`player${action.player}`];
+                const resultDisplay = document.getElementById('resultDisplay');
+                const resultAvatar = document.getElementById('resultAvatar');
+                const resultText = document.getElementById('resultText');
+                
+                // Set avatar image
+                resultAvatar.src = `../assets/finals/${player.avatar}.png`;
+                
+                // Set result styling and text
+                resultDisplay.className = 'result-display';
+                
+                if (action.result === 'safe') {
+                    resultDisplay.classList.add('safe');
+                    resultText.textContent = 'SAFE';
+                    resultText.style.color = '#00aa00';
+                    if (action.player === playerNum) {
+                        audio.safe.play();
+                    }
+                } else if (action.result === 'virus') {
+                    resultDisplay.classList.add('virus');
+                    resultText.textContent = 'VIRUS!';
+                    resultText.style.color = '#ff0000';
+                    virusCount++;
+                    // Play different virus sounds based on count
+                    if (virusCount === 1) audio.virus1.play();
+                    else if (virusCount === 2) audio.virus2.play();
+                    else if (virusCount === 3) audio.virus3.play();
+                    else audio.virusMiley.play();
+                } else if (action.result === 'antivirus') {
+                    resultDisplay.classList.add('antivirus');
+                    resultText.textContent = 'IMMUNITY!';
+                    resultText.style.color = '#0066ff';
+                } else if (action.result === 'bsod') {
+                    // Don't show result display for BSOD, go straight to death screen
+                    console.log('BSOD detected in UI!');
+                    Object.values(audio).forEach(sound => sound.pause());
+                    audio.death.play();
+                    return;
+                }
+                
+                // Show result
+                resultDisplay.classList.add('active');
+                
+                // Hide after 2 seconds
+                setTimeout(() => {
+                    resultDisplay.classList.remove('active');
+                }, 2000);
+                
+                // Animate virus eating folders with red boxes
+                if (action.result === 'virus' && action.virusAte) {
                     setTimeout(() => {
-                        const folderEls = document.querySelectorAll('.folder');
-                        if (folderEls[folderId]) {
-                            folderEls[folderId].classList.add('virus-eating');
-                        }
-                    }, i * 200);
-                });
+                        // First highlight infected folders
+                        action.virusAte.forEach((folderId) => {
+                            const folderEls = document.querySelectorAll('.folder');
+                            if (folderEls[folderId]) {
+                                folderEls[folderId].classList.add('virus-infected');
+                            }
+                        });
+                        
+                        // Then make them disappear
+                        setTimeout(() => {
+                            action.virusAte.forEach((folderId, i) => {
+                                setTimeout(() => {
+                                    const folderEls = document.querySelectorAll('.folder');
+                                    if (folderEls[folderId]) {
+                                        folderEls[folderId].classList.add('virus-eating');
+                                    }
+                                }, i * 200);
+                            });
+                        }, 1000);
+                    }, 2000);
+                }
+            } else if (action.result === 'bsod_relocated') {
+                // Play special sound for BSOD relocation
+                console.log('BSOD relocated!');
             }
         }
         
+        function showBSODRelocation() {
+            // Show alert
+            document.getElementById('bsodAlert').classList.add('active');
+            
+            // Make all folders shake and glow
+            document.querySelectorAll('.folder').forEach(folder => {
+                if (folder.style.visibility !== 'hidden') {
+                    folder.classList.add('relocating');
+                }
+            });
+            
+            // Hide alert and stop animation after 3 seconds
+            setTimeout(() => {
+                document.getElementById('bsodAlert').classList.remove('active');
+                document.querySelectorAll('.folder').forEach(folder => {
+                    folder.classList.remove('relocating');
+                });
+            }, 3000);
+        }
+        
         function showGameOver(winnerId, players) {
+            const loser = winnerId === 1 ? players.player2 : players.player1;
             const winner = winnerId === 1 ? players.player1 : players.player2;
-            document.getElementById('winnerAvatar').src = `../assets/finals/${winner.avatar}.png`;
-            document.getElementById('winnerName').textContent = winner.name;
-            document.getElementById('gameOver').classList.add('active');
+            
+            // Stop all game music
+            Object.values(audio).forEach(sound => sound.pause());
+            
+            if (winnerId === playerNum) {
+                // You won - show winner screen immediately
+                document.getElementById('winnerNameDisplay').textContent = winner.name.toUpperCase();
+                document.getElementById('winnerScreen').classList.add('active');
+                audio.win.play();
+            } else {
+                // You lost - show BSOD then nothing
+                document.getElementById('loserName').textContent = loser.name.toUpperCase();
+                document.getElementById('bsod').classList.add('active');
+                audio.loss.play();
+            }
         }
         
         // Clean up on page unload
         window.addEventListener('beforeunload', () => {
             if (unsubscribe) unsubscribe();
+            stopTurnTimer();
         });
     </script>
 </body>

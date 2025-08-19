@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INTERNET OLYMPICS 2 - Tournament Bracket</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #000 url('../assets/finals/blind-bg.jpg') center/cover fixed;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        /* Winner celebration */
+        .winner-celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            overflow: hidden;
+        }
+
+        .winner-celebration.active {
+            display: flex;
+        }
+
+        .winner-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+
+        .winner-content {
+            background: rgba(255, 255, 255, 0.95);
+            border: 5px solid #ffd700;
+            padding: 50px;
+            text-align: center;
+            max-width: 800px;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.8);
+            animation: winnerPulse 2s infinite;
+        }
+
+        @keyframes winnerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .winner-title {
+            font-size: 48px;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .winner-name {
+            font-size: 36px;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+
+        .winner-subtitle {
+            font-size: 24px;
+            color: #000;
+        }
+
+        /* Header */
+        .bracket-header {
+            background: linear-gradient(to right, #000080, #1084d0);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+            border: 2px solid #dfdfdf;
+            border-bottom: 2px solid #000;
+            border-right: 2px solid #000;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .bracket-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .bracket-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Bracket container */
+        .bracket-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #000;
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        .bracket {
+            display: flex;
+            gap: 40px;
+            min-width: 1200px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Round columns */
+        .round {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex-shrink: 0;
+            justify-content: space-around;
+            min-height: 600px;
+        }
+
+        .round-title {
+            background: #000080;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            border: 2px solid #000;
+            margin-bottom: 10px;
+        }
+
+        /* Matchup */
+        .matchup {
+            background: #f0f0f0;
+            border: 2px solid #c0c0c0;
+            border-bottom: 2px solid #808080;
+            border-right: 2px solid #808080;
+            padding: 0;
+            position: relative;
+            min-width: 200px;
+        }
+
+        .matchup.active {
+            border-color: #ff0;
+            box-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
+        }
+
+        .matchup.completed {
+            opacity: 0.8;
+        }
+
+        .player-slot {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: #fff;
+            border-bottom: 1px solid #ccc;
+            transition: all 0.2s;
+            min-height: 50px;
+        }
+
+        .player-slot:last-child {
+            border-bottom: none;
+        }
+
+        .player-slot.winner {
+            background: #90ee90;
+            font-weight: bold;
+        }
+
+        .player-slot.loser {
+            background: #ffcccb;
+            opacity: 0.6;
+        }
+
+        .player-slot.empty {
+            background: #f5f5f5;
+            color: #999;
+            font-style: italic;
+        }
+
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border: 2px solid #000;
+            margin-right: 10px;
+            background: #fff;
+        }
+
+        .player-name {
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .vs-divider {
+            background: #000;
+            color: #fff;
+            text-align: center;
+            padding: 5px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        /* Game link */
+        .game-link {
+            display: block;
+            text-align: center;
+            padding: 5px;
+            font-size: 10px;
+            color: #0066cc;
+            text-decoration: none;
+            background: #f9f9f9;
+            border-top: 1px solid #ccc;
+        }
+
+        .game-link:hover {
+            text-decoration: underline;
+            background: #f0f0f0;
+        }
+
+        /* Round specific spacing */
+        .round-1 {
+            flex: 1;
+        }
+
+        .round-2 {
+            flex: 1;
+        }
+
+        .round-2 .matchup {
+            margin: 40px 0;
+        }
+
+        .semifinals {
+            flex: 1;
+        }
+
+        .semifinals .matchup {
+            margin: 120px 0;
+        }
+
+        .finals {
+            flex: 1;
+        }
+
+        .finals .matchup {
+            border: 3px solid #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        /* Champion */
+        .champion-container {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            border: 3px solid #000;
+            padding: 20px;
+            text-align: center;
+            min-width: 200px;
+            flex-shrink: 0;
+        }
+
+        .champion-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .champion-avatar {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border: 3px solid #000;
+            margin: 10px auto;
+            display: block;
+            background: #fff;
+        }
+
+        .champion-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .champion-empty {
+            opacity: 0.5;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        /* Back button */
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #fff;
+            border: 2px solid #000;
+            padding: 10px 15px;
+            text-decoration: none;
+            color: #000;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+
+        .back-btn:hover {
+            background: #f0f0f0;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 18px;
+            color: #666;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .bracket {
+                flex-direction: column;
+                align-items: stretch;
+                min-width: auto;
+            }
+            
+            .round {
+                margin-bottom: 30px;
+                min-height: auto;
+            }
+            
+            .round-2 .matchup,
+            .semifinals .matchup {
+                margin: 20px 0;
+            }
+            
+            .champion-container {
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Audio -->
+    <audio id="bracketMusic" src="../assets/finals/bracket-bg.mp3" loop></audio>
+    
+    <!-- Winner Celebration -->
+    <div class="winner-celebration" id="winnerCelebration">
+        <video class="winner-video" src="../assets/finals/loop-bg.mp4" autoplay loop muted></video>
+        <div class="winner-content">
+            <div class="winner-title">CONGRATULATIONS TO</div>
+            <div class="winner-name" id="championName">@CHAMPION</div>
+            <div class="winner-subtitle">YOU ARE THE WINNER OF INTERNET OLYMPICS 2!</div>
+        </div>
+    </div>
+
+    <a href="index.html" class="back-btn">← BACK TO LOBBY</a>
+
+    <div class="bracket-header">
+        <div class="bracket-title">INTERNET OLYMPICS 2 - CHAMPIONSHIP BRACKET</div>
+        <div class="bracket-subtitle">14 finalists. 1 champion. No mercy.</div>
+    </div>
+
+    <div class="bracket-container">
+        <div id="bracketDisplay" class="loading">Loading tournament data...</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc,
+            setDoc,
+            onSnapshot
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO2l-40668WNpQdj2w",
+            authDomain: "c0uchz0mb13.firebaseapp.com",
+            projectId: "c0uchz0mb13",
+            storageBucket: "c0uchz0mb13.firebasestorage.app",
+            messagingSenderId: "1051521591004",
+            appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
+            measurementId: "G-6BNDYZQRPE"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Finalist list (14 players) - FIXED pretzelness spelling
+        const finalists = [
+            'duckgirl808',
+            'edouardstone',
+            'hauntyourownhouse',
+            'michaelmelwani',
+            'littleurbanachiever',
+            'minibearbeats',
+            'nataliesomekh',
+            'normalmiette',
+            'pintallica',
+            'plascu',
+            'kurt',  // Fixed spelling
+            'tempe',
+            'thecornii',
+            'whoiskaybrown'
+        ];
+        
+        // Play background music
+        const bracketMusic = document.getElementById('bracketMusic');
+        bracketMusic.volume = 0.3;
+        bracketMusic.play().catch(e => console.log('Autoplay blocked'));
+
+        // Initialize tournament structure if it doesn't exist
+        async function initializeTournament() {
+            const tournamentRef = doc(db, 'tournament', 'finals2025');
+            const tournamentDoc = await getDoc(tournamentRef);
+            
+            if (!tournamentDoc.exists()) {
+                // Shuffle players for random seeding
+                const shuffled = [...finalists].sort(() => Math.random() - 0.5);
+                
+                // Create round 1 matchups (7 matches)
+                const round1 = [];
+                for (let i = 0; i < 14; i += 2) {
+                    round1.push({
+                        id: `r1m${i/2 + 1}`,
+                        player1: shuffled[i],
+                        player2: shuffled[i + 1],
+                        winner: null,
+                        gameId: null,
+                        status: 'pending'
+                    });
+                }
+                
+                // Create empty later rounds
+                const round2 = [
+                    { id: 'r2m1', player1: null, player2: null, winner: null, gameId: null, status: 'pending' },
+                    { id: 'r2m2', player1: null, player2: null, winner: null, gameId: null, status: 'pending' },
+                    { id: 'r2m3', player1: null, player2: null, winner: null, gameId: null, status: 'pending' },
+                    { id: 'r2m4', player1: null, player2: null, winner: null, gameId: null, status: 'pending' }
+                ];
+                
+                const semifinals = [
+                    { id: 'sfm1', player1: null, player2: null, winner: null, gameId: null, status: 'pending' },
+                    { id: 'sfm2', player1: null, player2: null, winner: null, gameId: null, status: 'pending' }
+                ];
+                
+                const finals = {
+                    id: 'final',
+                    player1: null,
+                    player2: null,
+                    winner: null,
+                    gameId: null,
+                    status: 'pending'
+                };
+                
+                const tournamentData = {
+                    round1,
+                    round2,
+                    semifinals,
+                    finals,
+                    champion: null,
+                    createdAt: new Date().toISOString()
+                };
+                
+                await setDoc(tournamentRef, tournamentData);
+                return tournamentData;
+            }
+            
+            return tournamentDoc.data();
+        }
+
+        // Render bracket
+        function renderBracket(tournament) {
+            const bracketDisplay = document.getElementById('bracketDisplay');
+            
+            // Check if we have a champion
+            if (tournament.champion) {
+                showChampion(tournament.champion);
+            }
+            
+            bracketDisplay.innerHTML = `
+                <div class="bracket">
+                    <!-- Round 1 -->
+                    <div class="round round-1">
+                        <div class="round-title">ROUND 1</div>
+                        ${tournament.round1.map(match => renderMatchup(match, 'round1')).join('')}
+                    </div>
+                    
+                    <!-- Round 2 -->
+                    <div class="round round-2">
+                        <div class="round-title">ROUND 2</div>
+                        ${tournament.round2.map(match => renderMatchup(match, 'round2')).join('')}
+                    </div>
+                    
+                    <!-- Semifinals -->
+                    <div class="round semifinals">
+                        <div class="round-title">SEMIFINALS</div>
+                        ${tournament.semifinals.map(match => renderMatchup(match, 'semifinals')).join('')}
+                    </div>
+                    
+                    <!-- Finals -->
+                    <div class="round finals">
+                        <div class="round-title">FINALS</div>
+                        ${renderMatchup(tournament.finals, 'finals')}
+                    </div>
+                    
+                    <!-- Champion -->
+                    <div class="champion-container">
+                        <div class="champion-title">🏆 Champion 🏆</div>
+                        ${tournament.champion ? `
+                            <img class="champion-avatar" src="../assets/finals/finalists/${tournament.champion}.png" alt="${tournament.champion}">
+                            <div class="champion-name">@${tournament.champion}</div>
+                        ` : `
+                            <div class="champion-empty">
+                                <div style="font-size: 48px;">👑</div>
+                                <div>To be determined</div>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render individual matchup
+        function renderMatchup(match, round) {
+            const isActive = match.status === 'active';
+            const isCompleted = match.status === 'completed';
+            
+            return `
+                <div class="matchup ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}">
+                    ${renderPlayerSlot(match.player1, match.player1 === match.winner, !match.player1)}
+                    <div class="vs-divider">VS</div>
+                    ${renderPlayerSlot(match.player2, match.player2 === match.winner, !match.player2)}
+                    ${match.gameId ? `<a href="spectator.html?game=${match.gameId}" class="game-link">Watch Game →</a>` : ''}
+                </div>
+            `;
+        }
+
+        // Render player slot
+        function renderPlayerSlot(username, isWinner, isEmpty) {
+            if (isEmpty) {
+                return `
+                    <div class="player-slot empty">
+                        <div class="player-name">TBD</div>
+                    </div>
+                `;
+            }
+            
+            const slotClass = isWinner ? 'winner' : (isWinner === false ? 'loser' : '');
+            
+            return `
+                <div class="player-slot ${slotClass}">
+                    <img class="player-avatar" src="../assets/finals/finalists/${username}.png" alt="${username}" onerror="this.src='../assets/finals/angelbubu-1.png'">
+                    <div class="player-name">@${username}</div>
+                </div>
+            `;
+        }
+
+        // Show champion celebration
+        function showChampion(championUsername) {
+            const celebration = document.getElementById('winnerCelebration');
+            const championNameEl = document.getElementById('championName');
+            
+            championNameEl.textContent = `@${championUsername}`;
+            celebration.classList.add('active');
+            
+            // Stop bracket music
+            bracketMusic.pause();
+        }
+        
+        // Initialize and subscribe to updates
+        initializeTournament().then(tournamentData => {
+            renderBracket(tournamentData);
+            
+            // Subscribe to real-time updates
+            const tournamentRef = doc(db, 'tournament', 'finals2025');
+            const unsubscribe = onSnapshot(tournamentRef, (doc) => {
+                if (doc.exists()) {
+                    renderBracket(doc.data());
+                }
+            });
+            
+            // Cleanup
+            window.addEventListener('beforeunload', () => {
+                if (unsubscribe) unsubscribe();
+            });
+        });
+    </script>
+</body>
+</html>

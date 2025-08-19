@@ -13,192 +13,491 @@
 
         body {
             font-family: Arial, sans-serif;
-            background: #000;
-            color: #0f0;
+            background: #008080 url('../assets/finals/desktop-bg.jpg') center/cover;
+            color: #000;
             min-height: 100vh;
+            overflow-x: auto;
             padding: 20px;
-            font-family: 'Courier New', monospace;
         }
 
-        /* Header */
-        .header {
-            border: 1px solid #0f0;
-            padding: 15px;
-            margin-bottom: 20px;
-            text-align: center;
+        /* Game header */
+        .game-header {
+            background: linear-gradient(to right, #000080, #1084d0);
+            color: white;
+            padding: 10px 20px;
+            border: 2px solid #dfdfdf;
+            border-bottom: 2px solid #000;
+            border-right: 2px solid #000;
+            max-width: 1200px;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
-        .header h1 {
-            font-size: 20px;
-            margin-bottom: 5px;
-            text-shadow: 0 0 10px #0f0;
+        .game-title {
+            font-size: 16px;
+            font-weight: bold;
         }
 
         .game-code {
-            font-size: 24px;
-            letter-spacing: 3px;
-            margin: 10px 0;
+            background: #000;
+            color: #0f0;
+            padding: 5px 10px;
+            font-family: monospace;
+            font-size: 14px;
         }
 
-        /* Main container */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 20px;
-        }
-
-        /* Game view */
-        .game-view {
-            border: 1px solid #0f0;
-            padding: 20px;
-            min-height: 600px;
-        }
-
-        /* Player info */
-        .players {
+        /* Player info bars */
+        .players-bar {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 30px;
+            max-width: 1200px;
+            margin: 0 auto 20px;
             gap: 20px;
         }
 
-        .player {
+        .player-info {
+            background: #c0c0c0;
+            border: 2px solid #dfdfdf;
+            border-bottom: 2px solid #000;
+            border-right: 2px solid #000;
+            padding: 10px 20px;
             flex: 1;
-            border: 1px solid #0f0;
-            padding: 15px;
-            text-align: center;
-            opacity: 0.5;
-            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .player.connected {
-            opacity: 1;
-            box-shadow: 0 0 20px #0f0;
-        }
-
-        .player.current-turn {
-            background: rgba(0, 255, 0, 0.1);
+        .player-info.active {
+            background: #ffff99;
             animation: pulse 1s infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 20px #0f0; }
-            50% { box-shadow: 0 0 40px #0f0; }
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 0, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(255, 255, 0, 0); }
         }
 
-        .player img {
-            width: 60px;
-            height: 60px;
-            margin-bottom: 10px;
-            filter: brightness(0) saturate(100%) invert(68%) sepia(97%) saturate(7498%) hue-rotate(86deg) brightness(118%) contrast(119%);
+        .player-avatar {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            background: #f0f0f0;
+            border: 1px solid #999;
         }
 
-        .player-name {
-            font-size: 18px;
-            margin-bottom: 5px;
+        .player-details h3 {
+            font-size: 14px;
+            margin-bottom: 2px;
         }
 
         .player-status {
             font-size: 12px;
-            color: #090;
+            color: #666;
         }
 
-        /* Folder grid */
+        .player-status.connected {
+            color: #008000;
+        }
+
+        .player-immunity {
+            font-size: 11px;
+            color: #0066cc;
+            font-weight: bold;
+        }
+
+        /* Player color themes */
+        body.player1-turn {
+            background-color: rgba(0, 255, 0, 0.1);
+        }
+
+        body.player2-turn {
+            background-color: rgba(255, 20, 147, 0.1);
+        }
+
+        .player-info.player1.active {
+            background: #90ee90;
+            border-color: #00ff00;
+        }
+
+        .player-info.player2.active {
+            background: #ffb6c1;
+            border-color: #ff1493;
+        }
+
+        /* Game board */
+        .game-board {
+            background: rgba(192, 192, 192, 0.95);
+            border: 3px solid #000;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .folder-count {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            text-align: center;
+            font-family: monospace;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        /* Folder grid - 10x6 for 60 folders */
         .folder-grid {
             display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 10px;
-            margin: 20px 0;
-        }
-
-        .folder-space {
-            aspect-ratio: 1;
-            border: 1px dashed #050;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         .folder {
             width: 100%;
-            height: 100%;
-            background: rgba(0, 255, 0, 0.1);
-            border: 1px solid #0f0;
+            aspect-ratio: 1;
+            border: 2px solid #808080;
+            background: #c0c0c0;
+            cursor: default;
+            transition: all 0.2s;
+            position: relative;
+            padding: 5px;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: default;
-            transition: all 0.3s;
         }
 
         .folder img {
-            width: 80%;
-            height: 80%;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
-            filter: brightness(0) saturate(100%) invert(68%) sepia(97%) saturate(7498%) hue-rotate(86deg) brightness(118%) contrast(119%);
+            image-rendering: pixelated;
         }
 
-        .folder.hidden {
-            opacity: 0;
-            transform: scale(0);
+        .folder.vanishing {
+            animation: vanish 0.5s forwards;
         }
 
-        /* Action log */
-        .action-log {
-            border: 1px solid #0f0;
+        .folder.virus-eating {
+            animation: virusEat 0.8s forwards;
+        }
+
+        @keyframes vanish {
+            to {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+        }
+
+        @keyframes virusEat {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.3); background: #ff9999; }
+            50% { transform: scale(1.5); background: #ff6666; }
+            100% { 
+                opacity: 0;
+                transform: scale(0);
+                background: #ff0000;
+            }
+        }
+
+        /* Game status banner */
+        .game-status-banner {
+            background: #fffacd;
+            border: 2px solid #daa520;
             padding: 15px;
-            height: 600px;
-            overflow-y: auto;
-        }
-
-        .action-log h2 {
-            font-size: 16px;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #0f0;
-        }
-
-        .log-entry {
-            font-size: 12px;
-            margin-bottom: 8px;
-            padding: 5px;
-            border-left: 2px solid #0f0;
-            padding-left: 10px;
-        }
-
-        .log-entry.virus {
-            color: #f00;
-            border-color: #f00;
-        }
-
-        .log-entry.bomb {
-            color: #ff0;
-            border-color: #ff0;
-            font-weight: bold;
-        }
-
-        .log-entry.safe {
-            color: #0f0;
-        }
-
-        /* Game status */
-        .game-status {
             text-align: center;
-            margin: 20px 0;
             font-size: 18px;
+            font-weight: bold;
+            color: #000080;
+            margin: 20px auto;
+            max-width: 1200px;
         }
 
-        .game-status.waiting {
-            color: #ff0;
-        }
-
-        .game-status.finished {
-            color: #f00;
+        .game-status-banner.finished {
+            background: #ffcccb;
+            border-color: #dc143c;
+            color: #8b0000;
             font-size: 24px;
-            animation: blink 0.5s infinite;
+        }
+
+        /* Loading */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #008080;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading.hidden {
+            display: none;
+        }
+
+        .loading-box {
+            background: #c0c0c0;
+            border: 2px solid #000;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+        }
+
+        /* Live action display */
+        .action-display {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #000;
+            color: #fff;
+            padding: 30px 60px;
+            font-size: 36px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 1000;
+            display: none;
+            border: 3px solid #fff;
+            text-transform: uppercase;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+
+        .action-display.active {
+            display: block;
+            animation: actionPulse 0.5s ease-out;
+        }
+
+        .action-display.safe {
+            background: #00aa00;
+        }
+
+        .action-display.virus {
+            background: #ff0000;
+            animation: actionPulse 0.5s ease-out, shake 0.5s;
+        }
+
+        .action-display.antivirus {
+            background: #0066ff;
+        }
+
+        .action-display.bsod {
+            background: #0000aa;
+            animation: actionPulse 0.5s ease-out, shake 1s;
+        }
+
+        @keyframes actionPulse {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+            10% { transform: translate(-52%, -50%) rotate(-2deg); }
+            20% { transform: translate(-48%, -50%) rotate(2deg); }
+            30% { transform: translate(-52%, -50%) rotate(-2deg); }
+            40% { transform: translate(-48%, -50%) rotate(2deg); }
+            50% { transform: translate(-50%, -50%) rotate(0deg); }
+        }
+
+        /* Folder highlight for spectators */
+        .folder.highlighting {
+            animation: highlightPulse 1s infinite;
+            border: 3px solid #ffff00 !important;
+            z-index: 10;
+        }
+
+        @keyframes highlightPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(255, 255, 0, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(255, 255, 0, 0.8); }
+        }
+
+        /* Avatar result display for spectators */
+        .result-display {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 3000;
+            display: none;
+            animation: resultPop 0.5s ease-out;
+        }
+
+        .result-display.active {
+            display: block;
+        }
+
+        @keyframes resultPop {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .result-avatar {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border: 5px solid;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .result-display.safe .result-avatar {
+            border-color: #00ff00;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.8);
+        }
+
+        .result-display.virus .result-avatar {
+            border-color: #ff0000;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+        }
+
+        .result-display.antivirus .result-avatar {
+            border-color: #0066ff;
+            box-shadow: 0 0 30px rgba(0, 102, 255, 0.8);
+        }
+
+        .result-display.bsod .result-avatar {
+            border-color: #000;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .result-text {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #fff;
+            border: 3px solid #000;
+        }
+
+        /* Selection indicator for spectators */
+        .folder.selecting {
+            border: 3px solid #ffff00 !important;
+            box-shadow: 0 0 15px rgba(255, 255, 0, 0.8);
+            animation: selectPulse 1s infinite;
+        }
+
+        @keyframes selectPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* BSOD */
+        .bsod {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0000aa;
+            color: #fff;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 6000;
+            font-family: 'Lucida Console', monospace;
+            padding: 20px;
+        }
+
+        .bsod.active {
+            display: flex;
+        }
+
+        .bsod-content {
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .bsod-header {
+            background: #aaa;
+            color: #0000aa;
+            padding: 5px 20px;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .bsod-title {
+            font-size: 18px;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+
+        .bsod-error {
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .bsod-winner {
+            font-size: 24px;
+            margin-top: 30px;
+            animation: blink 1s infinite;
+        }
+
+        /* Winner screen */
+        .winner-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 7000;
+            overflow: hidden;
+        }
+
+        .winner-screen.active {
+            display: flex;
+        }
+
+        .winner-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+
+        .winner-content {
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #000;
+            padding: 40px;
+            text-align: center;
+            max-width: 600px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .winner-title {
+            font-size: 48px;
+            font-weight: bold;
+            color: #000080;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .winner-message {
+            font-size: 24px;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+
+        .winner-note {
+            font-size: 16px;
+            color: #666;
+            font-style: italic;
         }
 
         @keyframes blink {
@@ -206,108 +505,176 @@
             50% { opacity: 0.5; }
         }
 
-        /* Stats */
-        .stats {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            margin: 20px 0;
-            font-size: 14px;
-        }
-
-        .stat {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            color: #0f0;
-            text-shadow: 0 0 10px #0f0;
-        }
-
-        /* Loading */
-        .loading {
+        /* Spectator reactions */
+        .reaction-buttons {
             position: fixed;
-            top: 50%;
+            bottom: 20px;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 20px;
+        }
+
+        .reaction-btn {
+            background: #fff;
+            border: none;
             font-size: 24px;
-            text-align: center;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: transform 0.2s;
         }
 
-        .loading.hidden {
-            display: none;
+        .reaction-btn:hover {
+            transform: scale(1.2);
         }
 
-        /* Mobile */
+        .floating-reaction {
+            position: fixed;
+            font-size: 36px;
+            animation: floatUp 3s ease-out forwards;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(-100px) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-200px) scale(0.8);
+            }
+        }
+
+        /* Mobile adjustments */
         @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-            
-            .action-log {
-                height: 300px;
-            }
-            
             .folder-grid {
                 grid-template-columns: repeat(6, 1fr);
                 gap: 5px;
+            }
+            
+            .players-bar {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Audio -->
+    <audio id="introMusic" src="../assets/finals/game-intro.mp3" loop></audio>
+    <audio id="winSound" src="../assets/finals/game-winner-reveal.mp3"></audio>
+    <audio id="deathSound" src="../assets/finals/game-end-death.mp3"></audio>
+    
     <div class="loading" id="loading">
-        <div>CONNECTING TO GAME...</div>
-        <div style="margin-top: 10px;">⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏</div>
-    </div>
-
-    <div class="header">
-        <h1>INTERNET OLYMPICS 2 - SPECTATOR MODE</h1>
-        <div class="game-code" id="gameCode">------</div>
-        <div class="game-status" id="gameStatus">WAITING FOR PLAYERS...</div>
-    </div>
-
-    <div class="container">
-        <div class="game-view">
-            <div class="players">
-                <div class="player" id="player1">
-                    <img src="../assets/finals/angelbubu-1.png" alt="Player 1">
-                    <div class="player-name">WAITING...</div>
-                    <div class="player-status">DISCONNECTED</div>
-                </div>
-                <div class="player" id="player2">
-                    <img src="../assets/finals/angelbubu-2.png" alt="Player 2">
-                    <div class="player-name">WAITING...</div>
-                    <div class="player-status">DISCONNECTED</div>
-                </div>
-            </div>
-
-            <div class="stats">
-                <div class="stat">
-                    <div>FOLDERS REMAINING</div>
-                    <div class="stat-value" id="folderCount">60</div>
-                </div>
-                <div class="stat">
-                    <div>SPECTATORS</div>
-                    <div class="stat-value" id="spectatorCount">0</div>
-                </div>
-            </div>
-
-            <div class="folder-grid" id="folderGrid">
-                <!-- Folders will be generated here -->
+        <div class="loading-box">
+            <div style="font-size: 18px; margin-bottom: 15px;">CONNECTING TO GAME...</div>
+            <div style="width: 200px; height: 20px; background: #fff; border: 1px solid #000;">
+                <div style="width: 60%; height: 100%; background: #0054e3;"></div>
             </div>
         </div>
+    </div>
 
-        <div class="action-log">
-            <h2>ACTION LOG</h2>
-            <div id="logEntries"></div>
+    <div class="game-header">
+        <h1 class="game-title">INTERNET OLYMPICS 2 - SPECTATOR MODE</h1>
+        <div class="game-code">ROOM: <span id="roomCode">------</span></div>
+    </div>
+
+    <div class="players-bar">
+        <div class="player-info" id="player1Info">
+            <img class="player-avatar" id="player1Avatar" src="../assets/finals/angelbubu-1.png" alt="Player 1">
+            <div class="player-details">
+                <h3 id="player1Name">waiting...</h3>
+                <div class="player-status" id="player1Status">disconnected</div>
+                <div class="player-immunity" id="player1Immunity" style="display: none;">🛡️ IMMUNE: 0 clicks</div>
+            </div>
         </div>
+        <div class="player-info" id="player2Info">
+            <img class="player-avatar" id="player2Avatar" src="../assets/finals/angelbubu-2.png" alt="Player 2">
+            <div class="player-details">
+                <h3 id="player2Name">waiting...</h3>
+                <div class="player-status" id="player2Status">disconnected</div>
+                <div class="player-immunity" id="player2Immunity" style="display: none;">🛡️ IMMUNE: 0 clicks</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="game-status-banner" id="gameStatus">
+        WAITING FOR PLAYERS...
+    </div>
+
+    <div class="game-board">
+        <div class="folder-count">
+            FOLDERS REMAINING: <span id="folderCount">60</span> | SPECTATORS: <span id="spectatorCount">0</span>
+        </div>
+        <div class="folder-grid" id="folderGrid"></div>
+    </div>
+
+    <!-- Result Display -->
+    <div class="result-display" id="resultDisplay">
+        <img class="result-avatar" id="resultAvatar" src="" alt="">
+        <div class="result-text" id="resultText">SAFE</div>
+    </div>
+
+    <!-- Action Display -->
+    <div class="action-display" id="actionDisplay">
+        <div id="actionText">PLAYER - ACTION</div>
+    </div>
+
+    <!-- BSOD -->
+    <div class="bsod" id="bsod">
+        <div class="bsod-content">
+            <div class="bsod-header">Windows</div>
+            <div class="bsod-title">
+                A fatal exception 0E has occurred at 0028:C0011E36 in VXD VMM(01) +<br>
+                00010E36. The current application will be terminated.
+            </div>
+            <div class="bsod-error">
+                * Press any key to terminate the current application.<br>
+                * Press CTRL+ALT+DEL again to restart your computer. You will<br>
+                &nbsp;&nbsp;lose any unsaved information in all applications.<br><br>
+                Error: FOLDER_NOT_FOUND
+            </div>
+            <div class="bsod-winner">
+                <div style="font-size: 48px; margin-bottom: 20px;">BIG BIG BIG RIP 4 EVER AND EVER</div>
+                <div style="font-size: 32px; margin-bottom: 20px;">2 <span id="loserName"></span></div>
+                <div style="font-size: 24px; margin-bottom: 30px;">U DID GOOD KID</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Winner screen -->
+    <div class="winner-screen" id="winnerScreen">
+        <video class="winner-video" src="../assets/finals/cast-bg.mp4" autoplay loop muted></video>
+        <div class="winner-content">
+            <div class="winner-title">BASED BASED BASED</div>
+            <div class="winner-message">
+                Congrats 2 <span id="winnerNameDisplay"></span><br>
+                for making it thru!
+            </div>
+            <div class="winner-note">Stay tuned for the next round.</div>
+        </div>
+    </div>
+
+    <!-- Reaction Buttons -->
+    <div class="reaction-buttons">
+        <button class="reaction-btn" onclick="sendReaction('😱')">😱</button>
+        <button class="reaction-btn" onclick="sendReaction('😂')">😂</button>
+        <button class="reaction-btn" onclick="sendReaction('💀')">💀</button>
+        <button class="reaction-btn" onclick="sendReaction('🔥')">🔥</button>
+        <button class="reaction-btn" onclick="sendReaction('😭')">😭</button>
     </div>
 
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-        import { getFirestore, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
         import { GameManager } from './firebase-config.js';
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -317,138 +684,240 @@
             alert('No game ID provided');
             window.location.href = './index.html';
         }
+        
+        // Set room code
+        document.getElementById('roomCode').textContent = gameId;
+        
+        // Audio
+        const introMusic = document.getElementById('introMusic');
+        const winSound = document.getElementById('winSound');
+        const deathSound = document.getElementById('deathSound');
+        introMusic.volume = 0.3;
+        winSound.volume = 0.5;
+        deathSound.volume = 0.5;
+        
+        // Play intro music
+        introMusic.play().catch(e => console.log('Autoplay blocked'));
 
-        // UI Elements
-        const elements = {
-            loading: document.getElementById('loading'),
-            gameCode: document.getElementById('gameCode'),
-            gameStatus: document.getElementById('gameStatus'),
-            player1: document.getElementById('player1'),
-            player2: document.getElementById('player2'),
-            folderGrid: document.getElementById('folderGrid'),
-            folderCount: document.getElementById('folderCount'),
-            spectatorCount: document.getElementById('spectatorCount'),
-            logEntries: document.getElementById('logEntries')
-        };
+        // Game state
+        let currentGameState = null;
 
-        // Initialize grid
-        function initializeGrid() {
-            elements.folderGrid.innerHTML = '';
-            for (let i = 0; i < 64; i++) {
-                const space = document.createElement('div');
-                space.className = 'folder-space';
-                space.dataset.index = i;
-                elements.folderGrid.appendChild(space);
+        // Subscribe to game updates
+        const unsubscribe = GameManager.subscribeToGame(gameId, (gameData) => {
+            if (!gameData) {
+                // Game was deleted
+                alert('Game has been deleted by admin');
+                window.location.href = './index.html';
+                return;
             }
-        }
-
-        // Update game display
-        function updateGame(gameData) {
-            elements.gameCode.textContent = gameId;
+            document.getElementById('loading').classList.add('hidden');
+            currentGameState = gameData;
+            updateUI(gameData);
+        });
+        
+        // Update UI based on game state
+        function updateUI(gameData) {
+            // Update player info
+            updatePlayerInfo(1, gameData.players.player1);
+            updatePlayerInfo(2, gameData.players.player2);
             
-            // Update status
+            // Update turn indicator with color theme
+            document.body.className = '';
+            if (gameData.currentTurn === 1) {
+                document.getElementById('player1Info').classList.add('active', 'player1');
+                document.getElementById('player2Info').classList.remove('active', 'player2');
+                document.body.classList.add('player1-turn');
+            } else {
+                document.getElementById('player2Info').classList.add('active', 'player2');
+                document.getElementById('player1Info').classList.remove('active', 'player1');
+                document.body.classList.add('player2-turn');
+            }
+            
+            // Update game status
+            const statusEl = document.getElementById('gameStatus');
             if (gameData.status === 'waiting') {
-                elements.gameStatus.textContent = 'WAITING FOR PLAYERS...';
-                elements.gameStatus.className = 'game-status waiting';
+                statusEl.textContent = 'WAITING FOR PLAYERS...';
+                statusEl.className = 'game-status-banner';
             } else if (gameData.status === 'playing') {
-                elements.gameStatus.textContent = `PLAYER ${gameData.currentTurn}'S TURN`;
-                elements.gameStatus.className = 'game-status playing';
+                statusEl.textContent = `PLAYER ${gameData.currentTurn}'S TURN`;
+                statusEl.className = 'game-status-banner';
             } else if (gameData.status === 'finished') {
                 const winner = gameData.winner === 1 ? gameData.players.player1 : gameData.players.player2;
-                elements.gameStatus.textContent = `GAME OVER - ${winner.name} WINS!`;
-                elements.gameStatus.className = 'game-status finished';
-            }
-            
-            // Update players
-            updatePlayer(elements.player1, gameData.players.player1, 1, gameData.currentTurn === 1);
-            updatePlayer(elements.player2, gameData.players.player2, 2, gameData.currentTurn === 2);
-            
-            // Update folders
-            gameData.folders.forEach((folder, index) => {
-                const space = elements.folderGrid.querySelector(`[data-index="${index}"]`);
-                if (space) {
-                    if (folder && folder.visible) {
-                        if (!space.querySelector('.folder')) {
-                            const folderEl = document.createElement('div');
-                            folderEl.className = 'folder';
-                            folderEl.innerHTML = `<img src="../assets/finals/${folder.icon}" alt="Folder">`;
-                            space.appendChild(folderEl);
-                        }
-                    } else {
-                        const folderEl = space.querySelector('.folder');
-                        if (folderEl) {
-                            folderEl.classList.add('hidden');
-                            setTimeout(() => folderEl.remove(), 300);
-                        }
-                    }
-                }
-            });
-            
-            // Update counts
-            elements.folderCount.textContent = gameData.folderCount || 60;
-            elements.spectatorCount.textContent = gameData.spectators || 0;
-            
-            // Update action log
-            if (gameData.lastAction) {
-                addLogEntry(gameData.lastAction, gameData.players);
-            }
-        }
-
-        function updatePlayer(element, playerData, playerNum, isCurrentTurn) {
-            if (playerData) {
-                element.classList.add('connected');
-                element.querySelector('.player-name').textContent = playerData.name;
-                element.querySelector('.player-status').textContent = 'CONNECTED';
+                const loser = gameData.winner === 1 ? gameData.players.player2 : gameData.players.player1;
+                statusEl.textContent = `GAME OVER - ${winner.name.toUpperCase()} SURVIVES!`;
+                statusEl.className = 'game-status-banner finished';
                 
-                if (isCurrentTurn) {
-                    element.classList.add('current-turn');
-                } else {
-                    element.classList.remove('current-turn');
-                }
-            } else {
-                element.classList.remove('connected', 'current-turn');
-                element.querySelector('.player-name').textContent = 'WAITING...';
-                element.querySelector('.player-status').textContent = 'DISCONNECTED';
+                // Stop intro music and play death sound
+                introMusic.pause();
+                deathSound.play();
+                
+                // Show BSOD
+                document.getElementById('loserName').textContent = loser.name.toUpperCase();
+                document.getElementById('bsod').classList.add('active');
+                
+                // After BSOD, show winner screen
+                setTimeout(() => {
+                    document.getElementById('bsod').classList.remove('active');
+                    document.getElementById('winnerNameDisplay').textContent = winner.name.toUpperCase();
+                    document.getElementById('winnerScreen').classList.add('active');
+                    winSound.play();
+                }, 5000);
+            }
+            
+            // Update folder count and spectators
+            document.getElementById('folderCount').textContent = gameData.folderCount;
+            document.getElementById('spectatorCount').textContent = gameData.spectators || 0;
+            
+            // Render folders
+            renderFolders(gameData.folders);
+            
+            // Handle last action animations
+            if (gameData.lastAction && gameData.lastAction.timestamp) {
+                handleLastAction(gameData.lastAction);
             }
         }
-
-        function addLogEntry(action, players) {
-            const entry = document.createElement('div');
-            const playerName = action.player === 1 ? players.player1?.name : players.player2?.name;
-            const time = new Date(action.timestamp).toLocaleTimeString();
-            
-            if (action.type === 'bomb') {
-                entry.className = 'log-entry bomb';
-                entry.textContent = `[${time}] ${playerName} HIT THE BOMB! GAME OVER!`;
-            } else if (action.type === 'virus') {
-                entry.className = 'log-entry virus';
-                entry.textContent = `[${time}] ${playerName} triggered a virus! ${action.virusAte?.length || 0} folders eaten`;
-            } else {
-                entry.className = 'log-entry safe';
-                entry.textContent = `[${time}] ${playerName} clicked safely`;
-            }
-            
-            elements.logEntries.insertBefore(entry, elements.logEntries.firstChild);
-            
-            // Keep only last 50 entries
-            while (elements.logEntries.children.length > 50) {
-                elements.logEntries.removeChild(elements.logEntries.lastChild);
-            }
-        }
-
-        // Initialize
-        initializeGrid();
         
-        // Add spectator and subscribe to game
-        GameManager.addSpectator(gameId).then(() => {
-            const unsubscribe = GameManager.subscribeToGame(gameId, (gameData) => {
-                elements.loading.classList.add('hidden');
-                updateGame(gameData);
-            });
+        function updatePlayerInfo(num, playerData) {
+            document.getElementById(`player${num}Name`).textContent = playerData.name ? `@${playerData.name}` : 'waiting...';
+            const statusEl = document.getElementById(`player${num}Status`);
+            statusEl.textContent = playerData.connected ? 'connected' : 'disconnected';
+            statusEl.classList.toggle('connected', playerData.connected);
             
-            window.addEventListener('beforeunload', () => {
-                if (unsubscribe) unsubscribe();
+            // Update avatar
+            if (playerData.avatar) {
+                document.getElementById(`player${num}Avatar`).src = `../assets/finals/${playerData.avatar}.png`;
+            }
+            
+            // Show immunity if active
+            const immunityEl = document.getElementById(`player${num}Immunity`);
+            if (playerData.immunityClicks > 0) {
+                immunityEl.style.display = 'block';
+                immunityEl.textContent = `🛡️ IMMUNE: ${playerData.immunityClicks} clicks`;
+            } else {
+                immunityEl.style.display = 'none';
+            }
+        }
+        
+        function renderFolders(folders) {
+            const grid = document.getElementById('folderGrid');
+            grid.innerHTML = '';
+            
+            folders.forEach((folder, index) => {
+                const folderEl = document.createElement('div');
+                folderEl.className = 'folder';
+                
+                if (folder.visible) {
+                    // Show folder icon with proper path
+                    const iconPath = `../assets/finals/${folder.icon}.png`;
+                    folderEl.innerHTML = `<img src="${iconPath}" alt="Folder" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.parentElement.innerHTML='📁'">`;
+                } else {
+                    folderEl.style.visibility = 'hidden';
+                }
+                
+                grid.appendChild(folderEl);
             });
+        }
+        
+        function handleLastAction(action) {
+            // Show avatar result display for spectators
+            if (action.player && currentGameState.players[`player${action.player}`]) {
+                const player = currentGameState.players[`player${action.player}`];
+                const resultDisplay = document.getElementById('resultDisplay');
+                const resultAvatar = document.getElementById('resultAvatar');
+                const resultText = document.getElementById('resultText');
+                
+                // Highlight the clicked folder
+                const folderEls = document.querySelectorAll('.folder');
+                if (folderEls[action.folderId]) {
+                    folderEls[action.folderId].classList.add('highlighting');
+                    setTimeout(() => {
+                        folderEls[action.folderId].classList.remove('highlighting');
+                    }, 2000);
+                }
+                
+                // Set avatar image
+                resultAvatar.src = `../assets/finals/${player.avatar}.png`;
+                
+                // Set result styling and text
+                resultDisplay.className = 'result-display';
+                
+                switch(action.result) {
+                    case 'safe':
+                        resultDisplay.classList.add('safe');
+                        resultText.textContent = 'SAFE';
+                        resultText.style.color = '#00aa00';
+                        break;
+                    case 'virus':
+                        resultDisplay.classList.add('virus');
+                        resultText.textContent = 'VIRUS!';
+                        resultText.style.color = '#ff0000';
+                        break;
+                    case 'antivirus':
+                        resultDisplay.classList.add('antivirus');
+                        resultText.textContent = 'IMMUNITY!';
+                        resultText.style.color = '#0066ff';
+                        break;
+                    case 'bsod':
+                        resultDisplay.classList.add('bsod');
+                        resultText.textContent = 'DEATH!';
+                        resultText.style.color = '#000000';
+                        break;
+                }
+                
+                // Show result
+                resultDisplay.classList.add('active');
+                
+                // Hide after 2 seconds
+                setTimeout(() => {
+                    resultDisplay.classList.remove('active');
+                }, 2000);
+            }
+            
+            // Animate based on last action
+            if (action.result === 'virus' && action.virusAte) {
+                // Delay virus animation to not overlap with result display
+                setTimeout(() => {
+                    action.virusAte.forEach((folderId, i) => {
+                        setTimeout(() => {
+                            const folderEls = document.querySelectorAll('.folder');
+                            if (folderEls[folderId]) {
+                                folderEls[folderId].classList.add('virus-eating');
+                            }
+                        }, i * 200);
+                    });
+                }, 2500);
+            } else if (action.result === 'click') {
+                // Animate clicked folder
+                const folderEls = document.querySelectorAll('.folder');
+                if (folderEls[action.folderId]) {
+                    folderEls[action.folderId].classList.add('vanishing');
+                }
+            }
+        }
+        
+        // Reaction system
+        window.sendReaction = function(emoji) {
+            const reaction = document.createElement('div');
+            reaction.className = 'floating-reaction';
+            reaction.textContent = emoji;
+            
+            // Random position across screen width
+            const x = Math.random() * window.innerWidth;
+            reaction.style.left = x + 'px';
+            reaction.style.bottom = '50px';
+            
+            document.body.appendChild(reaction);
+            
+            // Remove after animation
+            setTimeout(() => {
+                reaction.remove();
+            }, 3000);
+        };
+        
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (unsubscribe) unsubscribe();
+            GameManager.removeSpectator(gameId);
         });
     </script>
 </body>

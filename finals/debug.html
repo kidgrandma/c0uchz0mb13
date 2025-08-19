@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INTERNET OLYMPICS 2 - Debug Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+            padding: 20px;
+            font-size: 12px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        .section {
+            border: 1px solid #0f0;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            margin-bottom: 10px;
+            color: #ff0;
+        }
+
+        .game-item {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #0f0;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .game-id {
+            color: #0ff;
+            font-weight: bold;
+        }
+
+        .game-data {
+            margin-top: 5px;
+            font-size: 11px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 5px 10px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #0ff;
+        }
+
+        button.danger {
+            background: #f00;
+            color: #fff;
+        }
+
+        button.danger:hover {
+            background: #ff0;
+            color: #000;
+        }
+
+        .logs {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #0f0;
+            padding: 10px;
+            background: rgba(0, 255, 0, 0.05);
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+            border-bottom: 1px dotted #0f0;
+        }
+
+        .timestamp {
+            color: #999;
+            font-size: 10px;
+        }
+
+        .actions {
+            margin-top: 20px;
+        }
+
+        #connectionStatus {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            background: #000;
+            border: 1px solid #0f0;
+        }
+
+        .connected {
+            color: #0f0;
+        }
+
+        .disconnected {
+            color: #f00;
+        }
+    </style>
+</head>
+<body>
+    <div id="connectionStatus">
+        <span id="statusText">CONNECTING...</span>
+    </div>
+
+    <h1>INTERNET OLYMPICS 2 - DEBUG PANEL</h1>
+    
+    <div class="section">
+        <h2>FIREBASE CONNECTION</h2>
+        <div>Project: c0uchz0mb13</div>
+        <div>Collection: games</div>
+        <div id="totalGames">Total Games: Loading...</div>
+    </div>
+
+    <div class="section">
+        <h2>ACTIVE GAMES</h2>
+        <div id="gamesList">Loading...</div>
+    </div>
+
+    <div class="section">
+        <h2>ACTIONS</h2>
+        <div class="actions">
+            <button onclick="refreshData()">REFRESH DATA</button>
+            <button onclick="deleteAllGames()" class="danger">DELETE ALL GAMES</button>
+            <button onclick="createTestGame()">CREATE TEST GAME</button>
+            <button onclick="clearLogs()">CLEAR LOGS</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>LIVE LOG</h2>
+        <div class="logs" id="logs"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { 
+            getFirestore, 
+            collection, 
+            onSnapshot,
+            deleteDoc,
+            doc,
+            getDocs,
+            setDoc,
+            serverTimestamp
+        } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJ8uiR2qEUfXIuFEO2l-40668WNpQdj2w",
+            authDomain: "c0uchz0mb13.firebaseapp.com",
+            projectId: "c0uchz0mb13",
+            storageBucket: "c0uchz0mb13.firebasestorage.app",
+            messagingSenderId: "1051521591004",
+            appId: "1:1051521591004:web:1301f129fc0f3032f6f619",
+            measurementId: "G-6BNDYZQRPE"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let unsubscribe = null;
+
+        function log(message, type = 'info') {
+            const logsEl = document.getElementById('logs');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const time = new Date().toLocaleTimeString();
+            entry.innerHTML = `<span class="timestamp">[${time}]</span> ${message}`;
+            logsEl.insertBefore(entry, logsEl.firstChild);
+        }
+
+        function updateStatus(connected) {
+            const statusEl = document.getElementById('statusText');
+            if (connected) {
+                statusEl.textContent = 'CONNECTED TO FIREBASE';
+                statusEl.className = 'connected';
+            } else {
+                statusEl.textContent = 'DISCONNECTED';
+                statusEl.className = 'disconnected';
+            }
+        }
+
+        function displayGames(games) {
+            const listEl = document.getElementById('gamesList');
+            const totalEl = document.getElementById('totalGames');
+            
+            totalEl.textContent = `Total Games: ${games.length}`;
+            
+            if (games.length === 0) {
+                listEl.innerHTML = '<div>No games found in database</div>';
+                return;
+            }
+            
+            listEl.innerHTML = games.map(game => `
+                <div class="game-item">
+                    <div class="game-id">Game ID: ${game.id}</div>
+                    <div>Status: ${game.status || 'unknown'}</div>
+                    <div>Players: ${game.players?.player1?.name || 'empty'} vs ${game.players?.player2?.name || 'empty'}</div>
+                    <div>Folders: ${game.folderCount || 0}</div>
+                    <div>Created: ${game.createdAt ? new Date(game.createdAt.seconds * 1000).toLocaleString() : 'unknown'}</div>
+                    <button onclick="deleteGame('${game.id}')">DELETE</button>
+                    <button onclick="showGameData('${game.id}')">VIEW DATA</button>
+                    <div class="game-data" id="data-${game.id}" style="display: none;"></div>
+                </div>
+            `).join('');
+        }
+
+        // Subscribe to all games
+        function subscribeToGames() {
+            log('Subscribing to games collection...');
+            const gamesRef = collection(db, 'games');
+            
+            unsubscribe = onSnapshot(gamesRef, 
+                (snapshot) => {
+                    updateStatus(true);
+                    const games = [];
+                    snapshot.forEach((doc) => {
+                        games.push({ id: doc.id, ...doc.data() });
+                    });
+                    log(`Received update: ${games.length} games found`);
+                    displayGames(games);
+                },
+                (error) => {
+                    updateStatus(false);
+                    log(`Error: ${error.message}`, 'error');
+                }
+            );
+        }
+
+        // Global functions
+        window.deleteGame = async (gameId) => {
+            if (confirm(`Delete game ${gameId}?`)) {
+                try {
+                    await deleteDoc(doc(db, 'games', gameId));
+                    log(`Deleted game: ${gameId}`);
+                } catch (error) {
+                    log(`Failed to delete game: ${error.message}`, 'error');
+                }
+            }
+        };
+
+        window.deleteAllGames = async () => {
+            if (confirm('Delete ALL games? This cannot be undone!')) {
+                try {
+                    const gamesRef = collection(db, 'games');
+                    const snapshot = await getDocs(gamesRef);
+                    const deletePromises = [];
+                    
+                    snapshot.forEach((doc) => {
+                        deletePromises.push(deleteDoc(doc.ref));
+                    });
+                    
+                    await Promise.all(deletePromises);
+                    log(`Deleted ${deletePromises.length} games`);
+                } catch (error) {
+                    log(`Failed to delete games: ${error.message}`, 'error');
+                }
+            }
+        };
+
+        window.createTestGame = async () => {
+            const gameId = 'TEST' + Math.floor(Math.random() * 1000);
+            try {
+                await setDoc(doc(db, 'games', gameId), {
+                    status: 'waiting',
+                    players: {
+                        player1: { name: 'Test Player 1', connected: false },
+                        player2: { name: 'Test Player 2', connected: false }
+                    },
+                    folderCount: 200,
+                    createdAt: serverTimestamp()
+                });
+                log(`Created test game: ${gameId}`);
+            } catch (error) {
+                log(`Failed to create test game: ${error.message}`, 'error');
+            }
+        };
+
+        window.showGameData = (gameId) => {
+            const dataEl = document.getElementById(`data-${gameId}`);
+            if (dataEl.style.display === 'none') {
+                // Get fresh data
+                const gamesRef = collection(db, 'games');
+                getDocs(gamesRef).then(snapshot => {
+                    snapshot.forEach((doc) => {
+                        if (doc.id === gameId) {
+                            dataEl.textContent = JSON.stringify(doc.data(), null, 2);
+                            dataEl.style.display = 'block';
+                        }
+                    });
+                });
+            } else {
+                dataEl.style.display = 'none';
+            }
+        };
+
+        window.refreshData = () => {
+            log('Refreshing data...');
+            if (unsubscribe) {
+                unsubscribe();
+            }
+            subscribeToGames();
+        };
+
+        window.clearLogs = () => {
+            document.getElementById('logs').innerHTML = '';
+            log('Logs cleared');
+        };
+
+        // Initialize
+        subscribeToGames();
+        log('Debug panel initialized');
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (unsubscribe) unsubscribe();
+        });
+    </script>
+</body>
+</html>
